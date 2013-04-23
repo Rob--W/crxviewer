@@ -1,0 +1,139 @@
+/* (c) Rob Wu <gwnRob@gmail.com> */
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+#top-bar {
+  width: 100%;
+  height: 2rem;
+  border-bottom: 2px solid #DDD;
+  padding: 0.2rem;
+}
+#top-bar #file-filter {
+  width: 300px;
+  max-width: 100%;
+  height: 1.4rem;
+  border: 1px solid #AAA;
+  padding: 3px;
+  color: #444;
+}
+#top-bar #file-filter:focus {
+  outline: none;
+  border-color: #4d90fe;
+}
+#top-bar #file-filter-feedback {
+  display: inline-block;
+  max-width: -webkit-calc(100% - 300px - 0.4rem);
+  max-width: calc(100% - 300px - 0.4rem);
+}
+#right-panel,
+#left-panel {
+  height: -webkit-calc(100% - 2rem);
+  height: calc(100% - 2rem);
+}
+#right-panel {
+  padding-left: 266px;
+}
+#left-panel {
+  z-index: 1;
+  position: absolute;
+  display: inline-block;
+  width: 250px;
+  background-color: #FFF;
+}
+#left-panel > .content {
+  overflow-y: auto;
+  max-height: 100%;
+}
+#left-panel > .resizer {
+  height: 100%;
+  position: absolute;
+  top: 0;
+  right: -8px;
+  width: 8px;
+  background-color: #DDD;
+  cursor: col-resize;
+}
+#left-panel > .resizer:hover {
+  background-color: #AAA;
+}
+.toggled {
+  width: 0 !important;
+}
+.toggled > .content {
+  display: none;
+}
+.toggled + .toggleable {
+  padding-left: 16px !important;
+}
+.toggler {
+  cursor: pointer;
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+  border-left: 0;
+  border-right: 8px solid rgba(0, 0, 0, 0.5);
+}
+.toggler:hover {
+  border-right-color: #000;
+}
+.toggled .toggler {
+  border-left: 8px solid #000000;
+  border-right: 0;
+}
+#file-list {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+#file-list li {
+  position: relative;
+  overflow-x: hidden;
+  cursor: default;
+}
+#file-list li:hover {
+  background-color: rgba(99, 99, 99, 0.2);
+}
+#file-list li.active {
+  background-color: rgba(99, 99, 99, 0.3);
+}
+#file-list li.file-filtered {
+  display: none;
+}
+#file-list li .file-path {
+  position: absolute;
+  min-width: 100%;
+  box-sizing: border-box;
+  padding-left: 4rem;
+  right: 4rem;
+  white-space: pre;
+}
+#file-list li .file-path .file-dir {
+  color: #888;
+}
+#file-list li .file-path .file-dir:not(:empty)::after {
+  content: "/";
+}
+#file-list li .file-path .file-dir:hover {
+  color: #000;
+}
+#file-list li .file-size {
+  width: 4rem;
+  float: right;
+  text-align: right;
+}
+#source-code {
+  max-height: 100%;
+  overflow: auto;
+  font-family: monospace;
+  white-space: pre;
+}
+#source-code .auto-wordwrap {
+  word-break: break-word;
+}

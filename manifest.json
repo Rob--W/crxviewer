@@ -1,0 +1,35 @@
+{
+    "name": "Chrome extension source viewer",
+    "description": "Adds button to show the source code of a Chrome extension (crx file) in the Chrome web store",
+    "version": "1",
+    "manifest_version": 2,
+    "background": {
+        "scripts": [
+            "cws_pattern.js",
+            "background.js"
+        ],
+        "persistent": false
+    },
+    "page_action": {
+        "default_icon": {
+            "19": "icons/19.png",
+            "38": "icons/38.png"
+        },
+        "default_title": "Inspect contents of the current Chrome extension",
+        "default_popup": "popup.html"
+    },
+    "icons": {
+        "16": "icons/16.png",
+        "48": "icons/48.png",
+        "128": "icons/128.png"
+    },
+    "permissions": [
+        "tabs",
+        "*://clients2.google.com/service/update2/crx*",
+        "*://clients2.googleusercontent.com/crx/download/*"
+    ],
+    "web_accessible_resources": [
+        "crxviewer.html"
+    ],
+    "incognito": "split"
+}

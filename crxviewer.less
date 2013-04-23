@@ -1,0 +1,151 @@
+@rightPanelWidth: 250px;
+@resizerWidth: 8px;
+@fileSizeWidth: 4rem;
+
+* {
+    box-sizing: border-box;
+}
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+#top-bar {
+    width: 100%;
+    height: 2rem;
+    border-bottom: 2px solid #DDD;
+    padding: 0.2rem;
+    #file-filter {
+        width: 300px;
+        max-width: 100%;
+        height: 1.4rem;
+        border: 1px solid #AAA;
+        padding: 3px;
+        color: #444;
+        &:focus {
+            outline: none;
+            border-color: rgb(77, 144, 254);
+        }
+    }
+    #file-filter-feedback {
+        display: inline-block;
+        // 300 px width, 2x0.2rem padding
+        max-width: -webkit-calc(100% - 300px - 0.4rem);
+        max-width: calc(100% - 300px - 0.4rem);
+    }
+}
+#right-panel, #left-panel {
+    height: -webkit-calc(100% - 2rem);
+    height: calc(100% - 2rem);
+}
+#right-panel {
+    padding-left: (2 * @resizerWidth + @rightPanelWidth);
+}
+#left-panel {
+    z-index: 1;
+    position: absolute;
+    display: inline-block;
+    width: @rightPanelWidth;
+    background-color: #FFF;
+    & > .content {
+        overflow-y: auto;
+        max-height: 100%;
+    }
+    & > .resizer {
+        height: 100%;
+        position: absolute;
+        top: 0;
+        right: -@resizerWidth;
+        width: @resizerWidth;
+        background-color: #DDD;
+        cursor: col-resize;
+        &:hover {
+            background-color: #AAA;
+        }
+    }
+}
+.toggled {
+    width: 0 !important;
+    & > .content {
+        display: none;
+    }
+}
+.toggled + .toggleable {
+    // Override inline declaration
+    padding-left: (2 * @resizerWidth) !important;
+}
+.toggler {
+    @triangleWidth: @resizerWidth;
+    cursor: pointer;
+    // Triangle:
+    width: 0;
+    height: 0;
+    border: 10px solid transparent;
+    border-left: 0;
+    border-right: @triangleWidth solid rgba(0,0,0,0.5);
+    &:hover {
+        border-right-color: #000;
+    }
+    .toggled & {
+        border-left: @triangleWidth solid black;
+        border-right: 0;
+    }
+}
+#file-list {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+
+    li {
+        position: relative;
+        overflow-x: hidden;
+        cursor: default;
+        &:hover {
+            background-color: rgba(99,99,99,0.2);
+        }
+        &.active {
+            background-color: rgba(99,99,99,0.3);
+        }
+        &.file-filtered {
+            display: none;
+        }
+
+        .file-path {
+            position: absolute;
+            min-width: 100%;
+            box-sizing: border-box;
+            padding-left: @fileSizeWidth;
+            right: @fileSizeWidth;
+            white-space: pre;
+
+            .file-dir {
+                color: #888;
+                &:not(:empty)::after {
+                    content: "/";
+                }
+                &:hover {
+                    color: #000;
+                }
+            }
+        }
+        .file-size {
+            width: @fileSizeWidth;
+            float: right;
+            text-align: right;
+        }
+    }
+}
+
+#source-code {
+    @indentWidth: 4ex;
+    max-height: 100%;
+    overflow: auto;
+    font-family: monospace;
+    white-space: pre;
+
+    // word-wrap sucks performance for big files
+    .auto-wordwrap {
+        word-break: break-word;
+    }
+}

@@ -1,4 +1,4 @@
-/* (c) Rob Wu <gwnRob@gmail.com> */
+/* (c) 2013 Rob Wu <gwnRob@gmail.com> */
 * {
   box-sizing: border-box;
 }
@@ -105,6 +105,9 @@ body {
 }
 #file-list li.file-filtered {
   display: none;
+}
+#file-list li.file-selected {
+  background-color: #def;
 }
 #file-list li .file-path {
   position: absolute;

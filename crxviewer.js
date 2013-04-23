@@ -57,6 +57,9 @@ function handleZipEntries(entries) {
         fileSizeElem.textContent = formatByteSizeSuffix(fileSize);
 
         listItem.addEventListener('click', function(e) {
+            var tmp = document.querySelector('.file-selected');
+            if (tmp) tmp.classList.remove('file-selected');
+            listItem.classList.add('file-selected');
             viewFileInfo(entry);
         });
 

@@ -1,0 +1,117 @@
+/**
+ * Based on Google Prettify Default
+ * Modifications by Rob Wu <gwnRob@gmail.com>:
+ * - Line numbers always fit
+ * - No border
+ * - Lighter stripes
+ * - Highlight on hover
+ */
+.pln {
+  color: #000000;
+}
+@media screen {
+  .str {
+    color: #008800;
+  }
+  .kwd {
+    color: #000088;
+  }
+  .com {
+    color: #880000;
+  }
+  .typ {
+    color: #660066;
+  }
+  .lit {
+    color: #006666;
+  }
+  .pun,
+  .opn,
+  .clo {
+    color: #666600;
+  }
+  .tag {
+    color: #000088;
+  }
+  .atn {
+    color: #660066;
+  }
+  .atv {
+    color: #008800;
+  }
+  .dec,
+  .var {
+    color: #660066;
+  }
+  .fun {
+    color: #ff0000;
+  }
+}
+@media print, projection {
+  .str {
+    color: #006600;
+  }
+  .kwd {
+    color: #006;
+    font-weight: bold;
+  }
+  .com {
+    color: #600;
+    font-style: italic;
+  }
+  .typ {
+    color: #404;
+    font-weight: bold;
+  }
+  .lit {
+    color: #004444;
+  }
+  .pun,
+  .opn,
+  .clo {
+    color: #444400;
+  }
+  .tag {
+    color: #006;
+    font-weight: bold;
+  }
+  .atn {
+    color: #440044;
+  }
+  .atv {
+    color: #006600;
+  }
+}
+pre.prettyprint {
+  margin: 0.5rem 0;
+}
+ol.linenums {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+/*
+ * Set the left margin depending on the total number of lines
+ * Current set-up = <1ch space before> <linenumber> <dot> <1ch space after>
+ */
+.linenums     > ol { padding-left: 0; }
+.linenumsltE1 > ol { padding-left: 2.2rem; }
+.linenumsltE2 > ol { padding-left: 2.7rem; }
+.linenumsltE3 > ol { padding-left: 3.2rem; }
+.linenumsltE4 > ol { padding-left: 3.7rem; }
+.linenumsltE5 > ol { padding-left: 4.2rem; }
+.linenumsltE6 > ol { padding-left: 4.7rem; }
+.linenumsltE7 > ol { padding-left: 5.2rem; }
+.linenumsltE8 > ol { padding-left: 5.7rem; }
+.linenumsltE9 > ol { padding-left: 6.2rem; }
+/* 999,999,999 lines, want more...? */
+
+li.L1,
+li.L3,
+li.L5,
+li.L7,
+li.L9 {
+  background: #F7F7F7;
+}
+li:hover {
+  background: #EEE;
+}

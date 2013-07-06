@@ -384,7 +384,35 @@ var checkAndApplyFilter = (function() {
     return checkAndApplyFilter;
 })();
 // Go load the stuff
-openCRXasZip(crx_url, function(blob) {
+openCRXasZip(crx_url, handleBlob, function(error_message) {
+    var outputElement = document.getElementById('source-code');
+    outputElement.textContent = '\n\n' + error_message;
+
+    var permission = {
+        origins: ['<all_urls>']
+    };
+    chrome.permissions.contains(permission, function(hasAccess) {
+        if (hasAccess) return;
+        var grantAccess = document.createElement('button');
+        var checkAccessOnClick = function() {
+            chrome.permissions.request(permission, function(hasAccess) {
+                if (!hasAccess) return;
+                grantAccess.parentNode.removeChild(grantAccess);
+                openCRXasZip(crx_url, handleBlob);
+            });
+        };
+        grantAccess.onclick = checkAccessOnClick;
+        outputElement.insertAdjacentHTML('beforeend', '\n\n' +
+            'To view this extension\'s source, an extra permission is needed.\n' +
+            'This permission can be revoked at any time at the ' +
+            '<a href="/options.html" target="_blank">options page</a>.\n\n'
+        );
+        grantAccess.textContent = 'Add permission';
+        outputElement.appendChild(grantAccess);
+    });
+});
+
+function handleBlob(blob) {
     setBlobAsDownload(blob);
 
     zip.createReader(new zip.BlobReader(blob), function(zipReader) {
@@ -397,7 +425,7 @@ openCRXasZip(crx_url, function(blob) {
             // F***, Extension crashes if navigating away >.>
         });
     });
-});
+}
 
 if (typeof URL === 'undefined') window.URL = window.webkitURL;
 function setBlobAsDownload(blob) {

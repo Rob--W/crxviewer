@@ -1,13 +1,16 @@
 /**
  * (c) 2013 Rob Wu <gwnRob@gmail.com>
  */
-/* globals chrome,
-           get_extensionID, get_crx_url,
-           zip */
 
-// URL must look like: crxviewer.html?url=http%3A%2F%2Fchrome.google.com%2Fwebstore...
-var cws_url = decodeURIComponent(location.search.match(/\burl=([^&]+)/)[1]);
-var extensionID = get_extensionID(cws_url);
+/* jshint browser:true, devel:true */
+/* globals chrome,
+           getParam, openCRXasZip,
+           zip,
+           beautify, prettyPrintOne */
+
+'use strict';
+
+var crx_url = getParam('crx');
 
 // Integrate zip.js
 zip.workerScriptsPath = '/lib/zip.js/';
@@ -381,7 +384,7 @@ var checkAndApplyFilter = (function() {
     return checkAndApplyFilter;
 })();
 // Go load the stuff
-openCRXasZip(get_crx_url(extensionID), function(blob) {
+openCRXasZip(crx_url, function(blob) {
     zip.createReader(new zip.BlobReader(blob), function(zipReader) {
         renderPanelResizer();
         zipReader.getEntries(handleZipEntries);

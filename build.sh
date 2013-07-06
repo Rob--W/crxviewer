@@ -19,6 +19,9 @@ ecp background.js
 ecp popup.html
 ecp popup.js
 
+ecp options.html
+ecp options.js
+
 ecp crxviewer.html
 ecp crxviewer.css
 ecp crxviewer.js

@@ -29,8 +29,13 @@ body {
 }
 #top-bar #file-filter-feedback {
   display: inline-block;
-  max-width: -webkit-calc(100% - 300px - 0.4rem);
-  max-width: calc(100% - 300px - 0.4rem);
+  max-width: -webkit-calc(100% - 300px - 0.2rem - 8ex);
+  max-width: calc(100% - 300px - 0.2rem - 8ex);
+}
+#top-bar #download-link {
+  display: inline-block;
+  width: 8ex;
+  float: right;
 }
 #right-panel,
 #left-panel {

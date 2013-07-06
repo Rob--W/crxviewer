@@ -75,7 +75,9 @@ window.addEventListener('unload', function() {
 });
 function doViewSource() {
     chrome.tabs.create({
-        url: chrome.extension.getURL('crxviewer.html') + '?crx=' + encodeURIComponent(crx_url),
+        url: chrome.extension.getURL('crxviewer.html') +
+            '?crx=' + encodeURIComponent(crx_url) +
+            '&zipname=' + encodeURIComponent(filename),
         active: true
     });
 }

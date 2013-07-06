@@ -3,7 +3,7 @@
  */
 
 /* jshint browser:true, devel:true */
-/* globals chrome,
+/* globals chrome, URL,
            getParam, openCRXasZip,
            zip,
            beautify, prettyPrintOne */
@@ -385,6 +385,8 @@ var checkAndApplyFilter = (function() {
 })();
 // Go load the stuff
 openCRXasZip(crx_url, function(blob) {
+    setBlobAsDownload(blob);
+
     zip.createReader(new zip.BlobReader(blob), function(zipReader) {
         renderPanelResizer();
         zipReader.getEntries(handleZipEntries);
@@ -396,3 +398,15 @@ openCRXasZip(crx_url, function(blob) {
         });
     });
 });
+
+if (typeof URL === 'undefined') window.URL = window.webkitURL;
+function setBlobAsDownload(blob) {
+    var dl_link = document.getElementById('download-link');
+    dl_link.href = URL.createObjectURL(blob);
+    var zipname = getParam('zipname');
+    if (!zipname)
+        zipname = crx_url.match(/([^\/]+?)\/*$/)[1].replace(/\.(zip|nex)$/i, '') + '.zip';
+    dl_link.download = zipname;
+    dl_link.textContent = 'Download';
+    dl_link.title = 'Download as ' + zipname;
+}

@@ -13,12 +13,15 @@ html, body {
     height: 100%;
 }
 #top-bar {
+    @fileFilterWidth: 300px;
+    @barPadding: 0.2rem;
+    @downloadLinkWidth: 8ex;
     width: 100%;
     height: 2rem;
     border-bottom: 2px solid #DDD;
-    padding: 0.2rem;
+    padding: @barPadding;
     #file-filter {
-        width: 300px;
+        width: @fileFilterWidth;
         max-width: 100%;
         height: 1.4rem;
         border: 1px solid #AAA;
@@ -32,8 +35,13 @@ html, body {
     #file-filter-feedback {
         display: inline-block;
         // 300 px width, 2x0.2rem padding
-        max-width: -webkit-calc(100% - 300px - 0.4rem);
-        max-width: calc(100% - 300px - 0.4rem);
+        max-width: -webkit-calc(100% - @fileFilterWidth - @barPadding - @downloadLinkWidth);
+        max-width: calc(100% - @fileFilterWidth - @barPadding - @downloadLinkWidth);
+    }
+    #download-link {
+        display: inline-block;
+        width: @downloadLinkWidth;
+        float: right;
     }
 }
 #right-panel, #left-panel {

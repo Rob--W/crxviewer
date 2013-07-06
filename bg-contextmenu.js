@@ -2,7 +2,7 @@
  * (c) 2013 Rob Wu <gwnRob@gmail.com>
  */
 /* jshint browser:true, devel:true */
-/* globals chrome, cws_match_pattern */
+/* globals chrome, cws_match_pattern, get_crx_url, get_extensionID */
 
 'use strict';
 (function() {
@@ -19,9 +19,17 @@
     });
     
     chrome.contextMenus.onClicked.addListener(function(info, tab) {
-        var crx_url = info.linkUrl;
+        var crx_url = get_crx_url(info.linkUrl);
+        var params;
+        if (crx_url) { // Not a link to a CRX, but a Chrome detail page.
+            params = 'crx=' + encodeURIComponent(crx_url) +
+                     '&zipname=' + get_extensionID(info.linkUrl) + '.zip';
+        } else {
+            params = 'crx=' + encodeURIComponent(info.linkUrl);
+        }
+
         chrome.tabs.create({
-            url: chrome.extension.getURL('crxviewer.html') + '?crx=' + encodeURIComponent(crx_url),
+            url: chrome.extension.getURL('crxviewer.html') + '?' + params,
             active: true
         });
     });
@@ -36,7 +44,8 @@
                 '*://*/*.NEX*',
                 '*://*/*.nex*',
                 cws_match_pattern,
-                '*://addons.opera.com/extensions/download/*'
+                '*://addons.opera.com/extensions/download/*',
+                '*://chrome.google.com/webstore/detail/*'
             ]
         }, function() {
             if (chrome.runtime.lastError)

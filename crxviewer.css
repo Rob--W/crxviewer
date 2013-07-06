@@ -68,6 +68,14 @@ body {
 #left-panel > .resizer:hover {
   background-color: #AAA;
 }
+#initial-status {
+  white-space: normal;
+  text-align: center;
+}
+#initial-status progress {
+  width: 300px;
+  max-width: 100%;
+}
 .toggled {
   width: 0 !important;
 }

@@ -18,7 +18,7 @@ zip.workerScriptsPath = '/lib/zip.js/';
 function formatByteSize(fileSize) {
     // Assume parameter fileSize to be a number
     fileSize = (fileSize+'').replace(/\d(?=(\d{3})+(?!\d))/g, '$&,');
-    return fileSize + ' bytes';
+    return fileSize;
 }
 function formatByteSizeSuffix(fileSize) {
     if (fileSize < 1e4)
@@ -56,7 +56,7 @@ function handleZipEntries(entries) {
         listItem.querySelector('.file-dir').textContent = path[0] || '';
         var fileSize = entry.uncompressedSize;
         var fileSizeElem = listItem.querySelector('.file-size');
-        fileSizeElem.title = formatByteSize(fileSize);
+        fileSizeElem.title = formatByteSize(fileSize) + ' bytes';
         fileSizeElem.textContent = formatByteSizeSuffix(fileSize);
 
         listItem.addEventListener('click', function(e) {
@@ -384,9 +384,12 @@ var checkAndApplyFilter = (function() {
     return checkAndApplyFilter;
 })();
 // Go load the stuff
+
+var progressDiv = document.getElementById('initial-status');
+progressDiv.textContent = 'Loading ' + crx_url;
+
 openCRXasZip(crx_url, handleBlob, function(error_message) {
-    var outputElement = document.getElementById('source-code');
-    outputElement.textContent = '\n\n' + error_message;
+    progressDiv.textContent = error_message;
 
     var permission = {
         origins: ['<all_urls>']
@@ -398,21 +401,36 @@ openCRXasZip(crx_url, handleBlob, function(error_message) {
             chrome.permissions.request(permission, function(hasAccess) {
                 if (!hasAccess) return;
                 grantAccess.parentNode.removeChild(grantAccess);
-                openCRXasZip(crx_url, handleBlob);
+                openCRXasZip(crx_url, handleBlob, null, progressEventHandler);
             });
         };
         grantAccess.onclick = checkAccessOnClick;
-        outputElement.insertAdjacentHTML('beforeend', '\n\n' +
-            'To view this extension\'s source, an extra permission is needed.\n' +
+        progressDiv.insertAdjacentHTML('beforeend', '<br><br>' +
+            'To view this extension\'s source, an extra permission is needed.<br>' +
             'This permission can be revoked at any time at the ' +
-            '<a href="/options.html" target="_blank">options page</a>.\n\n'
+            '<a href="/options.html" target="_blank">options page</a>.<br><br>'
         );
         grantAccess.textContent = 'Add permission';
-        outputElement.appendChild(grantAccess);
+        progressDiv.appendChild(grantAccess);
     });
-});
+}, progressEventHandler);
+function progressEventHandler(xhrProgressEvent) {
+    if (xhrProgressEvent.lengthComputable) {
+        var loaded = xhrProgressEvent.loaded;
+        var total = xhrProgressEvent.total;
+        progressDiv.textContent = 'Loading ' + crx_url;
+        progressDiv.insertAdjacentHTML('beforeend', '<br><br>' +
+                                       (formatByteSize(loaded) + ' / ' + formatByteSize(total)) + '<br>' +
+                                       '<progress max="' + total + '" value="' + loaded + '">');
+    } else {
+        // Progress dot ;)
+        progressDiv.appendChild(document.createTextNode('.'));
+    }
+}
 
 function handleBlob(blob) {
+    progressDiv.hidden = true;
+    
     setBlobAsDownload(blob);
 
     zip.createReader(new zip.BlobReader(blob), function(zipReader) {

@@ -34,3 +34,10 @@ if (chrome.declarativeWebRequest) {
         '<a href="https://www.google.com/landing/chrome/beta/">Beta channel</a></em>.'
     );
 }
+
+document.getElementById('contextmenu').onchange = function() {
+    chrome.storage.local.set({showContextMenu: this.checked});
+};
+chrome.storage.local.get({showContextMenu:true}, function(items) {
+    document.getElementById('contextmenu').checked = items.showContextMenu;
+});

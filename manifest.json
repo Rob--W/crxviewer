@@ -6,7 +6,8 @@
     "background": {
         "scripts": [
             "cws_pattern.js",
-            "background.js"
+            "background.js",
+            "bg-contextmenu.js"
         ],
         "persistent": false
     },
@@ -26,6 +27,8 @@
     "options_page": "options.html",
     "permissions": [
         "tabs",
+        "storage",
+        "contextMenus",
         "declarativeWebRequest",
         "*://clients2.google.com/service/update2/crx*",
         "*://clients2.googleusercontent.com/crx/download/*"

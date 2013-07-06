@@ -15,6 +15,7 @@ ecp manifest.json
 
 ecp cws_pattern.js
 ecp background.js
+ecp bg-contextmenu.js
 
 ecp popup.html
 ecp popup.js

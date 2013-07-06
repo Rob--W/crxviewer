@@ -6,7 +6,11 @@
 body {
     margin: 2em 3em;
     font-family: Arial, sans-serif;
-    font-size: 1.4em;
+    font-size: 1.3em;
+}
+label {
+    display: block;
+    margin: 1em 0;;
 }
 </style>
 </head>
@@ -16,6 +20,10 @@ body {
     Allow access to all URLs.<br>
     This option allows the extension to detect Chrome and Opera 15 extensions outside the Chrome Web store.
     When the download of a Chromium extension is detected, the CRX button will be shown.
+</label>
+<label>
+    <input type="checkbox" id="contextmenu">
+    Add a context menu option to Chrome / Opera 15 extension links.
 </label>
 <script src="options.js"></script>
 </body>

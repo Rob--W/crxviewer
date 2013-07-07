@@ -7,6 +7,7 @@
 
 if (chrome.declarativeWebRequest) {
     chrome.runtime.onInstalled.addListener(setupDeclarativeWebRequest);
+    chrome.declarativeWebRequest.onMessage.addListener(dwr_onMessage);
 }
 
 // Detect navigations to/from Chrome/Opera extension gallery, and show icon if needed.
@@ -18,10 +19,16 @@ if (chrome.declarativeWebRequest) {
             hostEquals: 'addons.opera.com'
         }]
     };
-    // This method should be an efficient way to only activate the extension when needed,
-    // but unfortunately the onCommitted event does not work as intended.
-    // See http://crbug.com/257851
-    chrome.webNavigation.onCommitted.addListener(showPageActionIfNeeded, webNavigationFilter);
+    if (!chrome.declarativeWebRequest) {
+        // This method should be an efficient way to only activate the extension when needed,
+        // but unfortunately the onCommitted event does not work as intended.
+        // See http://crbug.com/257851
+        // Thus it's disabled when the declarativeWebRequest is available.
+        // pushState-based navigation within the Chrome Web Store is handled by the
+        //  onHistoryStateUpdated event, navigation within Opera's addon gallery is handled by
+        //  the declarativeWebRequest API.
+        chrome.webNavigation.onCommitted.addListener(showPageActionIfNeeded, webNavigationFilter);
+    }
     chrome.webNavigation.onHistoryStateUpdated.addListener(showPageActionIfNeeded, webNavigationFilter);
 })();
 
@@ -61,10 +68,28 @@ function setupDeclarativeWebRequest() {
             new chrome.declarativeWebRequest.SendMessageToExtension({message: 'crx'})
         ]
     };
-    chrome.declarativeWebRequest.onRequest.removeRules([detectCrx.id]);
-    chrome.declarativeWebRequest.onRequest.addRules([detectCrx], function() {
-        chrome.declarativeWebRequest.onMessage.addListener(dwr_onMessage);
-    });
+    var detectOperaAddonGallery = {
+        id: 'nl.robwu.crxviewer.operagallery',
+        conditions: [
+            new chrome.declarativeWebRequest.RequestMatcher({
+                resourceType: ['main_frame'],
+                url: {
+                    hostEquals: 'addons.opera.com',
+                    pathContains: 'extensions/'
+                },
+                stages: [
+                    'onHeadersReceived'
+                ]
+            })
+        ],
+        actions: [
+            new chrome.declarativeWebRequest.SendMessageToExtension({message: 'opera'})
+        ]
+    };
+    var rules = [detectCrx, detectOperaAddonGallery];
+    var rule_ids = rules.map(function(rule) { return rule.id; });
+    chrome.declarativeWebRequest.onRequest.removeRules(rule_ids);
+    chrome.declarativeWebRequest.onRequest.addRules(rules);
 }
 function cdw_getRequestMatcherForExtensionAsAttachment() {
     return new chrome.declarativeWebRequest.RequestMatcher({
@@ -82,12 +107,36 @@ function cdw_getRequestMatcherForExtensionAsAttachment() {
         })
     });
 }
+function dwr_checkPageAction(details) {
+    var onUpdated = function(tabId, changeInfo, tab) {
+        if (details.tabId == tabId && details.url == tab.url) {
+            removeListeners(tabId);
+            showPageAction(tabId, tab.url);
+        }
+    };
+    var removeListeners = function(tabId) {
+        if (details.tabId == tabId) {
+            chrome.tabs.onUpdated.removeListener(onUpdated);
+            chrome.tabs.onRemoved.removeListener(removeListeners);
+        }
+    };
+    chrome.tabs.onUpdated.addListener(onUpdated);
+    chrome.tabs.onRemoved.addListener(removeListeners);
+}
 function dwr_onMessage(details) {
+    if (details.message == 'opera') {
+        dwr_checkPageAction(details);
+        return;
+    }
+    showPageAction(details.tabId, details.url);
+}
+function showPageAction(tabId, url) {
+    var params = url ? '#crx=' + encodeURIComponent(url) : '';
     chrome.pageAction.setPopup({
-        tabId: details.tabId,
-        popup: 'popup.html#crx=' + encodeURIComponent(details.url)
+        tabId: tabId,
+        popup: 'popup.html?' + params
     });
-    chrome.pageAction.show(details.tabId);
+    chrome.pageAction.show(tabId);
 }
 
 function showPageActionIfNeeded(details_or_tab) {
@@ -98,16 +147,8 @@ function showPageActionIfNeeded(details_or_tab) {
     }
     var tabId = details_or_tab.tabId || details_or_tab.id;
     var url = details_or_tab.url;
-    // The CWS is a single page application (SAP). Checking changeInfo.url is not
-    // sufficient to see if the tab is part of the CWS. tab.url has to be checked
-    // every time
     if (cws_pattern.test(url) || ows_pattern.test(url)) {
-        var params = url ? '#crx=' + encodeURIComponent(url) : '';
-        chrome.pageAction.setPopup({
-            tabId: tabId,
-            popup: 'popup.html?' + params
-        });
-        chrome.pageAction.show(tabId);
+        showPageAction(tabId, url);
     } else {
         chrome.pageAction.hide(tabId);
     }

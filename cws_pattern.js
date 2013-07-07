@@ -8,11 +8,11 @@
 // cws_pattern[1] = extensionID
 var cws_pattern = /^https?:\/\/chrome.google.com\/webstore\/.+?\/([a-z]{32})(?=[\/#?]|$)/;
 // match pattern per Chrome spec
-var cws_match_pattern = '*://chrome.google.com/webstore/*';
+var cws_match_pattern = '*://chrome.google.com/webstore/detail/*';
 
 // Opera add-on gallery
 var ows_pattern = /^https?:\/\/addons.opera.com\/.*?extensions\/(?:details|download)\/([^\/]+)/i;
-var ows_match_pattern = '*://addons.opera.com/*extensions/*';
+var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 
 // string extensionID if valid URL
 // null otherwise

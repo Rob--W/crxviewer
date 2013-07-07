@@ -6,7 +6,8 @@
 
 'use strict';
 (function() {
-    var MENU_ID = 'nl.robwu.contextmenu.crxlink';
+    var MENU_ID_LINK = 'nl.robwu.contextmenu.crxlink';
+    var MENU_ID_PAGE = 'nl.robwu.contextmenu.crxpage';
     chrome.storage.onChanged.addListener(function(changes) {
         if (!changes.showContextMenu) return;
         if (changes.showContextMenu.newValue) show();
@@ -19,13 +20,14 @@
     });
     
     chrome.contextMenus.onClicked.addListener(function(info, tab) {
-        var crx_url = get_crx_url(info.linkUrl);
+        var url = info.menuItemId == MENU_ID_PAGE ? info.pageUrl : info.linkUrl;
+        var crx_url = get_crx_url(url);
         var params;
         if (crx_url) { // Not a link to a CRX, but a Chrome detail page.
             params = 'crx=' + encodeURIComponent(crx_url) +
-                     '&zipname=' + get_extensionID(info.linkUrl) + '.zip';
+                     '&zipname=' + get_extensionID(url) + '.zip';
         } else {
-            params = 'crx=' + encodeURIComponent(info.linkUrl);
+            params = 'crx=' + encodeURIComponent(url);
         }
 
         chrome.tabs.create({
@@ -35,7 +37,7 @@
     });
     function show() {
         chrome.contextMenus.create({
-            id: MENU_ID,
+            id: MENU_ID_LINK,
             title: 'View extension source',
             contexts: ['link'],
             targetUrlPatterns: [
@@ -46,11 +48,15 @@
                 cws_match_pattern,
                 ows_match_pattern
             ]
-        }, function() {
-            if (chrome.runtime.lastError)
-                console.error(chrome.runtime.lastError.message);
-            else
-                console.log('Created contextmenu item.');
+        });
+        chrome.contextMenus.create({
+            id: MENU_ID_PAGE,
+            title: 'View extension source',
+            contexts: ['all'],
+            documentUrlPatterns: [
+                cws_match_pattern,
+                ows_match_pattern
+            ]
         });
     }
     function hide() {

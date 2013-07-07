@@ -1,0 +1,36 @@
+# Chrome extension source viewer
+
+View the source code of any Chrome extension in the Chrome Web store without installing it.
+https://chrome.google.com/webstore/detail/chrome-extension-source-v/jifpbeccnghkjeaalbbjmodiffmgedin
+
+## Features
+
+This Chrome extension adds a button to right of the omnibox when a CRX file has been detected.
+By default, this is only enabled on the Chrome Web Store. Upon clicking the button, two actions
+become available:
+
+  - Download extension as zip file
+  - View source
+
+The "View source" option opens a new tab with a simple viewer, with the following features:
+
+  - Download-as-zip at the upper-right corner.
+  - List of file names, and the option to filter files with a regular expression.
+  - Automatic beautification (formatting) of code
+  - Syntax highlighting
+  - Image preview
+
+As mentioned before, this extension activates on the Chrome Web Store by default.
+It's also possible to view the source code of Chrome and Opera 15+ extensions that are hosted
+somewhere else. Further, there's an option to show a contextmenu entry on links whose target
+is a Chromium extension. Both features can be toggled at the options page.
+
+The "View source for all extensions" only shows a button when it detects the download of an
+extension. This detection is implemented through MIME-type sniffing using the
+[`declarativeWebRequest`](https://developer.chrome.com/extensions/declarativeWebRequest.html)
+API, which is only available to Chromium beta/dev users (though it should soon be available to the
+general public).
+
+## Copyright
+(c) 2013 Rob Wu <gwnRob@gmail.com>
+

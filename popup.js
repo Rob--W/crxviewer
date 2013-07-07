@@ -3,14 +3,16 @@
  */
 
 /* jshint browser:true, devel:true */
-/* globals chrome, cws_pattern, get_extensionID, get_crx_url, getParam, URL */
+/* globals chrome, cws_pattern, ows_pattern, get_crx_url, get_zip_name,
+    is_crx_url, getParam, URL */
 'use strict';
 var cws_url;
 var crx_url = getParam('crx');
 var filename;
 
 if (crx_url) {
-    filename = crx_url.match(/([^\/]+?)\/*$/)[1].replace(/\.(zip|nex)$/i, '') + '.zip';
+    crx_url = get_crx_url(crx_url); // Normalize if needed.
+    filename = get_zip_name(crx_url);
     ready();
 } else {
     // Get CWS URL. On failure, close the popup
@@ -20,8 +22,8 @@ if (crx_url) {
     }, function(tabs) {
         cws_url = tabs[0].url;
         crx_url = get_crx_url(cws_url);
-        filename = get_extensionID(cws_url) + '.zip';
-        if (!cws_pattern.test(cws_url)) {
+        filename = get_zip_name(crx_url);
+        if (!is_crx_url(crx_url)) {
             chrome.pageAction.hide(tabs[0].id);
             window.close();
             return;

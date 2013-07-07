@@ -2,7 +2,7 @@
  * (c) 2013 Rob Wu <gwnRob@gmail.com>
  */
 /* jshint browser:true, devel:true */
-/* globals chrome, cws_match_pattern, get_crx_url, get_extensionID */
+/* globals chrome, cws_match_pattern, ows_match_pattern, get_crx_url, get_extensionID */
 
 'use strict';
 (function() {
@@ -44,8 +44,7 @@
                 '*://*/*.NEX*',
                 '*://*/*.nex*',
                 cws_match_pattern,
-                '*://addons.opera.com/extensions/download/*',
-                '*://chrome.google.com/webstore/detail/*'
+                ows_match_pattern
             ]
         }, function() {
             if (chrome.runtime.lastError)

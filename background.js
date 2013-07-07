@@ -1,7 +1,7 @@
 /**
  * (c) 2013 Rob Wu <gwnRob@gmail.com>
  */
-/* globals chrome, cws_match_pattern, cws_pattern */
+/* globals chrome, cws_match_pattern, ows_match_pattern, cws_pattern, ows_pattern */
 
 'use strict';
 
@@ -9,13 +9,12 @@ if (chrome.declarativeWebRequest) {
     chrome.runtime.onInstalled.addListener(setupDeclarativeWebRequest);
 }
 setupTabsOnUpdated();
-chrome.tabs.query({
-    url: cws_match_pattern
-}, function(tabs) {
-    for (var i=0; i<tabs.length; ++i) {
-        if (cws_pattern.test(tabs[i].url)) {
-            chrome.pageAction.show(tabs[i].id);
-        }
+
+chrome.runtime.onInstalled.addListener(function() {
+    chrome.tabs.query({url: cws_match_pattern}, queryCallback);
+    chrome.tabs.query({url: ows_match_pattern}, queryCallback);
+    function queryCallback(tabs) {
+        tabs.forEach(showPageActionIfNeeded);
     }
 });
 
@@ -75,14 +74,26 @@ function dwr_onMessage(details) {
     });
     chrome.pageAction.show(details.tabId);
 }
-function setupTabsOnUpdated() {
+
+function showPageActionIfNeeded(tab) {
+    var tabId = tab.id;
+    var url = tab.url;
+    // The CWS is a single page application (SAP). Checking changeInfo.url is not
+    // sufficient to see if the tab is part of the CWS. tab.url has to be checked
+    // every time
+    if (cws_pattern.test(url) || ows_pattern.test(url)) {
+        var params = url ? '#crx=' + encodeURIComponent(url) : '';
+        chrome.pageAction.setPopup({
+            tabId: tabId,
+            popup: 'popup.html?' + params
+        });
+        chrome.pageAction.show(tabId);
+    } else {
+        chrome.pageAction.hide(tabId);
+    }
+}
+function setupTabsOnUpdated(tabId) {
     chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-        // The CWS is a single page application (SAP). Checking changeInfo.url is not
-        // sufficient to see if the tab is part of the CWS. tab.url has to be checked
-        // every time
-        if (cws_pattern.test(tab.url))
-            chrome.pageAction.show(tabId);
-        else
-            chrome.pageAction.hide(tabId);
+        showPageActionIfNeeded(tab);
     });
 }

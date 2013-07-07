@@ -8,7 +8,22 @@
 if (chrome.declarativeWebRequest) {
     chrome.runtime.onInstalled.addListener(setupDeclarativeWebRequest);
 }
-setupTabsOnUpdated();
+
+// Detect navigations to/from Chrome/Opera extension gallery, and show icon if needed.
+(function() {
+    var webNavigationFilter = {
+        urls: [{
+            hostEquals: 'chrome.google.com'
+        }, {
+            hostEquals: 'addons.opera.com'
+        }]
+    };
+    // This method should be an efficient way to only activate the extension when needed,
+    // but unfortunately the onCommitted event does not work as intended.
+    // See http://crbug.com/257851
+    chrome.webNavigation.onCommitted.addListener(showPageActionIfNeeded, webNavigationFilter);
+    chrome.webNavigation.onHistoryStateUpdated.addListener(showPageActionIfNeeded, webNavigationFilter);
+})();
 
 chrome.runtime.onInstalled.addListener(function() {
     chrome.tabs.query({url: cws_match_pattern}, queryCallback);
@@ -75,9 +90,14 @@ function dwr_onMessage(details) {
     chrome.pageAction.show(details.tabId);
 }
 
-function showPageActionIfNeeded(tab) {
-    var tabId = tab.id;
-    var url = tab.url;
+function showPageActionIfNeeded(details_or_tab) {
+    if (details_or_tab.frameId) {
+        // If frameId is set, and it's not zero, then it's a navigation in a frame.
+        // We're only interested in main-frame navigations, so... bye!
+        return;
+    }
+    var tabId = details_or_tab.tabId || details_or_tab.id;
+    var url = details_or_tab.url;
     // The CWS is a single page application (SAP). Checking changeInfo.url is not
     // sufficient to see if the tab is part of the CWS. tab.url has to be checked
     // every time
@@ -91,9 +111,4 @@ function showPageActionIfNeeded(tab) {
     } else {
         chrome.pageAction.hide(tabId);
     }
-}
-function setupTabsOnUpdated(tabId) {
-    chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-        showPageActionIfNeeded(tab);
-    });
 }

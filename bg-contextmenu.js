@@ -13,11 +13,18 @@
         if (changes.showContextMenu.newValue) show();
         else hide();
     });
-    chrome.runtime.onInstalled.addListener(function() {
+    if (chrome.extension.inIncognitoContext) {
+        // onStartup is not fired in incognito mode...
+        checkContextMenuPref();
+    } else {
+        chrome.runtime.onInstalled.addListener(checkContextMenuPref);
+        chrome.runtime.onStartup.addListener(checkContextMenuPref);
+    }
+    function checkContextMenuPref() {
         chrome.storage.local.get({showContextMenu:true}, function(items) {
             if (items.showContextMenu) show();
         });
-    });
+    }
     
     chrome.contextMenus.onClicked.addListener(function(info, tab) {
         var url = info.menuItemId == MENU_ID_PAGE ? info.pageUrl : info.linkUrl;

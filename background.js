@@ -13,22 +13,13 @@ if (chrome.declarativeWebRequest) {
 // Detect navigations to/from Chrome/Opera extension gallery, and show icon if needed.
 (function() {
     var webNavigationFilter = {
-        urls: [{
+        url: [{
             hostEquals: 'chrome.google.com'
         }, {
             hostEquals: 'addons.opera.com'
         }]
     };
-    if (!chrome.declarativeWebRequest) {
-        // This method should be an efficient way to only activate the extension when needed,
-        // but unfortunately the onCommitted event does not work as intended.
-        // See http://crbug.com/257851
-        // Thus it's disabled when the declarativeWebRequest is available.
-        // pushState-based navigation within the Chrome Web Store is handled by the
-        //  onHistoryStateUpdated event, navigation within Opera's addon gallery is handled by
-        //  the declarativeWebRequest API.
-        chrome.webNavigation.onCommitted.addListener(showPageActionIfNeeded, webNavigationFilter);
-    }
+    chrome.webNavigation.onCommitted.addListener(showPageActionIfNeeded, webNavigationFilter);
     chrome.webNavigation.onHistoryStateUpdated.addListener(showPageActionIfNeeded, webNavigationFilter);
 })();
 
@@ -68,25 +59,7 @@ function setupDeclarativeWebRequest() {
             new chrome.declarativeWebRequest.SendMessageToExtension({message: 'crx'})
         ]
     };
-    var detectOperaAddonGallery = {
-        id: 'nl.robwu.crxviewer.operagallery',
-        conditions: [
-            new chrome.declarativeWebRequest.RequestMatcher({
-                resourceType: ['main_frame'],
-                url: {
-                    hostEquals: 'addons.opera.com',
-                    pathContains: 'extensions/'
-                },
-                stages: [
-                    'onHeadersReceived'
-                ]
-            })
-        ],
-        actions: [
-            new chrome.declarativeWebRequest.SendMessageToExtension({message: 'opera'})
-        ]
-    };
-    var rules = [detectCrx, detectOperaAddonGallery];
+    var rules = [detectCrx];
     var rule_ids = rules.map(function(rule) { return rule.id; });
     chrome.declarativeWebRequest.onRequest.removeRules(rule_ids);
     chrome.declarativeWebRequest.onRequest.addRules(rules);

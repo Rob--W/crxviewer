@@ -13,13 +13,8 @@
         if (changes.showContextMenu.newValue) show();
         else hide();
     });
-    if (chrome.extension.inIncognitoContext) {
-        // onStartup is not fired in incognito mode...
-        checkContextMenuPref();
-    } else {
-        chrome.runtime.onInstalled.addListener(checkContextMenuPref);
-        chrome.runtime.onStartup.addListener(checkContextMenuPref);
-    }
+    chrome.runtime.onInstalled.addListener(checkContextMenuPref);
+    chrome.runtime.onStartup.addListener(checkContextMenuPref);
     function checkContextMenuPref() {
         chrome.storage.local.get({showContextMenu:true}, function(items) {
             if (items.showContextMenu) show();

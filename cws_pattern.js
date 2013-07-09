@@ -18,6 +18,8 @@ var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 // null otherwise
 function get_extensionID(url) {
     var match = cws_pattern.exec(url);
+    if (match) return match[1];
+    match = /^https?:\/\/clients2\.google\.com\/service\/update2\/crx\b.*?%3D([a-z]{32})%26uc/.exec(url);
     return match && match[1];
 }
 
@@ -48,8 +50,9 @@ function get_crx_url(extensionID_or_url) {
 // Return the suggested name of the zip file.
 function get_zip_name(url, /*optional*/filename) {
     if (!filename) {
-        if (cws_pattern.test(url)) {
-            filename = get_extensionID(url) + '.zip';
+        var extensionID = get_extensionID(url);
+        if (extensionID) {
+            filename = extensionID + '.zip';
         } else {
             filename = /([^\/]+?)\/*$/.exec(url)[1];
         }

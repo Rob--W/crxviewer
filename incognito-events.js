@@ -54,14 +54,17 @@ if (chrome.extension.inIncognitoContext)
         };
     }
     function set_hasStartedUp() {
+        // We're in incognito mode, so the following cookie will be removed
+        // when the current profile is cleaned up
         document.cookie = ONSTARTUP_KEY + '=1; max-age=30000000'; // Lifetime almost 1 year
     }
 
     // Fire onInstalled if needed, trigger onStartup otherwise.
     var dispatchEvent = get_onInstalledEvent() || get_onStartupEvent();
-    if (dispatchEvent) ;
-    else if (document.readyState == 'complete')
-        dispatchEvent();
-    else
-        document.addEventListener('DOMContentLoaded', dispatchEvent);
+    if (dispatchEvent) {
+        if (document.readyState == 'complete')
+            dispatchEvent();
+        else
+            document.addEventListener('DOMContentLoaded', dispatchEvent);
+    }
 })();

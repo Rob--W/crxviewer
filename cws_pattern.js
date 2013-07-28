@@ -52,12 +52,12 @@ function get_zip_name(url, /*optional*/filename) {
     if (!filename) {
         var extensionID = get_extensionID(url);
         if (extensionID) {
-            filename = extensionID + '.zip';
+            filename = extensionID;
         } else {
             filename = /([^\/]+?)\/*$/.exec(url)[1];
         }
     }
-    return filename.replace(/\.(zip|nex)$/i, '') + '.zip';
+    return filename.replace(/\.(crx|nex|zip)$/i, '') + '.zip';
 }
 
 function is_crx_url(url) {

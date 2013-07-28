@@ -23,14 +23,8 @@
     
     chrome.contextMenus.onClicked.addListener(function(info, tab) {
         var url = info.menuItemId == MENU_ID_PAGE ? info.pageUrl : info.linkUrl;
-        var crx_url = get_crx_url(url);
-        var params;
-        if (crx_url) { // Not a link to a CRX, but a Chrome detail page.
-            params = 'crx=' + encodeURIComponent(crx_url) +
-                     '&zipname=' + get_extensionID(url) + '.zip';
-        } else {
-            params = 'crx=' + encodeURIComponent(url);
-        }
+        var crx_id = get_extensionID(url);
+        var params = 'crx=' + encodeURIComponent(url);
 
         chrome.tabs.create({
             url: chrome.extension.getURL('crxviewer.html') + '?' + params,

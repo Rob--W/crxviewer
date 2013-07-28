@@ -4,7 +4,7 @@
 
 /* jshint browser:true, devel:true */
 /* globals chrome, URL,
-           getParam, openCRXasZip,
+           getParam, openCRXasZip, get_zip_name,
            zip,
            beautify, prettyPrintOne */
 
@@ -450,8 +450,8 @@ function setBlobAsDownload(blob) {
     var dl_link = document.getElementById('download-link');
     dl_link.href = URL.createObjectURL(blob);
     var zipname = getParam('zipname');
-    if (!zipname)
-        zipname = crx_url.match(/([^\/]+?)\/*$/)[1].replace(/\.(zip|nex)$/i, '') + '.zip';
+    if (!zipname) 
+        zipname = get_zip_name(crx_url, zipname);
     dl_link.download = zipname;
     dl_link.textContent = 'Download';
     dl_link.title = 'Download as ' + zipname;

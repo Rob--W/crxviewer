@@ -2,7 +2,7 @@
  * (c) 2013 Rob Wu <gwnRob@gmail.com>
  */
 /* jshint browser:true, devel:true */
-/* globals chrome, cws_match_pattern, ows_match_pattern, get_crx_url, get_extensionID */
+/* globals chrome, cws_match_pattern, ows_match_pattern, get_crx_url */
 
 'use strict';
 (function() {
@@ -23,7 +23,7 @@
     
     chrome.contextMenus.onClicked.addListener(function(info, tab) {
         var url = info.menuItemId == MENU_ID_PAGE ? info.pageUrl : info.linkUrl;
-        var crx_id = get_extensionID(url);
+        url = get_crx_url(url);
         var params = 'crx=' + encodeURIComponent(url);
 
         chrome.tabs.create({

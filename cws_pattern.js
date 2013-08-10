@@ -2,7 +2,7 @@
  * (c) 2013 Rob Wu <gwnRob@gmail.com>
  */
 
-/* globals location */
+/* globals location, getPlatformInfo */
 'use strict';
 
 // cws_pattern[1] = extensionID
@@ -40,9 +40,13 @@ function get_crx_url(extensionID_or_url) {
     if (!/^[a-z]{32}$/.test(extensionID)) {
         return extensionID_or_url;
     }
+    var platformInfo = getPlatformInfo();
 
-    url = 'https://clients2.google.com/service/update2/crx?response=redirect&x=id%3D';
-    url += extensionID;
+    url = 'https://clients2.google.com/service/update2/crx?response=redirect';
+    url += '&os=' + platformInfo.os;
+    url += '&arch=' + platformInfo.arch;
+    url += '&nacl_arch=' + platformInfo.nacl_arch;
+    url += '&x=id%3D' + extensionID;
     url += '%26uc';
     return url;
 }

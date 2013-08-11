@@ -14,6 +14,7 @@ emkdir dist/lib
 ecp manifest.json
 
 ecp incognito-events.js
+ecp chrome-platform-info.js
 ecp cws_pattern.js
 ecp background.js
 ecp bg-contextmenu.js

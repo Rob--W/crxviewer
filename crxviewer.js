@@ -428,10 +428,11 @@ function progressEventHandler(xhrProgressEvent) {
     }
 }
 
-function handleBlob(blob) {
+function handleBlob(blob, publicKey) {
     progressDiv.hidden = true;
     
     setBlobAsDownload(blob);
+    setPublicKey(publicKey);
 
     zip.createReader(new zip.BlobReader(blob), function(zipReader) {
         renderPanelResizer();
@@ -455,4 +456,8 @@ function setBlobAsDownload(blob) {
     dl_link.download = zipname;
     dl_link.textContent = 'Download';
     dl_link.title = 'Download as ' + zipname;
+}
+function setPublicKey(publicKey) {
+    console.log('Public key (paste into manifest.json to preserve extension ID)');
+    console.log('"key": "' + publicKey + '",');
 }

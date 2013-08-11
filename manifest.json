@@ -1,7 +1,7 @@
 {
     "name": "Chrome extension source viewer",
     "description": "Adds button to show the source code of a Chrome extension (crx file) in the Chrome web store (and elsewhere if wanted)",
-    "version": "1.1.8",
+    "version": "1.1.9",
     "manifest_version": 2,
     "background": {
         "scripts": [

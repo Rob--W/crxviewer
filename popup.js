@@ -3,8 +3,7 @@
  */
 
 /* jshint browser:true, devel:true */
-/* globals chrome, cws_pattern, ows_pattern, get_crx_url, get_zip_name,
-    is_crx_url, getParam, URL */
+/* globals chrome, get_crx_url, get_zip_name, is_crx_url, getParam, openCRXasZip, URL */
 'use strict';
 var cws_url;
 var crx_url = getParam('crx');
@@ -51,23 +50,14 @@ function doDownload() {
         else alert('Download is pending.');
         return;
     }
-    var x = new XMLHttpRequest();
-    x.open('GET', crx_url);
-    x.responseType = 'blob';
-    x.onload = function() {
-        if (!x.response) {
-            console.log('Unexpected error: response is empty for ' + crx_url);
-            return;
-        }
-        blob_url = URL.createObjectURL(new Blob([x.response], {type: 'application/zip'}));
-        x = null;
+    openCRXasZip(crx_url, function(blob, publicKey) {
+        blob_url = URL.createObjectURL(blob);
         showDownload();
-    };
-    x.onerror = function() {
+    }, function(errorMessage) {
         hasDownloadedOnce = false;
-        console.log('Network error for ' + crx_url);
-    };
-    x.send();
+        console.error(errorMessage);
+        alert('Error in CRX Viewer:\n\n' + errorMessage);
+    });
     hasDownloadedOnce = true;
 }
 window.addEventListener('unload', function() {

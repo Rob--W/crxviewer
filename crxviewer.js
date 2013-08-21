@@ -6,7 +6,9 @@
 /* globals chrome, URL,
            getParam, openCRXasZip, get_zip_name,
            zip,
-           beautify, prettyPrintOne */
+           beautify, prettyPrintOne,
+           CryptoJS
+           */
 
 'use strict';
 
@@ -460,4 +462,17 @@ function setBlobAsDownload(blob) {
 function setPublicKey(publicKey) {
     console.log('Public key (paste into manifest.json to preserve extension ID)');
     console.log('"key": "' + publicKey + '",');
+
+    var extensionId = publicKeyToExtensionId(publicKey);
+    console.log('Calculated extension ID: ' + extensionId);
+}
+function publicKeyToExtensionId(base64encodedKey) {
+    var key = atob(base64encodedKey);
+    var sha256sum = CryptoJS.SHA256(CryptoJS.enc.Latin1.parse(key)).toString();
+    var extensionId = '';
+    var ord_a = 'a'.charCodeAt(0);
+    for (var i = 0; i < 32; ++i) {
+        extensionId += String.fromCharCode(parseInt(sha256sum[i], 16) + ord_a);
+    }
+    return extensionId;
 }

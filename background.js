@@ -80,27 +80,7 @@ function cdw_getRequestMatcherForExtensionAsAttachment() {
         })
     });
 }
-function dwr_checkPageAction(details) {
-    var onUpdated = function(tabId, changeInfo, tab) {
-        if (details.tabId == tabId && details.url == tab.url) {
-            removeListeners(tabId);
-            showPageAction(tabId, tab.url);
-        }
-    };
-    var removeListeners = function(tabId) {
-        if (details.tabId == tabId) {
-            chrome.tabs.onUpdated.removeListener(onUpdated);
-            chrome.tabs.onRemoved.removeListener(removeListeners);
-        }
-    };
-    chrome.tabs.onUpdated.addListener(onUpdated);
-    chrome.tabs.onRemoved.addListener(removeListeners);
-}
 function dwr_onMessage(details) {
-    if (details.message == 'opera') {
-        dwr_checkPageAction(details);
-        return;
-    }
     showPageAction(details.tabId, details.url);
 }
 function showPageAction(tabId, url) {

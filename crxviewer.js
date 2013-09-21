@@ -38,6 +38,7 @@ function handleZipEntries(entries) {
     var nonroot = [];
 
     var listItemBase = document.createElement('li');
+    var genericTypeCounts = {};
     listItemBase.innerHTML =
 '<span class="file-path">' +
     '<span class="file-dir"></span>' +
@@ -69,6 +70,13 @@ function handleZipEntries(entries) {
         });
 
         listItem.dataset.filename = filename;
+
+        var genericType = getGenericType(filename);
+        if (genericType) {
+            listItem.classList.add('gtype-' + genericType);
+            genericTypeCounts[genericType] = genericTypeCounts[genericType] + 1 || 1;
+        }
+
         if (filename.toLowerCase() === 'manifest.json')
             output.appendChild(listItem);
         else if (filename.indexOf('/') === -1)
@@ -89,6 +97,36 @@ function handleZipEntries(entries) {
     var fileList = document.getElementById('file-list');
     fileList.textContent = '';
     fileList.appendChild(output);
+
+    checkAndApplyFilter();
+
+    // Render number of files of the following generic types:
+    Object.keys(genericTypeCounts).forEach(function(genericType) {
+        var checkbox = document.querySelector('input[data-filter-type="' + genericType + '"]');
+        var counter = document.createElement('span');
+        counter.className = 'gcount';
+        counter.textContent = genericTypeCounts[genericType];
+        checkbox.parentNode.appendChild(counter);
+    });
+}
+function getGenericType(filename) {
+    if (filename === 'manifest.json') {
+        return '';
+    }
+    var extension = filename.split('.').pop().toLowerCase();
+    if (/^(js|coffee)$/.test(extension)) {
+        return 'code';
+    }
+    if (/^(bmp|cur|gif|ico|jpe?g|png|psd|svg|tiff?|xcf|webp)$/.test(extension)) {
+        return 'images';
+    }
+    if (/^(css|sass|less|html?|xhtml|xml)$/.test(extension)) {
+        return 'markup';
+    }
+    if (filename.lastIndexOf('_locales/', 0) === 0) {
+        return 'locales';
+    }
+    return 'misc';
 }
 
 var viewFileInfo = (function() {
@@ -340,7 +378,6 @@ function renderPanelResizer() {
 }
 
 var checkAndApplyFilter = (function() {
-    var lastPattern;
     // Filter for file names
     function applyFilter(/*regex*/pattern) {
         var CLASS_FILTERED = 'file-filtered';
@@ -356,15 +393,16 @@ var checkAndApplyFilter = (function() {
         }
     }
     function checkAndApplyFilter() {
-        var pattern = document.getElementById('file-filter').value;
+        var fileFilterElem = document.getElementById('file-filter');
         var feedback = document.getElementById('file-filter-feedback');
-        if (pattern === lastPattern) return;
-        lastPattern = pattern;
+        var pattern = fileFilterElem.value;
         try {
             // TODO: Really want to force case-sensitivity?
             pattern = new RegExp(pattern, 'i');
             feedback.textContent = '';
+            fileFilterElem.classList.remove('invalid');
         } catch (e) {
+            fileFilterElem.classList.add('invalid');
             // Strip Regexp, the user can see it themselves..
             // Invalid regular expression: /..pattern.../ : blablabla
             feedback.textContent = (e.message+'').replace(': /' + pattern + '/', '');
@@ -372,16 +410,35 @@ var checkAndApplyFilter = (function() {
         }
         applyFilter(pattern);
     }
+    (function() {
+        // Bind to checkbox filter
+
+        var FILTER_STORAGE_PREFIX = 'filter-';
+        var fileList = document.getElementById('file-list');
+        var checkboxes = document.querySelectorAll('input[data-filter-type]');
+        for (var i = 0; i < checkboxes.length; ++i) {
+            var checkbox = checkboxes[i];
+            var storageKey = FILTER_STORAGE_PREFIX + checkbox.dataset.filterType;
+            checkbox.checked = localStorage.getItem(storageKey) !== '0';
+            checkbox.onchange = onCheckboxChange;
+            if (!checkbox.checked) {
+                fileList.classList.add('gfilter-' + checkbox.dataset.filterType);
+            }
+        }
+        function onCheckboxChange() {
+            // jshint validthis:true
+            var storageKey = FILTER_STORAGE_PREFIX + this.dataset.filterType;
+            localStorage.setItem(storageKey, this.checked ? '1' : '0');
+            fileList.classList.toggle('gfilter-' + this.dataset.filterType, !this.checked);
+        }
+    })();
     // Bind event
     var fileFilterElem = document.getElementById('file-filter');
-    fileFilterElem.addEventListener('keydown', function(e) {
-        if (e.keyIdentifier === 'Enter') {
-            checkAndApplyFilter();
-        }
-    });
-    fileFilterElem.addEventListener('input', function(e) {
+    fileFilterElem.addEventListener('input', checkAndApplyFilter);
+    fileFilterElem.form.onsubmit = function(e) {
+        e.preventDefault();
         checkAndApplyFilter();
-    });
+    };
 
     return checkAndApplyFilter;
 })();

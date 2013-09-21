@@ -11,12 +11,24 @@
 </head>
 <body>
 <div id="top-bar">
-    <input type="text" id="file-filter" placeholder="filter (regex)" title="Only show files matching this regular expression
-    Examples:
-    - ^[^/]+$       All top-level files
-    - ^(?!_locales) All files excluding _locales dir
-    - \.js$         Only show .js files
-    " list="file-filter-patterns">
+    <form>
+        <input type="text" id="file-filter" placeholder="filter (regex)" title="Only show files matching this regular expression" list="file-filter-patterns">
+        <label title="Filter: Images">
+            <input type="checkbox" data-filter-type="images"> Images
+        </label>
+        <label title="Filter: JavaScript code">
+            <input type="checkbox" data-filter-type="code"> Code
+        </label>
+        <label title="Filter: HTML, CSS">
+            <input type="checkbox" data-filter-type="markup"> Mark-up
+        </label>
+        <label title="Filter: Translations used by chrome.i18n">
+            <input type="checkbox" data-filter-type="locales"> Locales
+        </label>
+        <label title="Filter: Other files">
+            <input type="checkbox" data-filter-type="misc"> Misc
+        </label>
+    </form>
     <span id="file-filter-feedback"></span>
     <a id="webstore-link">Listing</a>
     <a id="download-link">Download</a>

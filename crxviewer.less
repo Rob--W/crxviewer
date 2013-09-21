@@ -37,6 +37,16 @@ html, body {
             outline: none;
             border-color: rgb(77, 144, 254);
         }
+        &.invalid {
+            background-color: #FEE;
+            & ~ label {
+                // Require the user to fix the regex before using the checkboxes
+                display: none;
+            }
+        }
+    }
+    label {
+        vertical-align: middle;
     }
     #file-filter-feedback {
         -webkit-flex: 1;
@@ -48,8 +58,23 @@ html, body {
     & > a:not([href]) {
         display: none;
     }
-
 }
+
+.gcount:not(:empty) {
+    &,
+    &::before,
+    &::after {
+        vertical-align: top;
+        font-size: smaller;
+    }
+    &::before {
+        content: '(';
+    }
+    &::after {
+        content: ')';
+    }
+}
+
 #right-panel, #left-panel {
     height: -webkit-calc(100% - 2rem);
     height: calc(100% - 2rem);
@@ -120,6 +145,14 @@ html, body {
     padding: 0;
     list-style-type: none;
 
+    &.gfilter-images    li.gtype-images,
+    &.gfilter-code      li.gtype-code,
+    &.gfilter-markup    li.gtype-markup,
+    &.gfilter-locales   li.gtype-locales,
+    &.gfilter-misc      li.gtype-misc,
+    li.file-filtered {
+        display: none;
+    }
     li {
         position: relative;
         overflow-x: hidden;
@@ -129,9 +162,6 @@ html, body {
         }
         &.active {
             background-color: rgba(99,99,99,0.3);
-        }
-        &.file-filtered {
-            display: none;
         }
         &.file-selected {
             background-color: #def;

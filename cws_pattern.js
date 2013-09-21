@@ -7,6 +7,7 @@
 
 // cws_pattern[1] = extensionID
 var cws_pattern = /^https?:\/\/chrome.google.com\/webstore\/.+?\/([a-z]{32})(?=[\/#?]|$)/;
+var cws_download_pattern = /^https?:\/\/clients2\.google\.com\/service\/update2\/crx\b.*?%3D([a-z]{32})%26uc/;
 // match pattern per Chrome spec
 var cws_match_pattern = '*://chrome.google.com/webstore/detail/*';
 
@@ -19,7 +20,7 @@ var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 function get_extensionID(url) {
     var match = cws_pattern.exec(url);
     if (match) return match[1];
-    match = /^https?:\/\/clients2\.google\.com\/service\/update2\/crx\b.*?%3D([a-z]{32})%26uc/.exec(url);
+    match = cws_download_pattern.exec(url);
     return match && match[1];
 }
 
@@ -49,6 +50,18 @@ function get_crx_url(extensionID_or_url) {
     url += '&x=id%3D' + extensionID;
     url += '%26uc';
     return url;
+}
+
+// Get location of addon gallery for a given extension
+function get_webstore_url(url) {
+    var cws = cws_pattern.exec(url) || cws_download_pattern.exec(url);
+    if (cws) {
+        return 'https://chrome.google.com/webstore/detail/' + cws[1];
+    }
+    var ows = ows_pattern.exec(url);
+    if (ows) {
+        return 'https://addons.opera.com/extensions/details/' + ows[1];
+    }
 }
 
 // Return the suggested name of the zip file.

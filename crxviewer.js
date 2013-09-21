@@ -4,7 +4,7 @@
 
 /* jshint browser:true, devel:true */
 /* globals chrome, URL,
-           getParam, openCRXasZip, get_zip_name,
+           getParam, openCRXasZip, get_zip_name, get_webstore_url,
            zip,
            beautify, prettyPrintOne,
            CryptoJS
@@ -386,6 +386,15 @@ var checkAndApplyFilter = (function() {
     return checkAndApplyFilter;
 })();
 // Go load the stuff
+initialize();
+function initialize() {
+    var webstore_url = get_webstore_url(crx_url);
+    if (webstore_url) {
+        var webstore_link = document.getElementById('webstore-link');
+        webstore_link.href = webstore_url;
+        webstore_link.title = webstore_url;
+    }
+}
 
 var progressDiv = document.getElementById('initial-status');
 progressDiv.textContent = 'Loading ' + crx_url;
@@ -456,7 +465,6 @@ function setBlobAsDownload(blob) {
     if (!zipname) 
         zipname = get_zip_name(crx_url, zipname);
     dl_link.download = zipname;
-    dl_link.textContent = 'Download';
     dl_link.title = 'Download as ' + zipname;
 }
 function setPublicKey(publicKey) {

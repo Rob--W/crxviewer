@@ -16,7 +16,7 @@
     - ^[^/]+$       All top-level files
     - ^(?!_locales) All files excluding _locales dir
     - \.js$         Only show .js files
-    ">
+    " list="file-filter-patterns">
     <span id="file-filter-feedback"></span>
     <a id="webstore-link">Listing</a>
     <a id="download-link">Download</a>
@@ -31,6 +31,12 @@
         <div id="initial-status"></div>
     </div>
 </div>
+<datalist id="file-filter-patterns">
+    <option value="\.js$" label="JavaScript">
+    <option value="\.css$" label="CSS">
+    <option value="\.html?$" label="HTML">
+    <option value="\.(js|css|html)$" label="JS / CSS / HTML">
+</datalist>
 <script src="lib/zip.js/zip.js"></script>
 <script src="lib/zip.js/mime-types.js"></script>
 <script src="lib/crx-to-zip.js"></script>

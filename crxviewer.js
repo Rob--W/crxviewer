@@ -340,6 +340,7 @@ function renderPanelResizer() {
 }
 
 var checkAndApplyFilter = (function() {
+    var lastPattern;
     // Filter for file names
     function applyFilter(/*regex*/pattern) {
         var CLASS_FILTERED = 'file-filtered';
@@ -357,6 +358,8 @@ var checkAndApplyFilter = (function() {
     function checkAndApplyFilter() {
         var pattern = document.getElementById('file-filter').value;
         var feedback = document.getElementById('file-filter-feedback');
+        if (pattern === lastPattern) return;
+        lastPattern = pattern;
         try {
             // TODO: Really want to force case-sensitivity?
             pattern = new RegExp(pattern, 'i');
@@ -371,16 +374,13 @@ var checkAndApplyFilter = (function() {
     }
     // Bind event
     var fileFilterElem = document.getElementById('file-filter');
-    var _applyFilter;
     fileFilterElem.addEventListener('keydown', function(e) {
-        clearTimeout(_applyFilter);
         if (e.keyIdentifier === 'Enter') {
             checkAndApplyFilter();
-        } else {
-            _applyFilter = setTimeout(function() {
-                checkAndApplyFilter();
-            }, 200);
         }
+    });
+    fileFilterElem.addEventListener('input', function(e) {
+        checkAndApplyFilter();
     });
 
     return checkAndApplyFilter;

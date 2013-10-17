@@ -88,8 +88,8 @@ target.opera = function() {
     builder.build(setup);
     cp(SRC_DIR + 'manifest_opera.json', OPERA_BUILD_DIR + 'manifest.json');
 
-    cd(BUILD_DIR);
+    cd(OPERA_BUILD_DIR);
     exec('lessc "' + SRC_DIR + 'crxviewer.less" "' + OPERA_BUILD_DIR + 'crxviewer.css"');
-    exec('chromium --pack-extension="' + OPERA_BUILD_DIR + '" --pack-extension-key="' + OPERA_NEX_PEM + '"');
-    mv('-f', path.basename(OPERA_BUILD_DIR) + '.crx', 'crxviewer.nex');
+    rm('-f', '../crxviewer_opera.zip');
+    exec('7z a ../crxviewer_opera.zip * -tzip');
 };

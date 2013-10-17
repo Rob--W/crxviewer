@@ -4,6 +4,7 @@
 /* jshint browser:true, devel:true */
 /* globals chrome */
 'use strict'; 
+//#if CHROME
 var permission = {
     origins: ['<all_urls>']
 };
@@ -34,6 +35,7 @@ if (chrome.declarativeWebRequest) {
         '<a href="https://www.google.com/landing/chrome/beta/">Beta channel</a></em>.'
     );
 }
+//#endif
 
 document.getElementById('contextmenu').onchange = function() {
     chrome.storage.local.set({showContextMenu: this.checked});

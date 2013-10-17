@@ -23,12 +23,14 @@ footer {
 </style>
 </head>
 <body>
+<!--#if CHROME-->
 <label>
     <input type="checkbox" id="hasAccessToAllURLs">
     Allow access to all URLs.<br>
     This option allows the extension to detect Chrome and Opera 15 extensions outside the Chrome Web store.
     When the download of a Chromium extension is detected, the CRX button will be shown.
 </label>
+<!--#endif-->
 <label>
     <input type="checkbox" id="contextmenu">
     Add a context menu option to Chrome / Opera 15 extension links.
@@ -37,6 +39,7 @@ footer {
     &copy; 2013 Rob Wu &lt;gwnRob@gmail.com&gt;
     &bull; <a href="https://github.com/Rob--W/crxviewer">Source code on Github</a>
     &bull; <a href="https://chrome.google.com/webstore/detail/chrome-extension-source-v/jifpbeccnghkjeaalbbjmodiffmgedin">Chrome Web Store listing</a>
+    &bull; <a href="https://addons.opera.com/en/extensions/details/extension-source-viewer/">Opera addon listing</a>
 </footer>
 <script src="options.js"></script>
 </body>

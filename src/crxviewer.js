@@ -459,6 +459,7 @@ progressDiv.textContent = 'Loading ' + crx_url;
 openCRXasZip(crx_url, handleBlob, function(error_message) {
     progressDiv.textContent = error_message;
 
+//#if CHROME
     var permission = {
         origins: ['<all_urls>']
     };
@@ -481,6 +482,7 @@ openCRXasZip(crx_url, handleBlob, function(error_message) {
         grantAccess.textContent = 'Add permission';
         progressDiv.appendChild(grantAccess);
     });
+//#endif
 }, progressEventHandler);
 function progressEventHandler(xhrProgressEvent) {
     if (xhrProgressEvent.lengthComputable) {

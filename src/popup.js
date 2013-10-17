@@ -34,14 +34,14 @@ if (crx_url) {
 function ready() {
     document.getElementById('download').onclick = doDownload;
     document.getElementById('view-source').onclick = doViewSource;
+//#if OPERA
+    document.getElementById('install-as-nex').onclick = doInstall;
+//#endif
 }
 if (typeof URL === 'undefined') window.URL = window.webkitURL;
 var blob_url;
 function showDownload() {
-    var a = document.createElement('a');
-    a.href = blob_url;
-    a.download = filename;
-    a.click();
+    tryTriggerDownload(blob_url, filename);
 }
 var hasDownloadedOnce = false;
 function doDownload() {
@@ -72,4 +72,31 @@ function doViewSource() {
             '&zipname=' + encodeURIComponent(filename),
         active: true
     });
+}
+//#if OPERA
+function doInstall() {
+    var name = filename.replace(/\.zip$/, '.nex');
+    tryTriggerDownload(crx_url, name);
+}
+//#endif
+
+// Try to download in the context of the current tab, such that the download
+// continues even when the popup closed.
+// In Opera, the Save As dialog almost falls off the screen because it's positioned relative
+// to the upper-left corner of the (page action popup) viewport...
+function tryTriggerDownload(url, filename) {
+    chrome.tabs.executeScript({
+        code: '(' + triggerDownload + '})(' + JSON.stringify(url) + ',' + JSON.stringify(filename) + ')'
+    }, function(result) {
+        if (!result) {
+            // Access denied? Then try to save in the context of the popup
+            triggerDownload(url, filename);
+        }
+    });
+}
+function triggerDownload(url, filename) {
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
 }

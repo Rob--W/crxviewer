@@ -1,7 +1,11 @@
-# Chrome extension source viewer
+# Chrome extension source viewer (CRX Viewer)
 
 View the source code of any Chrome extension in the Chrome Web store without installing it.
 https://chrome.google.com/webstore/detail/chrome-extension-source-v/jifpbeccnghkjeaalbbjmodiffmgedin
+
+Also available for Opera and Opera's add-on gallery.
+https://addons.opera.com/extensions/details/extension-source-viewer/
+
 
 ## Features
 

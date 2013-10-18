@@ -86,7 +86,7 @@ function doInstall() {
 // to the upper-left corner of the (page action popup) viewport...
 function tryTriggerDownload(url, filename) {
     chrome.tabs.executeScript({
-        code: '(' + triggerDownload + '})(' + JSON.stringify(url) + ',' + JSON.stringify(filename) + ')'
+        code: '(' + triggerDownload + ')(' + JSON.stringify(url) + ',' + JSON.stringify(filename) + ')'
     }, function(result) {
         if (!result) {
             // Access denied? Then try to save in the context of the popup

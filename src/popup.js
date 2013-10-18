@@ -57,12 +57,15 @@ function doDownload() {
         hasDownloadedOnce = false;
         console.error(errorMessage);
         alert('Error in CRX Viewer:\n\n' + errorMessage);
-    });
+    }, onXHRprogress.bind(null, document.getElementById('download')));
     hasDownloadedOnce = true;
 }
 window.addEventListener('unload', function() {
     if (blob_url) {
         URL.revokeObjectURL(blob_url);
+    }
+    if (blob_url_nex) {
+        URL.revokeObjectURL(blob_url_nex);
     }
 });
 function doViewSource() {
@@ -73,10 +76,56 @@ function doViewSource() {
         active: true
     });
 }
+function onXHRprogress(progressContainer, xhrProgressEvent) {
+    var progressBar = progressContainer.querySelector('progress');
+    if (!progressBar) {
+        progressBar = document.createElement('progress');
+        progressContainer.appendChild(progressBar);
+    }
+    if (xhrProgressEvent.lengthComputable) {
+        progressBar.max = xhrProgressEvent.total;
+        progressBar.value = xhrProgressEvent.loaded;
+    } else {
+        progressBar.removeAttribute('value');
+    }
+}
 //#if OPERA
+var hasDownloadedCRX = false;
+var blob_url_nex;
 function doInstall() {
-    var name = filename.replace(/\.zip$/, '.nex');
-    tryTriggerDownload(crx_url, name);
+    var filename_nex = filename.replace(/\.zip$/, '.nex');
+
+    if (hasDownloadedCRX) {
+        if (blob_url_nex) tryTriggerDownload(blob_url_nex, filename_nex);
+        else console.log('Download is pending.');
+        return;
+    }
+    var x = new XMLHttpRequest();
+    x.open('GET', crx_url);
+    x.responseType = 'blob';
+    x.onprogress = onXHRprogress.bind(null, document.getElementById('install-as-nex'));
+    x.onload = function() {
+        var blob = x.response;
+        if (!blob) {
+            hasDownloadedCRX = false;
+            alert('Unexpected error: no response for ' + crx_url);
+            return;
+        }
+        if (blob.type !== 'application/x-navigator-extension' ||
+            blob.type !== 'application/x-chrome-extension') {
+            blob = new Blob([blob], {
+                type: 'application/x-navigator-extension'
+            });
+        }
+        blob_url_nex = URL.createObjectURL(blob);
+        tryTriggerDownload(blob_url_nex, filename_nex);
+    };
+    x.onerror = function() {
+        hasDownloadedCRX = false;
+        alert('Network error for ' + crx_url);
+    };
+    x.send();
+    hasDownloadedCRX = true;
 }
 //#endif
 
@@ -92,6 +141,7 @@ function tryTriggerDownload(url, filename) {
             // Access denied? Then try to save in the context of the popup
             triggerDownload(url, filename);
         }
+        window.close();
     });
 }
 function triggerDownload(url, filename) {

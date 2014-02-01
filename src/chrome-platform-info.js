@@ -18,7 +18,8 @@
 'use strict';
 
 // Set platform info if unset
-if (chrome.runtime.getPlatformInfo && !localStorage.getItem('platformInfo')) {
+if (typeof chrome === 'object' && chrome.runtime &&
+    chrome.runtime.getPlatformInfo && !localStorage.getItem('platformInfo')) {
     chrome.runtime.getPlatformInfo(function(platformInfo) {
         localStorage.setItem('platformInfo', JSON.stringify(platformInfo));
     });

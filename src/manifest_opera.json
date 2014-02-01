@@ -1,7 +1,7 @@
 {
     "name": "Extension source viewer",
     "description": "View the source code of any Chrome or Opera extension (crx/nex). Also allows you to directly install extensions from the Chrome Web Store.",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "manifest_version": 2,
     "developer": {
         "name": "Rob Wu",

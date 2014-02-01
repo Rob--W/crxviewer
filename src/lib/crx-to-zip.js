@@ -8,17 +8,24 @@
 // Input: Anything that is accepted by the Uint8Array constructor.
 // Output: Blob (to callback)
 var CRXtoZIP = (function() {
-    function CRXtoZIP(arraybuffer, callback) {
+    function CRXtoZIP(arraybuffer, callback, errCallback) {
         // Definition of crx format: http://developer.chrome.com/extensions/crx.html
         var view = new Uint8Array(arraybuffer);
 
+        // 50 4b 03 04
+        if (view[0] === 80 && view[1] === 75 && view[2] === 3 && view[3] === 4) {
+            console.warn('Input is not a CRX file, but a ZIP file.');
+            callback(new Blob([arraybuffer], {type: 'application/zip'}), undefined);
+            return;
+        }
+
         // 43 72 32 34
         if (view[0] !== 67 || view[1] !== 114 || view[2] !== 50 || view[3] !== 52)
-            throw new Error('Invalid header: Does not start with Cr24');
+            return errCallback('Invalid header: Does not start with Cr24'), void 0;
 
         // 02 00 00 00
         if (view[4] !== 2 || view[5] || view[6] || view[7])
-            throw new Error('Unexpected crx format version number.');
+            return errCallback('Unexpected crx format version number.'), void 0;
 
         var publicKeyLength = calcLength(view[ 8], view[ 9], view[10], view[11]);
         var signatureLength = calcLength(view[12], view[13], view[14], view[15]);
@@ -69,7 +76,7 @@ function openCRXasZip_blob(blob, callback, errCallback, frProgressListener) {
     fr.onprogress = frProgressListener;
     fr.onload = function() {
         /* jshint newcap:false */
-        CRXtoZIP(fr.result, callback);
+        CRXtoZIP(fr.result, callback, errCallback);
     };
     fr.onerror = function() {
         errCallback('Unexpected error while reading ' + (blob.name || 'the blob'));
@@ -87,7 +94,7 @@ function openCRXasZip_url(url, callback, errCallback, xhrProgressListener) {
             return;
         }
         /* jshint newcap:false */
-        CRXtoZIP(x.response, callback);
+        CRXtoZIP(x.response, callback, errCallback);
     };
     x.onerror = function() {
         errCallback('Network error for ' + url);

@@ -445,6 +445,11 @@ var checkAndApplyFilter = (function() {
 // Go load the stuff
 initialize();
 function initialize() {
+    if (!crx_url) {
+        // No crx found in parameters, show Select file dialog.
+        appendFileChooser();
+        return;
+    }
     var webstore_url = get_webstore_url(crx_url);
     if (webstore_url) {
         var webstore_link = document.getElementById('webstore-link');
@@ -454,15 +459,43 @@ function initialize() {
     openCRXinViewer(crx_url);
 }
 
+function appendFileChooser() {
+    var progressDiv = document.getElementById('initial-status');
+    progressDiv.hidden = false;
+    progressDiv.insertAdjacentHTML('beforeend',
+            '<br><br>' +
+            'Visit the Chrome Web Store or Opera\'s add-on gallery<br>' +
+            'and click on the CRX button to view its source.' +
+            '<br><br>Or select a .crx/.nex/.zip file:<br><br>');
+    var fileChooser = document.createElement('input');
+    fileChooser.type = 'file';
+    fileChooser.onchange = function() {
+        var file = fileChooser.files[0];
+        if (file) openCRXinViewer(file);
+    };
+    progressDiv.appendChild(fileChooser);
+}
+
+// crx_url: string or File object
 function openCRXinViewer(crx_url) {
+    var crx_blob;
+    if (typeof crx_url === 'object') {
+        crx_blob = crx_url;
+        crx_url = crx_blob.name;
+    }
     var progressDiv = document.getElementById('initial-status');
     progressDiv.hidden = false;
     progressDiv.textContent = 'Loading ' + crx_url;
 
-    openCRXasZip(crx_url, handleBlob, function(error_message) {
+    openCRXasZip(crx_blob || crx_url, handleBlob, function(error_message) {
         progressDiv.textContent = error_message;
+        appendFileChooser();
 
 //#if CHROME
+        if (crx_blob) {
+            // Input was a File object, so failure cannot be caused by invalid input.
+            return;
+        }
         var permission = {
             origins: ['<all_urls>']
         };
@@ -532,6 +565,10 @@ function setBlobAsDownload(blob) {
     dl_link.title = 'Download as ' + zipname;
 }
 function setPublicKey(publicKey) {
+    if (!publicKey) {
+        console.warn('Public key not found, cannot generate "key" or extension ID.');
+        return;
+    }
     console.log('Public key (paste into manifest.json to preserve extension ID)');
     console.log('"key": "' + publicKey + '",');
 

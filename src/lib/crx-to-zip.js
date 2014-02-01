@@ -53,8 +53,30 @@ var CRXtoZIP = (function() {
     }
     return CRXtoZIP;
 })();
-function openCRXasZip(url, callback, errCallback, xhrProgressListener) {
+
+/// Input: string, Blob or File object
+function openCRXasZip(url_or_blob, callback, errCallback, xhrProgressListener) {
     if (!errCallback) errCallback = console.log.bind(console);
+    if (typeof url_or_blob === 'object' && url_or_blob) {
+        // Object? Assume Blob or File object...
+        openCRXasZip_blob(url_or_blob, callback, errCallback, xhrProgressListener);
+    } else {
+        openCRXasZip_url(url_or_blob, callback, errCallback, xhrProgressListener);
+    }
+}
+function openCRXasZip_blob(blob, callback, errCallback, frProgressListener) {
+    var fr = new FileReader();
+    fr.onprogress = frProgressListener;
+    fr.onload = function() {
+        /* jshint newcap:false */
+        CRXtoZIP(fr.result, callback);
+    };
+    fr.onerror = function() {
+        errCallback('Unexpected error while reading ' + (blob.name || 'the blob'));
+    };
+    fr.readAsArrayBuffer(blob);
+}
+function openCRXasZip_url(url, callback, errCallback, xhrProgressListener) {
     var x = new XMLHttpRequest();
     x.open('GET', url);
     x.responseType = 'arraybuffer';

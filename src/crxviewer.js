@@ -451,54 +451,59 @@ function initialize() {
         webstore_link.href = webstore_url;
         webstore_link.title = webstore_url;
     }
+    openCRXinViewer(crx_url);
 }
 
-var progressDiv = document.getElementById('initial-status');
-progressDiv.textContent = 'Loading ' + crx_url;
+function openCRXinViewer(crx_url) {
+    var progressDiv = document.getElementById('initial-status');
+    progressDiv.hidden = false;
+    progressDiv.textContent = 'Loading ' + crx_url;
 
-openCRXasZip(crx_url, handleBlob, function(error_message) {
-    progressDiv.textContent = error_message;
+    openCRXasZip(crx_url, handleBlob, function(error_message) {
+        progressDiv.textContent = error_message;
 
 //#if CHROME
-    var permission = {
-        origins: ['<all_urls>']
-    };
-    chrome.permissions.contains(permission, function(hasAccess) {
-        if (hasAccess) return;
-        var grantAccess = document.createElement('button');
-        var checkAccessOnClick = function() {
-            chrome.permissions.request(permission, function(hasAccess) {
-                if (!hasAccess) return;
-                grantAccess.parentNode.removeChild(grantAccess);
-                openCRXasZip(crx_url, handleBlob, null, progressEventHandler);
-            });
+        var permission = {
+            origins: ['<all_urls>']
         };
-        grantAccess.onclick = checkAccessOnClick;
-        progressDiv.insertAdjacentHTML('beforeend', '<br><br>' +
-            'To view this extension\'s source, an extra permission is needed.<br>' +
-            'This permission can be revoked at any time at the ' +
-            '<a href="/options.html" target="_blank">options page</a>.<br><br>'
-        );
-        grantAccess.textContent = 'Add permission';
-        progressDiv.appendChild(grantAccess);
-    });
+        chrome.permissions.contains(permission, function(hasAccess) {
+            if (hasAccess) return;
+            var grantAccess = document.createElement('button');
+            var checkAccessOnClick = function() {
+                chrome.permissions.request(permission, function(hasAccess) {
+                    if (!hasAccess) return;
+                    grantAccess.parentNode.removeChild(grantAccess);
+                    openCRXasZip(crx_url, handleBlob, null, progressEventHandler);
+                });
+            };
+            grantAccess.onclick = checkAccessOnClick;
+            progressDiv.insertAdjacentHTML('beforeend', '<br><br>' +
+                'To view this extension\'s source, an extra permission is needed.<br>' +
+                'This permission can be revoked at any time at the ' +
+                '<a href="/options.html" target="_blank">options page</a>.<br><br>'
+            );
+            grantAccess.textContent = 'Add permission';
+            progressDiv.appendChild(grantAccess);
+        });
 //#endif
-}, progressEventHandler);
-function progressEventHandler(xhrProgressEvent) {
-    if (xhrProgressEvent.lengthComputable) {
-        var loaded = xhrProgressEvent.loaded;
-        var total = xhrProgressEvent.total;
-        progressDiv.textContent = 'Loading ' + crx_url;
-        progressDiv.insertAdjacentHTML('beforeend', '<br><br>' +
-                                       (formatByteSize(loaded) + ' / ' + formatByteSize(total)) + '<br>' +
-                                       '<progress max="' + total + '" value="' + loaded + '">');
-    } else {
-        // Progress dot ;)
-        progressDiv.appendChild(document.createTextNode('.'));
+    }, progressEventHandler);
+    function progressEventHandler(xhrProgressEvent) {
+        if (xhrProgressEvent.lengthComputable) {
+            var loaded = xhrProgressEvent.loaded;
+            var total = xhrProgressEvent.total;
+            progressDiv.textContent = 'Loading ' + crx_url;
+            progressDiv.insertAdjacentHTML('beforeend', '<br><br>' +
+                                           (formatByteSize(loaded) + ' / ' + formatByteSize(total)) + '<br>' +
+                                           '<progress max="' + total + '" value="' + loaded + '">');
+        } else {
+            // Progress dot ;)
+            progressDiv.appendChild(document.createTextNode('.'));
+        }
     }
 }
 
 function handleBlob(blob, publicKey) {
+    var progressDiv = document.getElementById('initial-status');
     progressDiv.hidden = true;
     
     setBlobAsDownload(blob);

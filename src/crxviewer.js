@@ -15,7 +15,7 @@
 var crx_url = getParam('crx');
 
 // Integrate zip.js
-zip.workerScriptsPath = '/lib/zip.js/';
+zip.workerScriptsPath = 'lib/zip.js/';
 
 function formatByteSize(fileSize) {
     // Assume parameter fileSize to be a number

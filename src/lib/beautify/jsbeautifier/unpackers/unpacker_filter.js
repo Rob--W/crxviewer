@@ -15,13 +15,13 @@ function unpacker_filter(source) {
             trailing_comments += comment + "\n";
         } else if (/^\s*\/\//.test(source)) {
             found = true;
-        comment = source.match(/^\s*\/\/.*/)[0];
-        source = source.substr(comment.length).replace(/^\s+/, '');
-        trailing_comments += comment + "\n";
-    }
+            comment = source.match(/^\s*\/\/.*/)[0];
+            source = source.substr(comment.length).replace(/^\s+/, '');
+            trailing_comments += comment + "\n";
+        }
     } while (found);
 
-    var unpackers = [P_A_C_K_E_R, Urlencoded, JavascriptObfuscator, MyObfuscate];
+    var unpackers = [P_A_C_K_E_R, Urlencoded, /*JavascriptObfuscator,*/ MyObfuscate];
     for (var i = 0; i < unpackers.length; i++) {
         if (unpackers[i].detect(source)) {
             unpacked = unpackers[i].unpack(source);

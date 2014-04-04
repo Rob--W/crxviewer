@@ -3,7 +3,7 @@
  */
 
 /* jshint browser:true, devel:true */
-/* globals chrome, get_crx_url, get_zip_name, is_crx_url, getParam, openCRXasZip, URL */
+/* globals chrome, get_crx_url, get_zip_name, is_crx_url, getParam, openCRXasZip */
 'use strict';
 var cws_url;
 var crx_url = getParam('crx');
@@ -38,21 +38,14 @@ function ready() {
     document.getElementById('install-as-nex').onclick = doInstall;
 //#endif
 }
-if (typeof URL === 'undefined') window.URL = window.webkitURL;
-var blob_url;
-function showDownload() {
-    tryTriggerDownload(blob_url, filename);
-}
 var hasDownloadedOnce = false;
 function doDownload() {
     if (hasDownloadedOnce) {
-        if (blob_url) showDownload();
-        else alert('Download is pending.');
+        console.log('Download is pending.');
         return;
     }
     openCRXasZip(crx_url, function(blob, publicKey) {
-        blob_url = URL.createObjectURL(blob);
-        showDownload();
+        tryTriggerDownload(blob, filename);
     }, function(errorMessage) {
         hasDownloadedOnce = false;
         console.error(errorMessage);
@@ -60,14 +53,6 @@ function doDownload() {
     }, onXHRprogress.bind(null, document.getElementById('download')));
     hasDownloadedOnce = true;
 }
-window.addEventListener('unload', function() {
-    if (blob_url) {
-        URL.revokeObjectURL(blob_url);
-    }
-    if (blob_url_nex) {
-        URL.revokeObjectURL(blob_url_nex);
-    }
-});
 function doViewSource() {
     chrome.tabs.create({
         url: chrome.extension.getURL('crxviewer.html') +
@@ -91,13 +76,11 @@ function onXHRprogress(progressContainer, xhrProgressEvent) {
 }
 //#if OPERA
 var hasDownloadedCRX = false;
-var blob_url_nex;
 function doInstall() {
     var filename_nex = filename.replace(/\.zip$/, '.nex');
 
     if (hasDownloadedCRX) {
-        if (blob_url_nex) tryTriggerDownload(blob_url_nex, filename_nex);
-        else console.log('Download is pending.');
+        console.log('Download is pending.');
         return;
     }
     var x = new XMLHttpRequest();
@@ -117,36 +100,24 @@ function doInstall() {
                 type: 'application/x-navigator-extension'
             });
         }
-        blob_url_nex = URL.createObjectURL(blob);
-        tryTriggerDownload(blob_url_nex, filename_nex);
+        tryTriggerDownload(blob, filename_nex);
     };
     x.onerror = function() {
         hasDownloadedCRX = false;
         alert('Network error for ' + crx_url);
+    };
+    x.onabort = function() {
+        hasDownloadedCRX = false;
     };
     x.send();
     hasDownloadedCRX = true;
 }
 //#endif
 
-// Try to download in the context of the current tab, such that the download
-// continues even when the popup closed.
-// In Opera, the Save As dialog almost falls off the screen because it's positioned relative
-// to the upper-left corner of the (page action popup) viewport...
-function tryTriggerDownload(url, filename) {
-    chrome.tabs.executeScript({
-        code: '(' + triggerDownload + ')(' + JSON.stringify(url) + ',' + JSON.stringify(filename) + ')'
-    }, function(result) {
-        if (!result) {
-            // Access denied? Then try to save in the context of the popup
-            triggerDownload(url, filename);
-        }
+// Delegate download to background page to make sure that the download dialog shows up.
+function tryTriggerDownload(blob, filename) {
+    chrome.runtime.getBackgroundPage(function(bg) {
+        bg.tryTriggerDownload(blob, filename);
         window.close();
     });
-}
-function triggerDownload(url, filename) {
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
 }

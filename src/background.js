@@ -1,7 +1,7 @@
 /**
  * (c) 2013 Rob Wu <gwnRob@gmail.com>
  */
-/* globals chrome, cws_match_pattern, ows_match_pattern, cws_pattern, ows_pattern */
+/* globals chrome, cws_match_pattern, ows_match_pattern, cws_pattern, ows_pattern, URL, document, alert */
 
 'use strict';
 
@@ -105,4 +105,42 @@ function showPageActionIfNeeded(details_or_tab) {
     } else {
         chrome.pageAction.hide(tabId);
     }
+}
+
+// Called by popup.js
+function tryTriggerDownload(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    if (!chrome.downloads) {
+        // Chrome 31+ and Opera 20+
+        tryTriggerDownloadFallback(url, filename);
+        return;
+    }
+    chrome.downloads.download({
+        url: url,
+        filename: filename
+    }, function(downloadId) {
+        if (chrome.runtime.lastError) {
+            alert('An error occurred while trying to save ' + filename + ':\n\n' +
+                chrome.runtime.lastError.message);
+        }
+    });
+}
+function tryTriggerDownloadFallback(url, filename) {
+    function triggerDownload(url, filename) {
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+    }
+
+    chrome.tabs.executeScript({
+        code: '(' + triggerDownload + ')(' +
+                  JSON.stringify(url) + ',' + JSON.stringify(filename) + ')'
+    }, function(result) {
+        if (chrome.runtime.lastError) {
+            // NOTE: May fail if used in quick succession:
+            triggerDownload(url, filename);
+        }
+        // else when the event page goes away, the URL will be revoked.
+    }); 
 }

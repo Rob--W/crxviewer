@@ -2,7 +2,7 @@
     "name": "Chrome extension source viewer",
     "short_name": "CRX Viewer",
     "description": "Adds button to show the source code of a Chrome extension (crx file) in the Chrome web store (and elsewhere if wanted)",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "manifest_version": 2,
     "background": {
         "scripts": [

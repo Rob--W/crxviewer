@@ -33,10 +33,10 @@ is a Chromium extension. Both features can be toggled at the options page.
 
 The "View source for all extensions" only shows a button when it detects the download of an
 extension. This detection is implemented through MIME-type sniffing using the
-[`declarativeWebRequest`](https://developer.chrome.com/extensions/declarativeWebRequest.html)
+[`declarativeWebRequest`](https://developer.chrome.com/extensions/declarativeWebRequest)
 API, which is only available to Chromium beta/dev users (though it should soon be available to the
 general public).
 
 ## Copyright
-(c) 2013 - 2014 Rob Wu <gwnRob@gmail.com> (https://robwu.nl/)
+(c) 2013 - 2014 Rob Wu <rob@robwu.nl> (https://robwu.nl/)
 

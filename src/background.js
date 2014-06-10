@@ -1,5 +1,5 @@
 /**
- * (c) 2013 Rob Wu <gwnRob@gmail.com>
+ * (c) 2013 Rob Wu <rob@robwu.nl>
  */
 /* globals chrome, cws_match_pattern, ows_match_pattern, cws_pattern, ows_pattern, URL, document, alert */
 

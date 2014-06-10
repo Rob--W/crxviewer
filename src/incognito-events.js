@@ -1,5 +1,5 @@
 /**
- * (c) 2013 Rob Wu <gwnRob@gmail.com>
+ * (c) 2013 Rob Wu <rob@robwu.nl>
  *
  * Shim to provide chrome.runtime.onInstalled and onStartup events to split incognito extensions.
  * Note that the incognito extension has to be activated before this check can be performed.

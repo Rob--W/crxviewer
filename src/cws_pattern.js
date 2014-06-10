@@ -1,8 +1,8 @@
 /**
- * (c) 2013 Rob Wu <gwnRob@gmail.com>
+ * (c) 2014 Rob Wu <rob@robwu.nl>
  */
 
-/* globals location, getPlatformInfo */
+/* globals location, getPlatformInfo, navigator */
 'use strict';
 
 // cws_pattern[1] = extensionID
@@ -41,15 +41,47 @@ function get_crx_url(extensionID_or_url) {
     if (!/^[a-z]{32}$/.test(extensionID)) {
         return extensionID_or_url;
     }
+
     var platformInfo = getPlatformInfo();
+
+    // Omitting this value is allowed, but add it just in case.
+    // Source: http://cs.chromium.org/file:omaha_query_params.cc%20GetProdIdString
+    var product_id = isChromeNotChromium() ? 'chromecrx' : 'chromiumcrx';
+    // Channel is "unknown" on Chromium on ArchLinux, so using "unknown" will probably be fine for everyone.
+    var product_channel = 'unknown';
+    // As of July, the Chrome Web Store sends 204 responses to user agents when their
+    // Chrome/Chromium version is older than version 31.0.1609.0
+    var product_version = '9999.0.9999.0';
+    // Try to detect the Chrome version, and if it is lower than 31.0.1609.0, use a very high version.
+    // $1 = m.0.r.p  // major.minor.revision.patch where minor is always 0 for some reason.
+    // $2 = m
+    // $3 =     r
+    var cr_version = /Chrome\/((\d+)\.0\.(\d+)\.\d+)/.exec(navigator.userAgent);
+    if (cr_version && +cr_version[2] >= 31 && +cr_version[3] >= 1609) {
+        product_version = cr_version[1];
+    }
 
     url = 'https://clients2.google.com/service/update2/crx?response=redirect';
     url += '&os=' + platformInfo.os;
     url += '&arch=' + platformInfo.arch;
     url += '&nacl_arch=' + platformInfo.nacl_arch;
+    url += '&prod=' + product_id;
+    url += '&prodchannel=' + product_channel;
+    url += '&prodversion=' + product_version;
     url += '&x=id%3D' + extensionID;
     url += '%26uc';
     return url;
+}
+
+// Weak detection of whether the user is using Chrome instead of Chromium/Opera/RockMelt/whatever.
+function isChromeNotChromium() {
+    try {
+        // Chrome ships with a PDF Viewer by default, Chromium does not.
+        return null !== navigator.plugins.namedItem('Chrome PDF Viewer');
+    } catch (e) {
+        // Just in case.
+        return false;
+    }
 }
 
 // Get location of addon gallery for a given extension

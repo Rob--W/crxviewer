@@ -7,7 +7,6 @@
 'use strict';
 require('shelljs/make');
 var builder = require('./external/builder');
-var path = require('path');
 
 
 var ROOT_DIR = __dirname + '/';
@@ -15,7 +14,6 @@ var BUILD_DIR = ROOT_DIR + 'dist/';
 var SRC_DIR = ROOT_DIR + 'src/';
 var CHROME_BUILD_DIR = BUILD_DIR + 'chrome/';
 var OPERA_BUILD_DIR = BUILD_DIR + 'opera/';
-var OPERA_NEX_PEM = ROOT_DIR + 'crxviewer.pem';
 var WEB_BUILD_DIR = BUILD_DIR + 'web/';
 
 function getBuildConfig(options) {
@@ -50,6 +48,15 @@ function cleanDirectory(dir) {
         mkdir('-p', dir);
 }
 
+function build(setup, output_root_dir) {
+    cleanDirectory(output_root_dir);
+    builder.build(setup);
+    exec('lessc "' + SRC_DIR + 'crxviewer.less" "' + output_root_dir + 'crxviewer.css"');
+    cd(output_root_dir);
+    rm('lib/beautify/jsbeautifier/get-jsb.sh');
+    rm('lib/zip.js/VERSION');
+}
+
 target.all = function() {
     target.chrome();
     target.opera();
@@ -68,11 +75,9 @@ target.chrome = function() {
             [SRC_DIR + 'manifest.json', CHROME_BUILD_DIR]
         ]
     });
-    cleanDirectory(CHROME_BUILD_DIR);
-    builder.build(setup);
+    build(setup, CHROME_BUILD_DIR);
 
     cd(CHROME_BUILD_DIR);
-    exec('lessc "' + SRC_DIR + 'crxviewer.less" "' + CHROME_BUILD_DIR + 'crxviewer.css"');
     rm('-f', '../crxviewer.zip');
     exec('7z a ../crxviewer.zip * -tzip');
 };
@@ -86,12 +91,10 @@ target.opera = function() {
             OPERA: true
         }
     });
-    cleanDirectory(OPERA_BUILD_DIR);
-    builder.build(setup);
+    build(setup, OPERA_BUILD_DIR);
     cp(SRC_DIR + 'manifest_opera.json', OPERA_BUILD_DIR + 'manifest.json');
 
     cd(OPERA_BUILD_DIR);
-    exec('lessc "' + SRC_DIR + 'crxviewer.less" "' + OPERA_BUILD_DIR + 'crxviewer.css"');
     rm('-f', '../crxviewer_opera.zip');
     exec('7z a ../crxviewer_opera.zip * -tzip');
 };
@@ -116,9 +119,5 @@ target.web = function() {
             [SRC_DIR + 'crxviewer.js', dest_dir]
         ]
     };
-    cleanDirectory(WEB_BUILD_DIR);
-    builder.build(setup);
-
-    cd(OPERA_BUILD_DIR);
-    exec('lessc "' + SRC_DIR + 'crxviewer.less" "' + WEB_BUILD_DIR + 'crxviewer.css"');
+    build(setup, WEB_BUILD_DIR);
 };

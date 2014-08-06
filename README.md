@@ -20,7 +20,7 @@ become available:
 
 The "View source" option opens a new tab with a simple viewer, with the following features:
 
-  - Download-as-zip at the upper-right corner.
+  - Download-as-zip and download-as-crx at the upper-right corner.
   - List of file names, and the option to filter files with a regular expression.
   - Automatic beautification (formatting) of code
   - Syntax highlighting

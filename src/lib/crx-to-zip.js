@@ -42,7 +42,7 @@ var CRXtoZIP = (function() {
         ], {
             type: 'application/zip'
         });
-        callback(zipFragment, publicKeyBase64);
+        callback(zipFragment, publicKeyBase64, arraybuffer);
     }
     function calcLength(a, b, c, d) {
         var length = 0;
@@ -64,7 +64,10 @@ var CRXtoZIP = (function() {
 
 /**
  * @param {string|Blob|File|ArrayBuffer|Uint8Array} crx_obj - CRX file data or URL
- * @param {function(Blob,string)} callback - Zip file as blob, base64-encoded public key as string.
+ * @param {function(Blob,string,arraybuffer)} callback -
+ *   Zip file as blob,
+ *   base64-encoded public key as string.
+ *   original crx data as arraybuffer.
  * @param {function(string)} errCallback - Error callback
  * @param {function(event)} xhrProgressListener - Progress event listener.
  */

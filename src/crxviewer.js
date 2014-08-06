@@ -541,11 +541,12 @@ function openCRXinViewer(crx_url) {
     }
 }
 
-function handleBlob(blob, publicKey) {
+function handleBlob(blob, publicKey, raw_crx_data) {
     var progressDiv = document.getElementById('initial-status');
     progressDiv.hidden = true;
     
     setBlobAsDownload(blob);
+    setRawCRXAsDownload(raw_crx_data);
     setPublicKey(publicKey);
 
     zip.createReader(new zip.BlobReader(blob), function(zipReader) {
@@ -564,11 +565,18 @@ if (typeof URL === 'undefined') window.URL = window.webkitURL;
 function setBlobAsDownload(blob) {
     var dl_link = document.getElementById('download-link');
     dl_link.href = URL.createObjectURL(blob);
-    var zipname = getParam('zipname');
-    if (!zipname) 
-        zipname = get_zip_name(crx_url, zipname);
+    var zipname = get_zip_name(crx_url, getParam('zipname'));
     dl_link.download = zipname;
-    dl_link.title = 'Download as ' + zipname;
+    dl_link.title = 'Download zip file as ' + zipname;
+}
+function setRawCRXAsDownload(arraybuffer) {
+    // Use application/octet-stream to prevent Chromium from trying to install the extension.
+    var blob = new Blob([arraybuffer], { type: 'application/octet-stream' });
+    var dl_link = document.getElementById('download-link-crx');
+    dl_link.href = URL.createObjectURL(blob);
+    var crxname = get_zip_name(crx_url, getParam('zipname')).replace(/\.zip$/i, '.crx');
+    dl_link.download = crxname;
+    dl_link.title = 'Download original CRX file as ' + crxname;
 }
 function setPublicKey(publicKey) {
     if (!publicKey) {

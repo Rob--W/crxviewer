@@ -1,6 +1,7 @@
 /**
  * (c) 2013 - 2014 Rob Wu <rob@robwu.nl>
  */
+/* exported openCRXasZip */
 /* jshint browser:true, devel:true */
 'use strict';
 
@@ -61,14 +62,21 @@ var CRXtoZIP = (function() {
     return CRXtoZIP;
 })();
 
-/// Input: string, Blob or File object
-function openCRXasZip(url_or_blob, callback, errCallback, xhrProgressListener) {
+/**
+ * @param {string|Blob|File|ArrayBuffer|Uint8Array} crx_obj - CRX file data or URL
+ * @param {function(Blob,string)} callback - Zip file as blob, base64-encoded public key as string.
+ * @param {function(string)} errCallback - Error callback
+ * @param {function(event)} xhrProgressListener - Progress event listener.
+ */
+function openCRXasZip(crx_obj, callback, errCallback, xhrProgressListener) {
     if (!errCallback) errCallback = console.log.bind(console);
-    if (typeof url_or_blob === 'object' && url_or_blob) {
-        // Object? Assume Blob or File object...
-        openCRXasZip_blob(url_or_blob, callback, errCallback, xhrProgressListener);
+    if (crx_obj instanceof Blob) { // Blob or File
+        openCRXasZip_blob(crx_obj, callback, errCallback, xhrProgressListener);
+    } else if (typeof crx_obj == 'string') {
+        openCRXasZip_url(crx_obj, callback, errCallback, xhrProgressListener);
     } else {
-        openCRXasZip_url(url_or_blob, callback, errCallback, xhrProgressListener);
+        // jshint newcap:false
+        CRXtoZIP(crx_obj, callback, errCallback);
     }
 }
 function openCRXasZip_blob(blob, callback, errCallback, frProgressListener) {

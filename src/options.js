@@ -9,7 +9,7 @@ var permission = {
     origins: ['<all_urls>']
 };
 chrome.permissions.contains(permission, setHasPermission);
-// Assume only one optional permission
+//// Assume that there is only one optional permission
 chrome.permissions.onAdded.addListener(setHasPermission.bind(null, true));
 chrome.permissions.onRemoved.addListener(setHasPermission.bind(null, false));
 

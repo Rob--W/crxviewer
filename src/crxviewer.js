@@ -479,6 +479,26 @@ function appendFileChooser() {
         var file = fileChooser.files[0];
         if (file) openCRXinViewer(file);
     };
+    /* Drag-n-Drop a file! */
+    function clearDragDrop() {
+        fileChooser.classList.remove('dragdrop');
+        fileChooser.classList.remove('invalid-source');
+    }
+    fileChooser.ondragover = function(e) {
+        this.classList.add('dragdrop');
+        e.preventDefault();
+        var types = e.dataTransfer.types;
+        if (!types.contains('Files')) {
+            this.classList.add('invalid-source');
+        }
+    };
+    fileChooser.ondragleave = clearDragDrop;
+    fileChooser.ondrop = function(e) {
+        clearDragDrop();
+        e.preventDefault();
+        var file = e.dataTransfer.files[0];
+        if (file) openCRXinViewer(file);
+    };
     progressDiv.appendChild(fileChooser);
 }
 

@@ -111,6 +111,12 @@ body {
         width: 300px;
         max-width: 100%;
     }
+    &.dragdrop {
+        outline: 3px dashed grey;
+        &.invalid-source {
+            outline-color: red;
+        }
+    }
 }
 .toggled {
     width: 0 !important;

@@ -518,11 +518,17 @@ function openCRXinViewer(crx_url) {
         progressDiv.textContent = error_message;
         appendFileChooser();
 
-//#if CHROME
         if (crx_blob) {
             // Input was a File object, so failure cannot be caused by invalid input.
             return;
         }
+        // URL request failed, retry with CORS proxy.
+        var cors_prefix = 'https://cors-anywhere.herokuapp.com/';
+        if (crx_url.indexOf(cors_prefix) == -1) {
+            openCRXinViewer(cors_prefix + crx_url);
+            return;
+        }
+//#if CHROME
         var permission = {
             origins: ['<all_urls>']
         };

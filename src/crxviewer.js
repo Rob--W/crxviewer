@@ -488,7 +488,7 @@ function appendFileChooser() {
         this.classList.add('dragdrop');
         e.preventDefault();
         var types = e.dataTransfer.types;
-        if (!types.contains('Files')) {
+        if (!types.contains('Files') && !types.contains('text/uri-list')) {
             this.classList.add('invalid-source');
         }
     };
@@ -497,6 +497,7 @@ function appendFileChooser() {
         clearDragDrop();
         e.preventDefault();
         var file = e.dataTransfer.files[0];
+        if (!file) file = e.dataTransfer.getData('URL');
         if (file) openCRXinViewer(file);
     };
     progressDiv.appendChild(fileChooser);

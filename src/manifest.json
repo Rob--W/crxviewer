@@ -29,7 +29,7 @@
     },
     "options_page": "options.html",
     "options_ui": {
-        "page": "options.html",
+        "page": "options.html#optionsV2",
         "chrome_style": true
     },
     "permissions": [

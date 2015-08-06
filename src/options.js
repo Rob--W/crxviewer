@@ -44,3 +44,8 @@ document.getElementById('contextmenu').onchange = function() {
 storageArea.get({showContextMenu:true}, function(items) {
     document.getElementById('contextmenu').checked = items.showContextMenu;
 });
+
+if (location.hash !== '#optionsV2') {
+    // A normal options page, open links in the same tab.
+    document.querySelector('base').remove();
+}

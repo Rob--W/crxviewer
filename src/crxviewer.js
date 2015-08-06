@@ -535,8 +535,9 @@ function openCRXinViewer(crx_url) {
                                            (formatByteSize(loaded) + ' / ' + formatByteSize(total)) + '<br>' +
                                            '<progress max="' + total + '" value="' + loaded + '">');
         } else {
-            // Progress dot ;)
-            progressDiv.appendChild(document.createTextNode('.'));
+            progressDiv.textContent = 'Loading ' + crx_url;
+            progressDiv.insertAdjacentHTML('beforeend', '<br><br>' +
+                                           'Loaded bytes: ' + formatByteSize(xhrProgressEvent.loaded) + ' (total size unknown)');
         }
     }
 }

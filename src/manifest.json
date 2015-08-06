@@ -28,6 +28,10 @@
         "128": "icons/128.png"
     },
     "options_page": "options.html",
+    "options_ui": {
+        "page": "options.html",
+        "chrome_style": true
+    },
     "permissions": [
         "tabs",
         "webNavigation",

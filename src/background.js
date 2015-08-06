@@ -1,7 +1,7 @@
 /**
  * (c) 2013 Rob Wu <rob@robwu.nl>
  */
-/* globals chrome, cws_match_pattern, ows_match_pattern, cws_pattern, ows_pattern, URL, document, alert */
+/* globals chrome, cws_match_pattern, ows_match_pattern, cws_pattern, ows_pattern, URL, document, alert, localStorage */
 
 'use strict';
 
@@ -28,6 +28,24 @@ chrome.runtime.onInstalled.addListener(function() {
     chrome.tabs.query({url: ows_match_pattern}, queryCallback);
     function queryCallback(tabs) {
         tabs.forEach(showPageActionIfNeeded);
+    }
+    // Migrate from old localStorage settings to chrome.storage
+    var items = {};
+    Object.keys(localStorage).forEach(function(key) {
+        if (key.lastIndexOf('filter-', 0) !== 0) {
+            return;
+        }
+        var value = localStorage.getItem(key);
+        localStorage.removeItem(key);
+        if (value === '1') {
+            items[key] = true;
+        } else if (value === '0') {
+            items[key] = false;
+        }
+    });
+    if (Object.keys(items).length) {
+        var storageArea = chrome.storage.sync || chrome.storage.local;
+        storageArea.set(items);
     }
 });
 

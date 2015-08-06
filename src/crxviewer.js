@@ -412,25 +412,38 @@ var checkAndApplyFilter = (function() {
     }
     (function() {
         // Bind to checkbox filter
+//#if CHROME || OPERA
+        var storageArea = chrome.storage.sync || chrome.storage.local;
+//#endif
 
         var FILTER_STORAGE_PREFIX = 'filter-';
         var fileList = document.getElementById('file-list');
         var checkboxes = document.querySelectorAll('input[data-filter-type]');
-        for (var i = 0; i < checkboxes.length; ++i) {
-            var checkbox = checkboxes[i];
+        [].forEach.call(checkboxes, function(checkbox) {
             var storageKey = FILTER_STORAGE_PREFIX + checkbox.dataset.filterType;
             checkbox.checked = localStorage.getItem(storageKey) !== '0';
-            checkbox.onchange = onCheckboxChange;
-            if (!checkbox.checked) {
-                fileList.classList.add('gfilter-' + checkbox.dataset.filterType);
+            checkbox.onchange = function() {
+//#if CHROME || OPERA
+                var items = {};
+                items[storageKey] = checkbox.checked;
+                storageArea.set(items);
+//#else
+                localStorage.setItem(storageKey, this.checked ? '1' : '0');
+//#endif
+            };
+//#if CHROME || OPERA
+                storageArea.get(storageKey, function(items) {
+                    checkbox.checked = items[storageKey] !== false;
+                    updateFileListView();
+                });
+//#else
+                localStorage.setItem(storageKey, this.checked ? '1' : '0');
+                updateFileListView();
+//#endif
+            function updateFileListView() {
+                fileList.classList.toggle('gfilter-' + checkbox.dataset.filterType, !checkbox.checked);
             }
-        }
-        function onCheckboxChange() {
-            // jshint validthis:true
-            var storageKey = FILTER_STORAGE_PREFIX + this.dataset.filterType;
-            localStorage.setItem(storageKey, this.checked ? '1' : '0');
-            fileList.classList.toggle('gfilter-' + this.dataset.filterType, !this.checked);
-        }
+        });
     })();
     // Bind event
     var fileFilterElem = document.getElementById('file-filter');

@@ -16,7 +16,8 @@
     chrome.runtime.onInstalled.addListener(checkContextMenuPref);
     chrome.runtime.onStartup.addListener(checkContextMenuPref);
     function checkContextMenuPref() {
-        chrome.storage.local.get({showContextMenu:true}, function(items) {
+        var storageArea = chrome.storage.sync || chrome.storage.local;
+        storageArea.get({showContextMenu:true}, function(items) {
             if (items.showContextMenu) show();
         });
     }

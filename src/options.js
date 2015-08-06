@@ -37,9 +37,10 @@ if (chrome.declarativeWebRequest) {
 }
 //#endif
 
+var storageArea = chrome.storage.sync || chrome.storage.local;
 document.getElementById('contextmenu').onchange = function() {
-    chrome.storage.local.set({showContextMenu: this.checked});
+    storageArea.set({showContextMenu: this.checked});
 };
-chrome.storage.local.get({showContextMenu:true}, function(items) {
+storageArea.get({showContextMenu:true}, function(items) {
     document.getElementById('contextmenu').checked = items.showContextMenu;
 });

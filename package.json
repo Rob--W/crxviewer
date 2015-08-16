@@ -1,0 +1,19 @@
+{
+  "name": "crxviewer",
+  "version": "0.0.0",
+  "description": "Tools and dependencies to build CRX viewer.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Rob--W/crxviewer.git"
+  },
+  "author": "Rob Wu <rob@robwu.nl> (https://robwu.nl/)",
+  "license": "All rights reserved",
+  "bugs": {
+    "url": "https://github.com/Rob--W/crxviewer/issues"
+  },
+  "homepage": "https://github.com/Rob--W/crxviewer#readme",
+  "private": true,
+  "devDependencies": {
+    "less": "^2.5.1"
+  }
+}

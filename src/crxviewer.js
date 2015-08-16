@@ -428,8 +428,9 @@ var checkAndApplyFilter = (function() {
                 items[storageKey] = checkbox.checked;
                 storageArea.set(items);
 //#else
-                localStorage.setItem(storageKey, this.checked ? '1' : '0');
+                localStorage.setItem(storageKey, checkbox.checked ? '1' : '0');
 //#endif
+                updateFileListView();
             };
 //#if CHROME || OPERA
                 storageArea.get(storageKey, function(items) {
@@ -437,7 +438,7 @@ var checkAndApplyFilter = (function() {
                     updateFileListView();
                 });
 //#else
-                localStorage.setItem(storageKey, this.checked ? '1' : '0');
+                localStorage.setItem(storageKey, checkbox.checked ? '1' : '0');
                 updateFileListView();
 //#endif
             function updateFileListView() {

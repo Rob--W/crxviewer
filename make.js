@@ -24,7 +24,6 @@ function getBuildConfig(options) {
             OPERA: false
         },
         copy: [
-            [SRC_DIR + '*.css', dest_dir],
             [SRC_DIR + 'lib', dest_dir],
             [SRC_DIR + 'icons/*.png', dest_dir + 'icons']
         ],

@@ -493,6 +493,27 @@ function appendFileChooser() {
         var file = fileChooser.files[0];
         if (file) openCRXinViewer(file);
     };
+    /* Drag-n-Drop a file! */
+    function clearDragDrop() {
+        fileChooser.classList.remove('dragdrop');
+        fileChooser.classList.remove('invalid-source');
+    }
+    fileChooser.ondragover = function(e) {
+        this.classList.add('dragdrop');
+        e.preventDefault();
+        var types = e.dataTransfer.types;
+        if (!types.contains('Files') && !types.contains('text/uri-list')) {
+            this.classList.add('invalid-source');
+        }
+    };
+    fileChooser.ondragleave = clearDragDrop;
+    fileChooser.ondrop = function(e) {
+        clearDragDrop();
+        e.preventDefault();
+        var file = e.dataTransfer.files[0];
+        if (!file) file = e.dataTransfer.getData('URL');
+        if (file) openCRXinViewer(file);
+    };
     progressDiv.appendChild(fileChooser);
 }
 
@@ -511,11 +532,17 @@ function openCRXinViewer(crx_url) {
         progressDiv.textContent = error_message;
         appendFileChooser();
 
-//#if CHROME
         if (crx_blob) {
             // Input was a File object, so failure cannot be caused by invalid input.
             return;
         }
+        // URL request failed, retry with CORS proxy.
+        var cors_prefix = 'https://cors-anywhere.herokuapp.com/';
+        if (crx_url.indexOf(cors_prefix) == -1) {
+            openCRXinViewer(cors_prefix + crx_url);
+            return;
+        }
+//#if CHROME
         var permission = {
             origins: ['<all_urls>']
         };

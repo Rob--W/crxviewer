@@ -14,7 +14,7 @@
   "homepage": "https://github.com/Rob--W/crxviewer#readme",
   "private": true,
   "devDependencies": {
-    "less": "^2.5.1",
+    "less": "^2.7.1",
     "shelljs": "^0.7.0"
   }
 }

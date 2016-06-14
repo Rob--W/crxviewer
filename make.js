@@ -24,7 +24,6 @@ function getBuildConfig(options) {
             OPERA: false
         },
         copy: [
-            [SRC_DIR + '*.css', dest_dir],
             [SRC_DIR + 'lib', dest_dir],
             [SRC_DIR + 'icons/*.png', dest_dir + 'icons']
         ],
@@ -49,9 +48,9 @@ function cleanDirectory(dir) {
 }
 
 function build(setup, output_root_dir) {
-    exec(ROOT_DIR + 'node_modules/.bin/lessc --strict-math=on "' + SRC_DIR + 'crxviewer.less" "' + SRC_DIR + 'crxviewer.css"');
     cleanDirectory(output_root_dir);
     builder.build(setup);
+    exec(ROOT_DIR + '/node_modules/.bin/lessc --strict-math=on "' + SRC_DIR + 'crxviewer.less" "' + output_root_dir + 'crxviewer.css"');
     cd(output_root_dir);
     rm('lib/beautify/jsbeautifier/get-jsb.sh');
     rm('lib/zip.js/VERSION');

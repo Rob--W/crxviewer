@@ -12,7 +12,7 @@ var cws_download_pattern = /^https?:\/\/clients2\.google\.com\/service\/update2\
 var cws_match_pattern = '*://chrome.google.com/webstore/detail/*';
 
 // Opera add-on gallery
-var ows_pattern = /^https?:\/\/addons.opera.com\/.*?extensions\/(?:details|download)\/([^\/]+)/i;
+var ows_pattern = /^https?:\/\/addons.opera.com\/.*?extensions\/(?:details|download)\/([^\/?#]+)/i;
 var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 
 // string extensionID if valid URL

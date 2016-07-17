@@ -2,6 +2,7 @@
  * (c) 2013 Rob Wu <rob@robwu.nl>
  */
 /* globals chrome, cws_match_pattern, ows_match_pattern, cws_pattern, ows_pattern, URL, document, alert, localStorage */
+/* exported tryTriggerDownload  */
 
 'use strict';
 
@@ -17,6 +18,8 @@ if (chrome.declarativeWebRequest) {
             hostEquals: 'chrome.google.com'
         }, {
             hostEquals: 'addons.opera.com'
+        }, {
+            hostEquals: 'addons.mozilla.org'
         }]
     };
     chrome.webNavigation.onCommitted.addListener(showPageActionIfNeeded, webNavigationFilter);
@@ -58,7 +61,8 @@ function setupDeclarativeWebRequest() {
             new chrome.declarativeWebRequest.RequestMatcher({
                 contentType: [
                     'application/x-chrome-extension',
-                    'application/x-navigator-extension'
+                    'application/x-navigator-extension',
+                    'application/x-xpinstall',
                 ]
             }),
             // Octet stream, name ends with..
@@ -67,7 +71,7 @@ function setupDeclarativeWebRequest() {
                     'application/octet-stream'
                 ],
                 url: {
-                    urlMatches: '(?i)\\.(crx|nex)\\b'
+                    urlMatches: '(?i)\\.(crx|nex|xpi)\\b'
                 }
             }),
             // Octet stream, with attachment
@@ -89,7 +93,8 @@ function cdw_getRequestMatcherForExtensionAsAttachment() {
         ],
         responseHeaders: [
             '.crx', '.CRX', '.crx"', ".crx'",
-            '.nex', '.NEX', '.NEX"', ".nex'"
+            '.nex', '.NEX', '.NEX"', ".nex'",
+            '.xpi', '.XPI', '.XPI"', ".xpi'"
         ].map(function(contentDispositionHeaderSuffix) {
             return {
                 nameEquals: 'Content-disposition',

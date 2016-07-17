@@ -6,7 +6,7 @@ https://chrome.google.com/webstore/detail/chrome-extension-source-v/jifpbeccnghk
 Also available for Opera and Opera's add-on gallery.  
 https://addons.opera.com/extensions/details/extension-source-viewer/
 
-Online demo (select a .crx / .nex / .zip from your disk to try out the viewer):  
+Online demo (select a .crx / .nex / .zip / .xpi from your disk to try out the viewer):  
 https://robwu.nl/crxviewer/
 
 ## Features
@@ -27,8 +27,8 @@ The "View source" option opens a new tab with a simple viewer, with the followin
   - Image preview
 
 As mentioned before, this extension activates on the Chrome Web Store by default.
-It's also possible to view the source code of Chrome and Opera 15+ extensions that are hosted
-somewhere else. Further, there's an option to show a contextmenu entry on links whose target
+It's also possible to view the source code of Chrome, Opera 15+ and Firefox extensions that are
+hosted elsewhere. Further, there is an option to show a contextmenu entry on links whose target
 is a Chromium extension. Both features can be toggled at the options page.
 
 The "View source for all extensions" only shows a button when it detects the download of an

@@ -3,6 +3,8 @@
  */
 
 /* globals location, getPlatformInfo, navigator */
+/* exported cws_match_pattern, ows_match_pattern, amo_match_patterns */
+/* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, getParam */
 'use strict';
 
 // cws_pattern[1] = extensionID
@@ -15,6 +17,10 @@ var cws_match_pattern = '*://chrome.google.com/webstore/detail/*';
 var ows_pattern = /^https?:\/\/addons.opera.com\/.*?extensions\/(?:details|download)\/([^\/?#]+)/i;
 var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 
+// Firefox addon gallery
+var amo_pattern = /^https?:\/\/addons\.mozilla\.org\/.*?(?:addon|review)\/([^/<>"'?#]+)/;
+var amo_match_patterns = ['*://addons.mozilla.org/*addon/*', '*://addons.mozilla.org/*review/*'];
+
 // string extensionID if valid URL
 // null otherwise
 function get_extensionID(url) {
@@ -25,11 +31,20 @@ function get_extensionID(url) {
 }
 
 // Returns location of CRX file for a given extensionID or CWS url or Opera add-on URL
+// or Firefox addon URL.
 function get_crx_url(extensionID_or_url) {
     var url;
     var match = ows_pattern.exec(extensionID_or_url);
     if (match) {
         url = 'https://addons.opera.com/extensions/download/';
+        url += match[1];
+        url += '/';
+        return url;
+    }
+    match = amo_pattern.exec(extensionID_or_url);
+    if (match) {
+        // https://discourse.mozilla-community.org/t/is-there-a-direct-download-link-for-the-latest-addon-version-on-amo/4788
+        url = 'https://addons.mozilla.org/firefox/downloads/latest/';
         url += match[1];
         url += '/';
         return url;

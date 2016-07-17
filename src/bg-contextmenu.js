@@ -2,7 +2,7 @@
  * (c) 2013 Rob Wu <rob@robwu.nl>
  */
 /* jshint browser:true, devel:true */
-/* globals chrome, cws_match_pattern, ows_match_pattern, get_crx_url */
+/* globals chrome, cws_match_pattern, ows_match_pattern, amo_match_patterns,  get_crx_url */
 
 'use strict';
 (function() {
@@ -35,16 +35,18 @@
     function show() {
         chrome.contextMenus.create({
             id: MENU_ID_LINK,
-            title: 'View extension source',
+            title: 'View linked extension source',
             contexts: ['link'],
             targetUrlPatterns: [
                 '*://*/*.crx*',
                 '*://*/*.CRX*',
                 '*://*/*.NEX*',
                 '*://*/*.nex*',
+                '*://*/*.XPI*',
+                '*://*/*.xpi*',
                 cws_match_pattern,
                 ows_match_pattern
-            ]
+            ].concat(amo_match_patterns)
         });
         chrome.contextMenus.create({
             id: MENU_ID_PAGE,
@@ -53,7 +55,7 @@
             documentUrlPatterns: [
                 cws_match_pattern,
                 ows_match_pattern
-            ]
+            ].concat(amo_match_patterns)
         });
     }
     function hide() {

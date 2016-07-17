@@ -198,6 +198,7 @@ var viewFileInfo = (function() {
     }
     handlers['application/javascript'] =
     handlers['application/json'] =
+    handlers['application/rdf+xml'] =
     handlers['application/xhtml+xml'] =
     handlers.text = {
         Writer: zip.TextWriter,

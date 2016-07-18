@@ -4,6 +4,7 @@
 
 /* globals location, getPlatformInfo, navigator */
 /* exported cws_match_pattern, ows_match_pattern, amo_match_patterns */
+/* exported cws_pattern, ows_pattern, amo_pattern */
 /* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, getParam */
 'use strict';
 

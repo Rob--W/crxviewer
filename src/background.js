@@ -1,7 +1,8 @@
 /**
  * (c) 2013 Rob Wu <rob@robwu.nl>
  */
-/* globals chrome, cws_match_pattern, ows_match_pattern, cws_pattern, ows_pattern, URL, document, alert, localStorage */
+/* globals chrome, cws_match_pattern, ows_match_pattern, amo_match_patterns,
+   cws_pattern, ows_pattern, amo_pattern, URL, document, alert, localStorage */
 /* exported tryTriggerDownload  */
 
 'use strict';
@@ -29,6 +30,7 @@ if (chrome.declarativeWebRequest) {
 chrome.runtime.onInstalled.addListener(function() {
     chrome.tabs.query({url: cws_match_pattern}, queryCallback);
     chrome.tabs.query({url: ows_match_pattern}, queryCallback);
+    chrome.tabs.query({url: amo_match_patterns}, queryCallback);
     function queryCallback(tabs) {
         tabs.forEach(showPageActionIfNeeded);
     }
@@ -123,7 +125,7 @@ function showPageActionIfNeeded(details_or_tab) {
     }
     var tabId = details_or_tab.tabId || details_or_tab.id;
     var url = details_or_tab.url;
-    if (cws_pattern.test(url) || ows_pattern.test(url)) {
+    if (cws_pattern.test(url) || ows_pattern.test(url) || amo_pattern.test(url)) {
         showPageAction(tabId, url);
     } else {
         chrome.pageAction.hide(tabId);

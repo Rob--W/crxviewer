@@ -55,6 +55,8 @@ function get_xpi_url(addonSlug) {
     url += addonSlug;
     url += '/platform:' + platformId;
     url += '/';
+    // We can put anything here, but it is usually the desired file name for the XPI file.
+    url += addonSlug + '.xpi';
     return url;
 }
 
@@ -142,10 +144,13 @@ function get_zip_name(url, /*optional*/filename) {
         if (extensionID) {
             filename = extensionID;
         } else {
+            // https://addons.opera.com/en/extensions/details/<slug>/?display=en
+            // AMO: Lots of different formats, but usually ending with .xpi?....
+            url = url.split(/[?#]/, 1)[0];
             filename = /([^\/]+?)\/*$/.exec(url)[1];
         }
     }
-    return filename.replace(/\.(crx|nex|zip)$/i, '') + '.zip';
+    return filename.replace(/\.(crx|nex|xpi|zip)$/i, '') + '.zip';
 }
 
 function is_crx_url(url) {

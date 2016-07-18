@@ -112,9 +112,10 @@ target.firefox = function() {
     });
     build(setup, FIREFOX_BUILD_DIR);
     cp(SRC_DIR + 'manifest_firefox.json', FIREFOX_BUILD_DIR + 'manifest.json');
-    // TODO: Remove files that are not needed in Firefox?
 
     cd(FIREFOX_BUILD_DIR);
+    // Split incognito is not supported in Firefox.
+    rm('incognito-events.js');
     rm('-f', '../crxviewer_firefox.zip');
     exec('7z a ../crxviewer_firefox.zip * -tzip');
 };

@@ -32,6 +32,32 @@ function get_extensionID(url) {
     return match && match[1];
 }
 
+function get_xpi_url(addonSlug) {
+    // "https://addons.mozilla.org/firefox/downloads/latest/<slug>/" is suggested by TheOne:
+    // https://discourse.mozilla-community.org/t/is-there-a-direct-download-link-for-the-latest-addon-version-on-amo/4788
+    // This did not always work. I figured that some packages are platform-specific, so they need
+    // extra juice, so add it in the mix!
+
+    // https://github.com/mozilla/addons-server/blob/a5c045df049227b8a6e6ec0b9c86093aedda3d37/src/olympia/constants/platforms.py
+    var platformId;
+    var ua = navigator.userAgent;
+    if (ua.includes('Mac')) {
+        platformId = 3;
+    } else if (ua.includes('Win')) {
+        platformId = 5;
+    } else if (ua.includes('Android')) {
+        platformId = 7;
+    } else { // Assume Linux.
+        platformId = 2;
+    }
+
+    var url = 'https://addons.mozilla.org/firefox/downloads/latest/';
+    url += addonSlug;
+    url += '/platform:' + platformId;
+    url += '/';
+    return url;
+}
+
 // Returns location of CRX file for a given extensionID or CWS url or Opera add-on URL
 // or Firefox addon URL.
 function get_crx_url(extensionID_or_url) {
@@ -45,11 +71,7 @@ function get_crx_url(extensionID_or_url) {
     }
     match = amo_pattern.exec(extensionID_or_url);
     if (match) {
-        // https://discourse.mozilla-community.org/t/is-there-a-direct-download-link-for-the-latest-addon-version-on-amo/4788
-        url = 'https://addons.mozilla.org/firefox/downloads/latest/';
-        url += match[1];
-        url += '/';
-        return url;
+        return get_xpi_url(match[1]);
     }
     // Chrome Web Store
     match = get_extensionID(extensionID_or_url);

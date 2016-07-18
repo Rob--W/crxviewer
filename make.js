@@ -14,6 +14,7 @@ var BUILD_DIR = ROOT_DIR + 'dist/';
 var SRC_DIR = ROOT_DIR + 'src/';
 var CHROME_BUILD_DIR = BUILD_DIR + 'chrome/';
 var OPERA_BUILD_DIR = BUILD_DIR + 'opera/';
+var FIREFOX_BUILD_DIR = BUILD_DIR + 'firefox/';
 var WEB_BUILD_DIR = BUILD_DIR + 'web/';
 
 function getBuildConfig(options) {
@@ -21,6 +22,7 @@ function getBuildConfig(options) {
     var setup = {
         defines: {
             CHROME: false,
+            FIREFOX: false,
             OPERA: false
         },
         copy: [
@@ -59,6 +61,7 @@ function build(setup, output_root_dir) {
 target.all = function() {
     target.chrome();
     target.opera();
+    target.firefox();
     target.web();
 };
 
@@ -98,6 +101,24 @@ target.opera = function() {
     exec('7z a ../crxviewer_opera.zip * -tzip');
 };
 
+target.firefox = function() {
+    echo();
+    echo('Building Firefox addon...');
+    var setup = getBuildConfig({
+        build_dir: FIREFOX_BUILD_DIR,
+        defines: {
+            FIREFOX: true
+        }
+    });
+    build(setup, FIREFOX_BUILD_DIR);
+    cp(SRC_DIR + 'manifest_firefox.json', FIREFOX_BUILD_DIR + 'manifest.json');
+    // TODO: Remove files that are not needed in Firefox?
+
+    cd(FIREFOX_BUILD_DIR);
+    rm('-f', '../crxviewer_firefox.zip');
+    exec('7z a ../crxviewer_firefox.zip * -tzip');
+};
+
 target.web = function() {
     echo();
     echo('Building online demo...');
@@ -105,6 +126,7 @@ target.web = function() {
     var setup = {
         defines: {
             CHROME: false,
+            FIREFOX: false,
             OPERA: false
         },
         copy: [

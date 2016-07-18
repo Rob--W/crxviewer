@@ -4,6 +4,7 @@
 
 /* jshint browser:true, devel:true */
 /* globals chrome, get_crx_url, get_zip_name, is_crx_url, getParam, openCRXasZip */
+/* globals encodeQueryString */
 'use strict';
 var cws_url;
 var crx_url = getParam('crx');
@@ -56,9 +57,10 @@ function doDownload() {
 function doViewSource() {
     chrome.tabs.create({
         url: chrome.extension.getURL('crxviewer.html') +
-            '?crx=' + encodeURIComponent(crx_url) +
-            '&zipname=' + encodeURIComponent(filename),
+            '?' + encodeQueryString({crx: crx_url, zipname: filename}),
         active: true
+    }, function() {
+        window.close();
     });
 }
 function onXHRprogress(progressContainer, xhrProgressEvent) {

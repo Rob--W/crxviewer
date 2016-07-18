@@ -1,0 +1,44 @@
+{
+    "name": "Extension source viewer",
+    "description": "View the source code of any Chrome or Opera extension (crx/nex) and Firefox addons (xpi).",
+    "version": "1.3.0",
+    "manifest_version": 2,
+    "applications": {
+        "gecko": {
+            "id": "crxviewer-firefox@robwu.nl"
+        }
+    },
+    "background": {
+        "scripts": [
+            "chrome-platform-info.js",
+            "cws_pattern.js",
+            "background.js",
+            "bg-contextmenu.js"
+        ]
+    },
+    "page_action": {
+        "default_icon": {
+            "19": "icons/19.png",
+            "38": "icons/38.png"
+        },
+        "default_title": "Inspect contents of the current extension",
+        "default_popup": "popup.html"
+    },
+    "icons": {
+        "16": "icons/16.png",
+        "48": "icons/48.png",
+        "128": "icons/128.png"
+    },
+    "options_ui": {
+        "page": "options.html#optionsV2"
+    },
+    "permissions": [
+        "tabs",
+        "storage",
+        "contextMenus",
+        "*://*/*"
+    ],
+    "web_accessible_resources": [
+        "crxviewer.html"
+    ]
+}

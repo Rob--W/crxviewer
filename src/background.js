@@ -3,10 +3,22 @@
  */
 /* globals chrome, cws_match_pattern, ows_match_pattern, amo_match_patterns,
    cws_pattern, ows_pattern, amo_pattern, URL, document, alert, localStorage */
+/* globals encodeQueryString */
 /* exported tryTriggerDownload  */
 
 'use strict';
 
+//#if FIREFOX
+/* globals browser */
+browser.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+    showPageActionIfNeeded(tab);
+});
+browser.tabs.query({
+    url: [cws_match_pattern, ows_match_pattern].concat(amo_match_patterns),
+}).then(function(tabs) {
+    tabs.forEach(showPageActionIfNeeded);
+});
+//#else
 if (chrome.declarativeWebRequest) {
     chrome.runtime.onInstalled.addListener(setupDeclarativeWebRequest);
     chrome.declarativeWebRequest.onMessage.addListener(dwr_onMessage);
@@ -108,8 +120,9 @@ function cdw_getRequestMatcherForExtensionAsAttachment() {
 function dwr_onMessage(details) {
     showPageAction(details.tabId, details.url);
 }
+//#endif
 function showPageAction(tabId, url) {
-    var params = url ? '#crx=' + encodeURIComponent(url) : '';
+    var params = url ? encodeQueryString({crx: url}) : '';
     chrome.pageAction.setPopup({
         tabId: tabId,
         popup: 'popup.html?' + params
@@ -134,7 +147,18 @@ function showPageActionIfNeeded(details_or_tab) {
 
 // Called by popup.js
 function tryTriggerDownload(blob, filename) {
-    var url = URL.createObjectURL(blob);
+//#if !FIREFOX
+    tryTriggerDownloadUrl(URL.createObjectURL(blob), filename);
+//#else
+//  // Firefox does not support downloading blob:-URLs... bugzil.la/1287347
+//  var fr = new FileReader();
+//  fr.onloadend = function() {
+//      tryTriggerDownloadUrl(fr.result, filename);
+//  };
+//  fr.readAsDataURL(blob);
+//#endif
+}
+function tryTriggerDownloadUrl(url, filename) {
     if (!chrome.downloads) {
         // Chrome 31+ and Opera 20+
         tryTriggerDownloadFallback(url, filename);
@@ -155,7 +179,9 @@ function tryTriggerDownloadFallback(url, filename) {
         var a = document.createElement('a');
         a.href = url;
         a.download = filename;
+        (document.body || document.documentElement).appendChild(a);
         a.click();
+        a.remove();
     }
 
     chrome.tabs.executeScript({

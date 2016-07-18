@@ -6,6 +6,7 @@
 /* exported cws_match_pattern, ows_match_pattern, amo_match_patterns */
 /* exported cws_pattern, ows_pattern, amo_pattern */
 /* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, getParam */
+/* exported encodeQueryString */
 'use strict';
 
 // cws_pattern[1] = extensionID
@@ -131,7 +132,22 @@ function is_crx_url(url) {
 
 function getParam(name) { // Assume name contains no RegEx-specific char
     var haystack = location.search || location.hash;
+//#if FIREFOX
+    // Work-around for bugzil.la/719905 - see encodeQueryString below.
+    haystack = haystack.replace(/%u003A/g, '%3A');
+//#endif
     var pattern = new RegExp('[&?#]' + name + '=([^&]*)');
     var needle = pattern.exec(haystack);
     return needle && decodeURIComponent(needle[1]);
+}
+
+function encodeQueryString(params) {
+    return Object.keys(params).map(function(key) {
+        var value = encodeURIComponent(params[key]);
+//#if FIREFOX
+        // Work-around for bugzil.la/719905 - colons in URL break loading the URL.
+        value = value.replace(/%3A/g, '%u003A');
+//#endif
+        return key + '=' + value;
+    }).join('&');
 }

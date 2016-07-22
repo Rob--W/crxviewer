@@ -1,6 +1,6 @@
 {
     "name": "Extension source viewer",
-    "description": "View the source code of any Chrome or Opera extension (crx/nex) and Firefox addons (xpi).",
+    "description": "View source code of Firefox addons and Chrome extensions (crx/nex/xpi) from addons.mozilla.org, the Chrome Webstore and elsewhere.",
     "version": "1.3.0",
     "manifest_version": 2,
     "applications": {
@@ -21,7 +21,7 @@
             "19": "icons/19.png",
             "38": "icons/38.png"
         },
-        "default_title": "Inspect contents of the current extension",
+        "default_title": "Inspect contents of the current browser extension",
         "default_popup": "popup.html"
     },
     "icons": {

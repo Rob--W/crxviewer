@@ -1,7 +1,7 @@
 {
     "name": "Chrome extension source viewer",
     "short_name": "CRX Viewer",
-    "description": "Adds button to show the source code of a Chrome extension (crx file) in the Chrome web store (and elsewhere if wanted)",
+    "description": "View source code of Chrome extensions, Firefox addons or Opera extensions (crx/nex/xpi) from the Chrome web store and elsewhere.",
     "version": "1.2.7",
     "manifest_version": 2,
     "background": {
@@ -19,7 +19,7 @@
             "19": "icons/19.png",
             "38": "icons/38.png"
         },
-        "default_title": "Inspect contents of the current Chromium extension",
+        "default_title": "Inspect contents of the current browser extension",
         "default_popup": "popup.html"
     },
     "icons": {

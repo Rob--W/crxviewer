@@ -1,6 +1,6 @@
 {
     "name": "Extension source viewer",
-    "description": "View the source code of any Chrome or Opera extension (crx/nex). Also allows you to directly install extensions from the Chrome Web Store.",
+    "description": "View source code of extensions in the Chrome Web Store, Firefox or Opera addon gallery. Has button to install from Chrome Web Store.",
     "version": "1.2.7",
     "manifest_version": 2,
     "developer": {
@@ -22,7 +22,7 @@
             "19": "icons/19.png",
             "38": "icons/38.png"
         },
-        "default_title": "Inspect contents of the current Chromium extension",
+        "default_title": "Inspect contents of the current browser extension",
         "default_popup": "popup.html"
     },
     "icons": {

@@ -12,7 +12,8 @@
 
 'use strict';
 
-var crx_url = getParam('crx');
+// crx_url is globally set to the URL of the shown file for ease of debugging.
+// If there is no URL (e.g. with  <input type=file>), then crx_url is the file name.
 
 // Integrate zip.js
 zip.workerScriptsPath = 'lib/zip.js/';
@@ -469,6 +470,7 @@ var checkAndApplyFilter = (function() {
 // Go load the stuff
 initialize();
 function initialize() {
+    var crx_url = getParam('crx');
     if (!crx_url) {
         // No crx found in parameters, show Select file dialog.
         appendFileChooser();
@@ -513,11 +515,14 @@ function openCRXinViewer(crx_url) {
         crx_blob = crx_url;
         crx_url = crx_blob.name;
     }
+    // Now we have fixed the crx_url, update the global var.
+    window.crx_url = crx_url;
+
     var progressDiv = document.getElementById('initial-status');
     progressDiv.hidden = false;
     progressDiv.textContent = 'Loading ' + crx_url;
 
-    openCRXasZip(crx_blob || crx_url, handleBlob, function(error_message) {
+    openCRXasZip(crx_blob || crx_url, handleBlob.bind(null, crx_url), function(error_message) {
         progressDiv.textContent = error_message;
         appendFileChooser();
 
@@ -536,7 +541,7 @@ function openCRXinViewer(crx_url) {
                 chrome.permissions.request(permission, function(hasAccess) {
                     if (!hasAccess) return;
                     grantAccess.parentNode.removeChild(grantAccess);
-                    openCRXasZip(crx_url, handleBlob, null, progressEventHandler);
+                    openCRXasZip(crx_url, handleBlob.bind(null, crx_url), null, progressEventHandler);
                 });
             };
             grantAccess.onclick = checkAccessOnClick;
@@ -566,12 +571,12 @@ function openCRXinViewer(crx_url) {
     }
 }
 
-function handleBlob(blob, publicKey, raw_crx_data) {
+function handleBlob(crx_url, blob, publicKey, raw_crx_data) {
     var progressDiv = document.getElementById('initial-status');
     progressDiv.hidden = true;
     
-    setBlobAsDownload(blob);
-    setRawCRXAsDownload(publicKey && raw_crx_data);
+    setBlobAsDownload(crx_url, blob);
+    setRawCRXAsDownload(crx_url, publicKey && raw_crx_data);
     setPublicKey(publicKey);
 
     zip.createReader(new zip.BlobReader(blob), function(zipReader) {
@@ -587,7 +592,7 @@ function handleBlob(blob, publicKey, raw_crx_data) {
 }
 
 if (typeof URL === 'undefined') window.URL = window.webkitURL;
-function setBlobAsDownload(blob) {
+function setBlobAsDownload(crx_url, blob) {
     var dl_link = document.getElementById('download-link');
     dl_link.href = URL.createObjectURL(blob);
     var zipname = get_zip_name(crx_url, getParam('zipname'));
@@ -603,7 +608,7 @@ function setBlobAsDownload(blob) {
 //  fr.readAsDataURL(blob);
 //#endif
 }
-function setRawCRXAsDownload(arraybuffer) {
+function setRawCRXAsDownload(crx_url, arraybuffer) {
     var dl_link = document.getElementById('download-link-crx');
     if (!arraybuffer) {
         // Not a CRX file.

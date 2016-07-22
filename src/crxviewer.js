@@ -111,7 +111,9 @@ function handleZipEntries(entries) {
     });
 }
 function getGenericType(filename) {
+    // Chromium / generic / WebExtensions
     if (filename === 'manifest.json') {
+        // No generic type = Don't offer any checkbox to hide it.
         return '';
     }
     var extension = filename.split('.').pop().toLowerCase();
@@ -127,6 +129,22 @@ function getGenericType(filename) {
     if (filename.lastIndexOf('_locales/', 0) === 0) {
         return 'locales';
     }
+
+    // Firefox add-on specific.
+    // Note: package.json is not just used for Jetpack but also npm and such.
+    if (filename === 'chrome.manifest' || filename === 'install.rdf' || filename === 'package.json') {
+        return '';
+    }
+    if (/^jsm$/.test(extension)) {
+        return 'code';
+    }
+    if (/^(xbl|xul)$/.test(extension)) {
+        return 'markup';
+    }
+    if (/locale\/.*\.(dtd|properties)$/i.test(filename)) {
+        return 'locales';
+    }
+
     return 'misc';
 }
 
@@ -136,7 +154,7 @@ function getMimeTypeForFilename(filename) {
         // They are viewable as plain text.
         return 'text/plain';
     }
-    if (/\.(crx|nex)$/i.test(filename)) {
+    if (/\.(crx|nex|xpi)$/i.test(filename)) {
         // Just map them to zip files because we treat it as a zip file, internally.
         return 'application/zip';
     }
@@ -210,10 +228,12 @@ var viewFileInfo = (function() {
             // Progress, todo
         });
     }
+    handlers['application/vnd.mozilla.xul+xml'] =
     handlers['application/javascript'] =
     handlers['application/json'] =
     handlers['application/rdf+xml'] =
     handlers['application/xhtml+xml'] =
+    handlers['application/xml-dtd'] =
     handlers.text = {
         Writer: zip.TextWriter,
         callback: function(entry, text, finalCallback) {

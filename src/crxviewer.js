@@ -503,17 +503,16 @@ function appendFileChooser() {
     fileChooser.type = 'file';
     fileChooser.onchange = function() {
         var file = fileChooser.files[0];
-        if (file) openCRXinViewer(file);
+        if (file) openCRXinViewer(file.name, file);
     };
     progressDiv.appendChild(fileChooser);
 }
 
-// crx_url: string or File object
-function openCRXinViewer(crx_url) {
-    var crx_blob;
-    if (typeof crx_url === 'object') {
-        crx_blob = crx_url;
-        crx_url = crx_blob.name;
+// crx_url: full URL to CRX file, or filename.
+// crx_blob: Blob. Must be set if crx_url is not a full URL.
+function openCRXinViewer(crx_url, crx_blob) {
+    if (typeof crx_url !== 'string') {
+        throw new Error('Usage: openCRXinViewer( string, Blob? )');
     }
     // Now we have fixed the crx_url, update the global var.
     window.crx_url = crx_url;

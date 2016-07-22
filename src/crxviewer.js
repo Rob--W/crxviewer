@@ -154,9 +154,18 @@ function getMimeTypeForFilename(filename) {
         // They are viewable as plain text.
         return 'text/plain';
     }
-    if (/\.(crx|nex|xpi)$/i.test(filename)) {
+    if (/^(CHANGELOG|LICENSE|README)$/i.test(filename)) {
+        return 'text/plain';
+    }
+    var extension = filename.split('.').pop().toLowerCase();
+    switch (extension) {
+    case 'crx':
+    case 'nex':
+    case 'xpi':
         // Just map them to zip files because we treat it as a zip file, internally.
         return 'application/zip';
+    case 'md':
+        return 'text/plain';
     }
     return zip.getMimeType(filename);
 }
@@ -180,6 +189,18 @@ var viewFileInfo = (function() {
         var mt = mimeType.split('/');
 
         var handler = handlers[mimeType] || handlers[mt[0]];
+        if (!handler) {
+            switch (getGenericType(entry.filename)) {
+            case 'code':
+            case 'markup':
+            case 'locales':
+                handler = handlers.text;
+                break;
+            case 'images':
+                handler = handlers.image;
+                break;
+            }
+        }
 
         if (!handler) {
             if (!confirm('No handler for ' + mimeType + ' :(\nWant to open as plain text?'))

@@ -136,6 +136,10 @@ function getMimeTypeForFilename(filename) {
         // They are viewable as plain text.
         return 'text/plain';
     }
+    if (/\.(crx|nex)$/i.test(filename)) {
+        // Just map them to zip files because we treat it as a zip file, internally.
+        return 'application/zip';
+    }
     return zip.getMimeType(filename);
 }
 
@@ -233,6 +237,22 @@ var viewFileInfo = (function() {
             var sourceCodeElem = document.getElementById('source-code');
             sourceCodeElem.innerHTML = '<img>';
             sourceCodeElem.firstChild.src = data_url;
+        }
+    };
+    handlers['application/java-archive'] =
+    handlers['application/zip'] = {
+        Writer: zip.BlobWriter,
+        callback: function(entry, blob) {
+            var sourceCodeElem = document.getElementById('source-code');
+            sourceCodeElem.innerHTML = '<button>View the content of this file in a new CRX Viewer</button>';
+            sourceCodeElem.firstChild.onclick = function() {
+                var w = window.open('crxviewer.html');
+                w.onload = function() {
+                    w.onload = null;
+                    // Need to create Blob in other window to make sure that instanceof Blob etc. works.
+                    w.openCRXinViewer(entry.filename, new w.Blob([blob]));
+                };
+            };
         }
     };
     function calcWrapLength(text) {

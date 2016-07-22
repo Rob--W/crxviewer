@@ -150,7 +150,7 @@ function get_zip_name(url, /*optional*/filename) {
             filename = /([^\/]+?)\/*$/.exec(url)[1];
         }
     }
-    return filename.replace(/\.(crx|nex|xpi|zip)$/i, '') + '.zip';
+    return filename.replace(/\.(crx|jar|nex|xpi|zip)$/i, '') + '.zip';
 }
 
 function is_crx_url(url) {

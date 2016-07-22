@@ -25,6 +25,7 @@ The "View source" option opens a new tab with a simple viewer, with the followin
   - Automatic beautification (formatting) of code
   - Syntax highlighting
   - Image preview
+  - View content of embedded zip files.
 
 As mentioned before, this extension activates on the Chrome Web Store by default.
 It's also possible to view the source code of Chrome, Opera 15+ and Firefox extensions that are

@@ -24,7 +24,6 @@ if (chrome.declarativeWebRequest) {
     chrome.declarativeWebRequest.onMessage.addListener(dwr_onMessage);
 }
 
-// Detect navigations to/from Chrome/Opera extension gallery, and show icon if needed.
 (function() {
     var webNavigationFilter = {
         url: [{

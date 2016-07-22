@@ -129,6 +129,15 @@ function getGenericType(filename) {
     return 'misc';
 }
 
+function getMimeTypeForFilename(filename) {
+    if (/^META-INF\/.*\.[ms]f$/.test(filename)) {
+        // .sf and .mf are part of the signature in Firefox addons.
+        // They are viewable as plain text.
+        return 'text/plain';
+    }
+    return zip.getMimeType(filename);
+}
+
 var viewFileInfo = (function() {
     var _lastView = 0;
     var handlers = {};
@@ -144,7 +153,7 @@ var viewFileInfo = (function() {
                 return;
         }
 
-        var mimeType = zip.getMimeType(entry.filename);
+        var mimeType = getMimeTypeForFilename(entry.filename);
         var mt = mimeType.split('/');
 
         var handler = handlers[mimeType] || handlers[mt[0]];

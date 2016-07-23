@@ -146,16 +146,19 @@ function showPageActionIfNeeded(details_or_tab) {
 
 // Called by popup.js
 function tryTriggerDownload(blob, filename) {
-//#if !FIREFOX
-    tryTriggerDownloadUrl(URL.createObjectURL(blob), filename);
-//#else
-//  // Firefox does not support downloading blob:-URLs... bugzil.la/1287347
-//  var fr = new FileReader();
-//  fr.onloadend = function() {
-//      tryTriggerDownloadUrl(fr.result, filename);
-//  };
-//  fr.readAsDataURL(blob);
+//#if FIREFOX
+//  // Firefox does not support blob:-URLs in chrome.downloads until 49 (bugzil.la/1287347).
+//  // Can't use blob:-URLs with <a download> either until 50 (bugzil.la/1287346).
+//  if (/Firefox\/4\d\./.test(navigator.userAgent)) {
+//    var fr = new FileReader();
+//    fr.onloadend = function() {
+//        tryTriggerDownloadUrl(fr.result, filename);
+//    };
+//    fr.readAsDataURL(blob);
+//    return;
+//  }
 //#endif
+    tryTriggerDownloadUrl(URL.createObjectURL(blob), filename);
 }
 function tryTriggerDownloadUrl(url, filename) {
     if (!chrome.downloads) {

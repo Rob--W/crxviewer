@@ -661,6 +661,7 @@ function setBlobAsDownload(crx_url, blob) {
 //#if FIREFOX
 //  // If e10s is enabled, then <a download> ceases to work with blob:moz-extension-URLs.
 //  // (bugzil.la/1287346). So work around this by converting the blob-URL to a data-URL.
+//  if (!/Firefox\/4\d\./.test(navigator.userAgent)) return; // Fixed in Firefox 50
 //  var fr = new FileReader();
 //  fr.onloadend = function() {
 //      dl_link.href = fr.result;
@@ -684,6 +685,7 @@ function setRawCRXAsDownload(crx_url, arraybuffer) {
 //#if FIREFOX
 //  // If e10s is enabled, then <a download> ceases to work with blob:moz-extension-URLs.
 //  // (bugzil.la/1287346). So work around this by converting the blob-URL to a data-URL.
+//  if (!/Firefox\/4\d\./.test(navigator.userAgent)) return; // Fixed in Firefox 50
 //  var fr = new FileReader();
 //  fr.onloadend = function() {
 //      dl_link.href = fr.result;

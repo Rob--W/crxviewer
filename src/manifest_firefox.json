@@ -36,6 +36,7 @@
         "tabs",
         "storage",
         "contextMenus",
+        "downloads",
         "*://*/*"
     ],
     "web_accessible_resources": [

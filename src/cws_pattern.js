@@ -21,6 +21,7 @@ var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 
 // Firefox addon gallery
 var amo_pattern = /^https?:\/\/addons\.mozilla\.org\/.*?(?:addon|review)\/([^/<>"'?#]+)/;
+var amo_download_pattern = /^https?:\/\/addons\.mozilla\.org\/[^?#]*\/downloads\/latest\/([^/?#]+)/;
 var amo_match_patterns = ['*://addons.mozilla.org/*addon/*', '*://addons.mozilla.org/*review/*'];
 
 // string extensionID if valid URL
@@ -134,6 +135,10 @@ function get_webstore_url(url) {
     var ows = ows_pattern.exec(url);
     if (ows) {
         return 'https://addons.opera.com/extensions/details/' + ows[1];
+    }
+    var amo = amo_pattern.exec(url) || amo_download_pattern.exec(url);
+    if (amo) {
+        return 'https://addons.mozilla.org/firefox/addon/' + amo[1];
     }
 }
 

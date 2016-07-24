@@ -4,7 +4,7 @@
 
 /* jshint browser:true, devel:true */
 /* globals chrome, URL,
-           getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url,
+           getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url, is_crx_url,
            zip,
            beautify, prettyPrintOne,
            CryptoJS
@@ -672,13 +672,17 @@ function appendFileChooser() {
 function openCRXinViewer(crx_url, zipname, crx_blob) {
     zipname = get_zip_name(crx_url, zipname);
     if (crx_blob) {
-        loadBlobInViewer(crx_blob, crx_url, function(blob) {
-            handleBlob(zipname, blob);
+        if (crx_url && !is_crx_url(crx_url)) {
+            handleBlob(zipname, crx_blob, null, null);
+            return;
+        }
+        loadBlobInViewer(crx_blob, crx_url || zipname, function(blob, publicKey, raw_crx_data) {
+            handleBlob(zipname, blob, publicKey, raw_crx_data);
         });
         return;
     }
-    loadUrlInViewer(crx_url, function(blob) {
-        handleBlob(zipname, blob);
+    loadUrlInViewer(crx_url, function(blob, publicKey, raw_crx_data) {
+        handleBlob(zipname, blob, publicKey, raw_crx_data);
     });
 }
 
@@ -687,14 +691,17 @@ function loadCachedUrlInViewer(blob_url, human_readable_name, onHasBlob, onHasNo
         onHasNoBlob();
         return;
     }
+    loadNonCrxUrlInViewer(blob_url, human_readable_name, onHasBlob, onHasNoBlob);
+}
 
+function loadNonCrxUrlInViewer(url, human_readable_name, onHasBlob, onHasNoBlob) {
     var progressDiv = document.getElementById('initial-status');
     progressDiv.hidden = false;
     progressDiv.textContent = 'Loading ' + human_readable_name;
 
     try {
         var x = new XMLHttpRequest();
-        x.open('GET', blob_url);
+        x.open('GET', url);
         x.responseType = 'blob';
         x.onerror = onHasNoBlob;
         x.onload = function() {
@@ -725,17 +732,34 @@ function loadBlobInViewer(crx_blob, human_readable_name, onHasBlob) {
 
 function loadUrlInViewer(crx_url, onHasBlob) {
     // Now we have fixed the crx_url, update the global var.
-    window.crx_url = crx_url = crx_url || '';
+    window.crx_url = crx_url;
 
     var progressDiv = document.getElementById('initial-status');
     progressDiv.hidden = false;
     progressDiv.textContent = 'Loading ' + crx_url;
 
+    if (!is_crx_url(crx_url)) {
+        // If it is certainly not expected to be a CRX, don't try to load as a CRX.
+        // Otherwise the user may be confused if they see CRX-specific errors.
+        loadNonCrxUrlInViewer(crx_url, crx_url, onHasBlob, function() {
+            progressDiv.textContent = 'Cannot load ' + crx_url;
+//#if CHROME
+            maybeShowPermissionRequest();
+//#endif
+        });
+        return;
+    }
+
     openCRXasZip(crx_url, onHasBlob, function(error_message) {
         progressDiv.textContent = error_message;
         appendFileChooser();
+//#if CHROME
+        maybeShowPermissionRequest();
+//#endif
+    }, progressEventHandler);
 
 //#if CHROME
+    function maybeShowPermissionRequest() {
         var permission = {
             origins: ['<all_urls>']
         };
@@ -746,7 +770,7 @@ function loadUrlInViewer(crx_url, onHasBlob) {
                 chrome.permissions.request(permission, function(hasAccess) {
                     if (!hasAccess) return;
                     grantAccess.parentNode.removeChild(grantAccess);
-                    openCRXasZip(crx_url, onHasBlob, null, progressEventHandler);
+                    loadUrlInViewer(crx_url, onHasBlob);
                 });
             };
             grantAccess.onclick = checkAccessOnClick;
@@ -758,8 +782,8 @@ function loadUrlInViewer(crx_url, onHasBlob) {
             grantAccess.textContent = 'Add permission';
             progressDiv.appendChild(grantAccess);
         });
+    }
 //#endif
-    }, progressEventHandler);
     function progressEventHandler(xhrProgressEvent) {
         if (xhrProgressEvent.lengthComputable) {
             var loaded = xhrProgressEvent.loaded;

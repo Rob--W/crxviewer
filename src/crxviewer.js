@@ -4,7 +4,7 @@
 
 /* jshint browser:true, devel:true */
 /* globals chrome, URL,
-           getParam, openCRXasZip, get_zip_name, get_webstore_url,
+           getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url,
            zip,
            beautify, prettyPrintOne,
            CryptoJS
@@ -284,15 +284,35 @@ var viewFileInfo = (function() {
     handlers['application/zip'] = {
         Writer: zip.BlobWriter,
         callback: function(entry, blob) {
+            var viewerUrl = 'crxviewer.html';
+            var blob_url = URL.createObjectURL(blob);
+            if (getParam('crx') === window.crx_url && window.crx_url) {
+                // The URL parameters are probably reliable (=describing the zip), so use it.
+                var inside = getParam('inside[]');
+                inside.push(entry.filename);
+                viewerUrl += '?' + encodeQueryString({
+                    // Pass these parameters in case the blob URL disappears.
+                    crx: window.crx_url,
+                    inside: inside,
+                    // Allow the viewer to re-use our cached blob.
+                    blob: blob_url,
+                });
+            } else {
+                viewerUrl += '?' + encodeQueryString({
+                    blob: blob_url,
+                    zipname: entry.zipname,
+                });
+            }
+
             var sourceCodeElem = document.getElementById('source-code');
             sourceCodeElem.innerHTML = '<button>View the content of this file in a new CRX Viewer</button>';
             sourceCodeElem.firstChild.onclick = function() {
-                var w = window.open('crxviewer.html');
-                w.onload = function() {
-                    w.onload = null;
-                    // Need to create Blob in other window to make sure that instanceof Blob etc. works.
-                    w.openCRXinViewer(entry.filename, new w.Blob([blob]));
-                };
+//#if FIREFOX
+                // window.open is broken, so use chrome.tabs.create: bugzil.la/1288901.
+                chrome.tabs.create({url: viewerUrl});
+//#else
+                window.open(viewerUrl);
+//#endif
             };
         }
     };
@@ -532,18 +552,59 @@ var checkAndApplyFilter = (function() {
 initialize();
 function initialize() {
     var crx_url = getParam('crx');
-    if (!crx_url) {
+    var blob_url = getParam('blob');
+    if (!crx_url && !blob_url) {
         // No crx found in parameters, show Select file dialog.
         appendFileChooser();
         return;
     }
-    var webstore_url = get_webstore_url(crx_url);
+    var webstore_url = crx_url && get_webstore_url(crx_url);
     if (webstore_url) {
         var webstore_link = document.getElementById('webstore-link');
         webstore_link.href = webstore_url;
         webstore_link.title = webstore_url;
     }
-    openCRXinViewer(crx_url);
+    var inside = getParam('inside[]');
+    var zipname = getParam('zipname');
+    if (inside.length || blob_url) {
+        openEmbeddedZipFile(crx_url, inside, blob_url, zipname);
+        return;
+    }
+    openCRXinViewer(crx_url, zipname);
+}
+
+// |crx_url| is the canonical representation (absolute URL) of the zip file (optional).
+// |inside| is the path to the file that we want to open. Every extra item is another level inside
+// the zip file, e.g. ['foo.jar','bar.zip'] is the "bar.zip" file inside "foo.jar" inside |crx_url|.
+// |blob_url| is the (ephemeral) URL of the Blob, used if possible.
+// |zipname| is the preferred name for the zip file (should be set if |crx_url| is not set).
+function openEmbeddedZipFile(crx_url, inside, blob_url, zipname) {
+    if (!/^blob:/.test(blob_url)) {
+        fallback();
+        return;
+    }
+    try {
+        var x = new XMLHttpRequest();
+        x.open('GET', blob_url);
+        x.responseType = 'blob';
+        x.onerror = fallback;
+        x.onload = function() {
+            if (x.response && x.response.size) {
+                openCRXinViewer(crx_url, zipname, x.response);
+            } else {
+                fallback();
+            }
+        };
+        x.send();
+    } catch (e) {
+        console.warn('Fetching blob URL failed: ' + e);
+        fallback();
+        return;
+    }
+
+    function fallback() {
+        console.warn('TODO: Parse zip, extract zip, descend.');
+    }
 }
 
 function appendFileChooser() {
@@ -564,25 +625,25 @@ function appendFileChooser() {
     fileChooser.type = 'file';
     fileChooser.onchange = function() {
         var file = fileChooser.files[0];
-        if (file) openCRXinViewer(file.name, file);
+        if (file) openCRXinViewer('', file.name, file);
     };
     progressDiv.appendChild(fileChooser);
 }
 
-// crx_url: full URL to CRX file, or filename.
-// crx_blob: Blob. Must be set if crx_url is not a full URL.
-function openCRXinViewer(crx_url, crx_blob) {
-    if (typeof crx_url !== 'string') {
-        throw new Error('Usage: openCRXinViewer( string, Blob? )');
-    }
+// crx_url: full URL to CRX file, may be an empty string.
+// zipname: Preferred file name.
+// crx_blob: Blob of the zip file.
+// One (or both) of crx_url or crx_blob must be set.
+function openCRXinViewer(crx_url, zipname, crx_blob) {
     // Now we have fixed the crx_url, update the global var.
-    window.crx_url = crx_url;
+    window.crx_url = crx_url = crx_url || '';
+    zipname = get_zip_name(crx_url, zipname);
 
     var progressDiv = document.getElementById('initial-status');
     progressDiv.hidden = false;
-    progressDiv.textContent = 'Loading ' + crx_url;
+    progressDiv.textContent = 'Loading ' + crx_url + (zipname ? ' (' + zipname + ')' : '');
 
-    openCRXasZip(crx_blob || crx_url, handleBlob.bind(null, crx_url), function(error_message) {
+    openCRXasZip(crx_blob || crx_url, handleBlob.bind(null, zipname), function(error_message) {
         progressDiv.textContent = error_message;
         appendFileChooser();
 
@@ -601,7 +662,7 @@ function openCRXinViewer(crx_url, crx_blob) {
                 chrome.permissions.request(permission, function(hasAccess) {
                     if (!hasAccess) return;
                     grantAccess.parentNode.removeChild(grantAccess);
-                    openCRXasZip(crx_url, handleBlob.bind(null, crx_url), null, progressEventHandler);
+                    openCRXasZip(crx_url, handleBlob.bind(null, zipname), null, progressEventHandler);
                 });
             };
             grantAccess.onclick = checkAccessOnClick;
@@ -631,12 +692,12 @@ function openCRXinViewer(crx_url, crx_blob) {
     }
 }
 
-function handleBlob(crx_url, blob, publicKey, raw_crx_data) {
+function handleBlob(zipname, blob, publicKey, raw_crx_data) {
     var progressDiv = document.getElementById('initial-status');
     progressDiv.hidden = true;
     
-    setBlobAsDownload(crx_url, blob);
-    setRawCRXAsDownload(crx_url, publicKey && raw_crx_data);
+    setBlobAsDownload(zipname, blob);
+    setRawCRXAsDownload(zipname, publicKey && raw_crx_data);
     setPublicKey(publicKey);
 
     zip.createReader(new zip.BlobReader(blob), function(zipReader) {
@@ -652,10 +713,9 @@ function handleBlob(crx_url, blob, publicKey, raw_crx_data) {
 }
 
 if (typeof URL === 'undefined') window.URL = window.webkitURL;
-function setBlobAsDownload(crx_url, blob) {
+function setBlobAsDownload(zipname, blob) {
     var dl_link = document.getElementById('download-link');
     dl_link.href = URL.createObjectURL(blob);
-    var zipname = get_zip_name(crx_url, getParam('zipname'));
     dl_link.download = zipname;
     dl_link.title = 'Download zip file as ' + zipname;
 //#if FIREFOX
@@ -669,7 +729,7 @@ function setBlobAsDownload(crx_url, blob) {
 //  fr.readAsDataURL(blob);
 //#endif
 }
-function setRawCRXAsDownload(crx_url, arraybuffer) {
+function setRawCRXAsDownload(zipname, arraybuffer) {
     var dl_link = document.getElementById('download-link-crx');
     if (!arraybuffer) {
         // Not a CRX file.
@@ -679,7 +739,7 @@ function setRawCRXAsDownload(crx_url, arraybuffer) {
     // Use application/octet-stream to prevent Chromium from trying to install the extension.
     var blob = new Blob([arraybuffer], { type: 'application/octet-stream' });
     dl_link.href = URL.createObjectURL(blob);
-    var crxname = get_zip_name(crx_url, getParam('zipname')).replace(/\.zip$/i, '.crx');
+    var crxname = zipname.replace(/\.zip$/i, '.crx');
     dl_link.download = crxname;
     dl_link.title = 'Download original CRX file as ' + crxname;
 //#if FIREFOX

@@ -162,24 +162,48 @@ function is_crx_url(url) {
     return cws_pattern.test(url) || ows_pattern.test(url) || /\.(crx|nex)\b/.test(url);
 }
 
+// |name| should not contain special RegExp characters, except possibly maybe a '[]' at the end.
+// If |name| ends with a '[]', then the return value is an array. Otherwise the first match is
+// returned.
 function getParam(name) { // Assume name contains no RegEx-specific char
     var haystack = location.search || location.hash;
 //#if FIREFOX
     // Work-around for bugzil.la/719905 - see encodeQueryString below.
     haystack = haystack.replace(/%u003A/g, '%3A');
 //#endif
-    var pattern = new RegExp('[&?#]' + name + '=([^&]*)');
-    var needle = pattern.exec(haystack);
+    var pattern, needle, match;
+    if (name.slice(-2, name.length) === '[]') {
+        pattern = new RegExp('[&?#]' + name + '\\[\\]=([^&]*)', 'g');
+        var needles = [];
+        while ((match = pattern.exec(haystack)) !== null) {
+            needles.push(decodeURIComponent(match[1]));
+        }
+        return needles;
+    }
+    pattern = new RegExp('[&?#]' + name + '=([^&]*)');
+    needle = pattern.exec(haystack);
     return needle && decodeURIComponent(needle[1]);
 }
 
 function encodeQueryString(params) {
-    return Object.keys(params).map(function(key) {
-        var value = encodeURIComponent(params[key]);
+    var parts = [];
+    Object.keys(params).forEach(function(key) {
+        var value = params[key];
+        if (Array.isArray(value)) {
+            value.forEach(function(value2) {
+                parts.push(encodeQueryStringPart(key + '[]', value2));
+            });
+        } else if (value !== void 0) {
+            parts.push(encodeQueryStringPart(key, value));
+        }
+    });
+    return parts.join('&');
+    function encodeQueryStringPart(key, value) {
+        value = encodeURIComponent(value);
 //#if FIREFOX
         // Work-around for bugzil.la/719905 - colons in URL break loading the URL.
         value = value.replace(/%3A/g, '%u003A');
 //#endif
         return key + '=' + value;
-    }).join('&');
+    }
 }

@@ -6,6 +6,9 @@ https://chrome.google.com/webstore/detail/chrome-extension-source-v/jifpbeccnghk
 Also available for Opera and Opera's add-on gallery.  
 https://addons.opera.com/extensions/details/extension-source-viewer/
 
+And also available for Firefox and addons.mozilla.org (WebExtensions and other Firefox addon types).
+https://addons.mozilla.org/firefox/addon/crxviewer/
+
 Online demo (select a .crx / .nex / .zip / .xpi from your disk to try out the viewer):  
 https://robwu.nl/crxviewer/
 

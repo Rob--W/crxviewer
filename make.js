@@ -55,7 +55,6 @@ function build(setup, output_root_dir) {
     exec(ROOT_DIR + '/node_modules/.bin/lessc --strict-math=on "' + SRC_DIR + 'crxviewer.less" "' + output_root_dir + 'crxviewer.css"');
     cd(output_root_dir);
     rm('lib/beautify/jsbeautifier/get-jsb.sh');
-    rm('lib/zip.js/VERSION');
 }
 
 target.all = function() {

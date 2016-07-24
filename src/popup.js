@@ -118,6 +118,14 @@ function doInstall() {
 
 // Delegate download to background page to make sure that the download dialog shows up.
 function tryTriggerDownload(blob, filename) {
+//#if FIREFOX
+    if (!chrome.runtime.getBackgroundPage) {
+        // For Firefox 45 (https://hg.mozilla.org/mozilla-central/rev/65f6e081ded8).
+        chrome.runtime.getBackgroundPage = function(cb) {
+            cb(chrome.extension.getBackgroundPage());
+        };
+    }
+//#endif
     chrome.runtime.getBackgroundPage(function(bg) {
         bg.tryTriggerDownload(blob, filename);
         window.close();

@@ -38,6 +38,9 @@ extension. This detection is implemented through MIME-type sniffing using the
 API, which is only available to Chromium beta/dev users (though it should soon be available to the
 general public).
 
+The Firefox addon is implemented as a WebExtension, which is recent technology. See
+[firefox-stuff/compatibility.md](firefox-stuff/compatibility.md) for compatibility notes.
+
 ## Copyright
-(c) 2013 - 2014 Rob Wu <rob@robwu.nl> (https://robwu.nl/)
+(c) 2013 - 2016 Rob Wu <rob@robwu.nl> (https://robwu.nl/)
 

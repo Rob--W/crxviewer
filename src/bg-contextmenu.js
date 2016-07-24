@@ -65,6 +65,14 @@
                 ows_match_pattern
             ].concat(amo_match_patterns)
         });
+//#if FIREFOX
+        if (/Firefox\/4\d\./.test(navigator.userAgent)) {
+            // documentUrlPatterns is not supported yet, the menu is always hidden (bugzil.la/1275116).
+            // It will probably be fixed in 50 or 51, hence the condition targets 49 and lower.
+            // Not returning causes a useless menu item to appear on every page in Firefox 46 and 47 (bugzil.la/1250685).
+            return;
+        }
+//#endif
         chrome.contextMenus.create({
             id: MENU_ID_PAGE,
             title: 'View extension source',

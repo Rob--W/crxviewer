@@ -5,7 +5,7 @@
 /* globals location, getPlatformInfo, navigator */
 /* exported cws_match_pattern, ows_match_pattern, amo_match_patterns */
 /* exported cws_pattern, ows_pattern, amo_pattern */
-/* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, getParam */
+/* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, is_not_crx_url, getParam */
 /* exported encodeQueryString */
 'use strict';
 
@@ -160,6 +160,13 @@ function get_zip_name(url, /*optional*/filename) {
 
 function is_crx_url(url) {
     return cws_pattern.test(url) || ows_pattern.test(url) || /\.(crx|nex)\b/.test(url);
+}
+
+// Whether the given URL is not a CRX file, with certainty.
+function is_not_crx_url(url) {
+    if (is_crx_url(url) || cws_download_pattern.test(url))
+        return false;
+    return amo_pattern.test(url) || amo_download_pattern.test(url) || /\.xpi([#?]|$)/.test(url);
 }
 
 // |name| should not contain special RegExp characters, except possibly maybe a '[]' at the end.

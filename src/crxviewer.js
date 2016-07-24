@@ -4,7 +4,7 @@
 
 /* jshint browser:true, devel:true */
 /* globals chrome, URL,
-           getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url, is_crx_url,
+           getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url, is_not_crx_url,
            zip,
            beautify, prettyPrintOne,
            CryptoJS
@@ -672,7 +672,7 @@ function appendFileChooser() {
 function openCRXinViewer(crx_url, zipname, crx_blob) {
     zipname = get_zip_name(crx_url, zipname);
     if (crx_blob) {
-        if (crx_url && !is_crx_url(crx_url)) {
+        if (crx_url && is_not_crx_url(crx_url)) {
             handleBlob(zipname, crx_blob, null, null);
             return;
         }
@@ -738,7 +738,7 @@ function loadUrlInViewer(crx_url, onHasBlob) {
     progressDiv.hidden = false;
     progressDiv.textContent = 'Loading ' + crx_url;
 
-    if (!is_crx_url(crx_url)) {
+    if (is_not_crx_url(crx_url)) {
         // If it is certainly not expected to be a CRX, don't try to load as a CRX.
         // Otherwise the user may be confused if they see CRX-specific errors.
         loadNonCrxUrlInViewer(crx_url, crx_url, onHasBlob, function(err) {

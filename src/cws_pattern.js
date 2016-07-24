@@ -173,7 +173,7 @@ function getParam(name) { // Assume name contains no RegEx-specific char
 //#endif
     var pattern, needle, match;
     if (name.slice(-2, name.length) === '[]') {
-        pattern = new RegExp('[&?#]' + name + '\\[\\]=([^&]*)', 'g');
+        pattern = new RegExp('[&?#]' + name.slice(0, -2) + '\\[\\]=([^&]*)', 'g');
         var needles = [];
         while ((match = pattern.exec(haystack)) !== null) {
             needles.push(decodeURIComponent(match[1]));

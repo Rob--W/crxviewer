@@ -300,7 +300,7 @@ var viewFileInfo = (function() {
             } else {
                 viewerUrl += '?' + encodeQueryString({
                     blob: blob_url,
-                    zipname: entry.zipname,
+                    zipname: entry.filename,
                 });
             }
 
@@ -566,44 +566,79 @@ function initialize() {
     }
     var inside = getParam('inside[]');
     var zipname = getParam('zipname');
-    if (inside.length || blob_url) {
-        openEmbeddedZipFile(crx_url, inside, blob_url, zipname);
+
+    // blob:-URL without inside parameter = looking inside an (embedded) zip file for which we don't
+    // have a URL, e.g. a file selected via <input type=file>
+    if (!inside.length && blob_url) {
+        loadCachedUrlInViewer(blob_url, crx_url || zipname || blob_url, function(blob) {
+            openCRXinViewer(crx_url, zipname, blob);
+        }, function() {
+            if (crx_url) {
+                openCRXinViewer(crx_url, zipname);
+            } else {
+                var progressDiv = document.getElementById('initial-status');
+                progressDiv.textContent = 'Cannot open ' + (zipname || blob_url);
+                appendFileChooser();
+            }
+        });
         return;
     }
+    if (crx_url && inside.length) {
+        openEmbeddedZipFile(crx_url, inside, blob_url);
+        return;
+    }
+
+    // Plain and simple: Open the CRX at the given URL.
     openCRXinViewer(crx_url, zipname);
 }
 
-// |crx_url| is the canonical representation (absolute URL) of the zip file (optional).
+// |crx_url| is the canonical representation (absolute URL) of the zip file.
 // |inside| is the path to the file that we want to open. Every extra item is another level inside
 // the zip file, e.g. ['foo.jar','bar.zip'] is the "bar.zip" file inside "foo.jar" inside |crx_url|.
+// The list must contain at least one item.
 // |blob_url| is the (ephemeral) URL of the Blob, used if possible.
-// |zipname| is the preferred name for the zip file (should be set if |crx_url| is not set).
-function openEmbeddedZipFile(crx_url, inside, blob_url, zipname) {
-    if (!/^blob:/.test(blob_url)) {
-        fallback();
-        return;
-    }
-    try {
-        var x = new XMLHttpRequest();
-        x.open('GET', blob_url);
-        x.responseType = 'blob';
-        x.onerror = fallback;
-        x.onload = function() {
-            if (x.response && x.response.size) {
-                openCRXinViewer(crx_url, zipname, x.response);
-            } else {
-                fallback();
-            }
-        };
-        x.send();
-    } catch (e) {
-        console.warn('Fetching blob URL failed: ' + e);
-        fallback();
-        return;
-    }
+function openEmbeddedZipFile(crx_url, inside, blob_url) {
+    var progressDiv = document.getElementById('initial-status');
+    progressDiv.hidden = false;
 
-    function fallback() {
-        console.warn('TODO: Parse zip, extract zip, descend.');
+    var zipname = inside[inside.length - 1];
+
+    loadCachedUrlInViewer(blob_url, zipname, function(blob) {
+        openCRXinViewer(crx_url, zipname, blob);
+    }, function() {
+        progressDiv.textContent = 'Loading ' + zipname;
+        loadUrlInViewer(crx_url, function(blob) {
+            peekIntoZipUntilEnd(0, blob);
+        });
+    });
+
+    function peekIntoZipUntilEnd(index, blob) {
+        var human_readable_name = inside.slice(0, index + 1).reverse().join(' in ') + ' from ' + crx_url;
+        var zipname = inside[index];
+
+        zip.createReader(new zip.BlobReader(blob), function(zipReader) {
+            zipReader.getEntries(function(entries) {
+                var entry = entries.filter(function(entry) {
+                    return entry.filename === zipname;
+                })[0];
+                if (!entry) {
+                    progressDiv.textContent = 'Cannot open (did not find) ' + human_readable_name;
+                    zipReader.close();
+                    return;
+                }
+                entry.getData(new zip.BlobWriter(), function(blob) {
+                    zipReader.close();
+                    if (++index < inside.length) {
+                        peekIntoZipUntilEnd(index, blob);
+                    } else {
+                        openCRXinViewer(crx_url, zipname, blob);
+                    }
+                }, function() {
+                    progressDiv.textContent = 'Cannot read ' + human_readable_name;
+                    zipReader.close();
+                });
+            });
+        });
     }
 }
 
@@ -635,23 +670,72 @@ function appendFileChooser() {
 // crx_blob: Blob of the zip file.
 // One (or both) of crx_url or crx_blob must be set.
 function openCRXinViewer(crx_url, zipname, crx_blob) {
-    // Now we have fixed the crx_url, update the global var.
-    window.crx_url = crx_url = crx_url || '';
     zipname = get_zip_name(crx_url, zipname);
+    if (crx_blob) {
+        loadBlobInViewer(crx_blob, crx_url, function(blob) {
+            handleBlob(zipname, blob);
+        });
+        return;
+    }
+    loadUrlInViewer(crx_url, function(blob) {
+        handleBlob(zipname, blob);
+    });
+}
+
+function loadCachedUrlInViewer(blob_url, human_readable_name, onHasBlob, onHasNoBlob) {
+    if (!/^blob:/.test(blob_url)) {
+        onHasNoBlob();
+        return;
+    }
 
     var progressDiv = document.getElementById('initial-status');
     progressDiv.hidden = false;
-    progressDiv.textContent = 'Loading ' + crx_url + (zipname ? ' (' + zipname + ')' : '');
+    progressDiv.textContent = 'Loading ' + human_readable_name;
 
-    openCRXasZip(crx_blob || crx_url, handleBlob.bind(null, zipname), function(error_message) {
+    try {
+        var x = new XMLHttpRequest();
+        x.open('GET', blob_url);
+        x.responseType = 'blob';
+        x.onerror = onHasNoBlob;
+        x.onload = function() {
+            if (x.response && x.response.size) {
+                onHasBlob(x.response);
+            } else {
+                onHasNoBlob();
+            }
+        };
+        x.send();
+    } catch (e) {
+        // Just in case XHR blocks the blob:-URL for some unknown reason.
+        console.warn('Fetching blob URL failed: ' + e);
+        onHasNoBlob();
+    }
+}
+
+function loadBlobInViewer(crx_blob, human_readable_name, onHasBlob) {
+    var progressDiv = document.getElementById('initial-status');
+    progressDiv.hidden = false;
+    progressDiv.textContent = 'Loading ' + human_readable_name;
+
+    openCRXasZip(crx_blob, onHasBlob, function(error_message) {
+        progressDiv.textContent = error_message;
+        appendFileChooser();
+    });
+}
+
+function loadUrlInViewer(crx_url, onHasBlob) {
+    // Now we have fixed the crx_url, update the global var.
+    window.crx_url = crx_url = crx_url || '';
+
+    var progressDiv = document.getElementById('initial-status');
+    progressDiv.hidden = false;
+    progressDiv.textContent = 'Loading ' + crx_url;
+
+    openCRXasZip(crx_url, onHasBlob, function(error_message) {
         progressDiv.textContent = error_message;
         appendFileChooser();
 
 //#if CHROME
-        if (crx_blob) {
-            // Input was a File object, so failure cannot be caused by invalid input.
-            return;
-        }
         var permission = {
             origins: ['<all_urls>']
         };
@@ -662,7 +746,7 @@ function openCRXinViewer(crx_url, zipname, crx_blob) {
                 chrome.permissions.request(permission, function(hasAccess) {
                     if (!hasAccess) return;
                     grantAccess.parentNode.removeChild(grantAccess);
-                    openCRXasZip(crx_url, handleBlob.bind(null, zipname), null, progressEventHandler);
+                    openCRXasZip(crx_url, onHasBlob, null, progressEventHandler);
                 });
             };
             grantAccess.onclick = checkAccessOnClick;

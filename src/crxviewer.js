@@ -825,7 +825,7 @@ function setBlobAsDownload(zipname, blob) {
     var dl_link = document.getElementById('download-link');
     dl_link.href = URL.createObjectURL(blob);
     dl_link.download = zipname;
-    dl_link.title = 'Download zip file as ' + zipname;
+    dl_link.title = 'Download zip file as ' + zipname + ' (' + formatByteSize(blob.size) + ' bytes)';
 //#if FIREFOX
 //  // If e10s is enabled, then <a download> ceases to work with blob:moz-extension-URLs.
 //  // (bugzil.la/1287346). So work around this by converting the blob-URL to a data-URL.

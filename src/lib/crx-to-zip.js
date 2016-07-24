@@ -106,8 +106,8 @@ function openCRXasZip_url(url, callback, errCallback, xhrProgressListener) {
         }
         /* jshint newcap:false */
         CRXtoZIP(x.response, callback, function(err) {
-            if (x.status >= 400) {
-                err = 'Failed to load ' + url + '. Server responsed with ' + x.status + ' ' + x.statusText;
+            if (x.status >= 400 || !x.response.length) {
+                err = 'Failed to load ' + url + '. Server responded with ' + x.status + ' ' + x.statusText;
             }
             errCallback(err);
         });

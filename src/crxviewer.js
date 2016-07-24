@@ -703,19 +703,19 @@ function loadNonCrxUrlInViewer(url, human_readable_name, onHasBlob, onHasNoBlob)
         var x = new XMLHttpRequest();
         x.open('GET', url);
         x.responseType = 'blob';
-        x.onerror = onHasNoBlob;
+        x.onerror = function() {
+            onHasNoBlob('Network error for ' + url);
+        };
         x.onload = function() {
             if (x.response && x.response.size) {
                 onHasBlob(x.response);
             } else {
-                onHasNoBlob();
+                onHasNoBlob('No response received for ' + url);
             }
         };
         x.send();
     } catch (e) {
-        // Just in case XHR blocks the blob:-URL for some unknown reason.
-        console.warn('Fetching blob URL failed: ' + e);
-        onHasNoBlob();
+        onHasNoBlob('The browser refused to load ' + url + ', ' + e);
     }
 }
 
@@ -741,8 +741,8 @@ function loadUrlInViewer(crx_url, onHasBlob) {
     if (!is_crx_url(crx_url)) {
         // If it is certainly not expected to be a CRX, don't try to load as a CRX.
         // Otherwise the user may be confused if they see CRX-specific errors.
-        loadNonCrxUrlInViewer(crx_url, crx_url, onHasBlob, function() {
-            progressDiv.textContent = 'Cannot load ' + crx_url;
+        loadNonCrxUrlInViewer(crx_url, crx_url, onHasBlob, function(err) {
+            progressDiv.textContent = err;
 //#if CHROME
             maybeShowPermissionRequest();
 //#endif

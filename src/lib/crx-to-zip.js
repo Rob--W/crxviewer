@@ -105,7 +105,12 @@ function openCRXasZip_url(url, callback, errCallback, xhrProgressListener) {
             return;
         }
         /* jshint newcap:false */
-        CRXtoZIP(x.response, callback, errCallback);
+        CRXtoZIP(x.response, callback, function(err) {
+            if (x.status >= 400) {
+                err = 'Failed to load ' + url + '. Server responsed with ' + x.status + ' ' + x.statusText;
+            }
+            errCallback(err);
+        });
     };
     x.onerror = function() {
         errCallback('Network error for ' + url);

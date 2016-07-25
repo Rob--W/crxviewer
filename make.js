@@ -23,7 +23,8 @@ function getBuildConfig(options) {
         defines: {
             CHROME: false,
             FIREFOX: false,
-            OPERA: false
+            OPERA: false,
+            WEB: false,
         },
         copy: [
             [SRC_DIR + 'lib', dest_dir],
@@ -127,7 +128,8 @@ target.web = function() {
         defines: {
             CHROME: false,
             FIREFOX: false,
-            OPERA: false
+            OPERA: false,
+            WEB: true,
         },
         copy: [
             [SRC_DIR + '*.css', dest_dir],

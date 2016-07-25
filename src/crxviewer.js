@@ -666,14 +666,13 @@ function appendFileChooser() {
     progressDiv.hidden = false;
     progressDiv.insertAdjacentHTML('beforeend',
             '<br><br>' +
-            (typeof chrome === 'object' && chrome.runtime && chrome.runtime.id ?
-            // Extension
+//#if !WEB
             'Visit the Chrome Web Store, Opera\'s or Firefox\'s add-on gallery<br>' +
             'and click on the CRX button to view its source.' +
-            '<br><br>Or select a .crx/.nex/.xpi/.zip file:' :
-            // Web page
-            'Select a .crx/.nex/.xpi/.zip file:'
-            ) +
+            '<br><br>Or select a .crx/.nex/.xpi/.zip file:' +
+//#else
+            'Select a .crx/.nex/.xpi/.zip file:' +
+//#endif
             '<br><br>');
     var fileChooser = document.createElement('input');
     fileChooser.type = 'file';

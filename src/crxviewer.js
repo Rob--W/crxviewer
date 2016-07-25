@@ -510,7 +510,27 @@ var checkAndApplyFilter = (function() {
         var FILTER_STORAGE_PREFIX = 'filter-';
         var fileList = document.getElementById('file-list');
         var checkboxes = document.querySelectorAll('input[data-filter-type]');
+
+//#if !CHROME && !OPERA
+        if (!checkboxes.length) return;
+        // In Firefox, checkbox elements don't respect width/height style for checkbox.
+        // Resize it if needed.
+        var checkbox = checkboxes[0];
+        var elementOnSameLine = checkbox.parentNode.querySelector('.gcount');
+        var actualHeight = checkbox.getBoundingClientRect().height;
+        var expectedHeight = elementOnSameLine.getBoundingClientRect().height;
+        var scaleFactor = 1;
+        if (actualHeight && expectedHeight && actualHeight !== expectedHeight) {
+            scaleFactor = expectedHeight / actualHeight;
+        }
+//#endif
         [].forEach.call(checkboxes, function(checkbox) {
+//#if !CHROME && !OPERA
+            if (scaleFactor !== 1) {
+                checkbox.style.transformOrigin = '0 0';
+                checkbox.style.transform = 'scale(' + scaleFactor + ')';
+            }
+//#endif
             var storageKey = FILTER_STORAGE_PREFIX + checkbox.dataset.filterType;
             checkbox.checked = localStorage.getItem(storageKey) !== '0';
             checkbox.onchange = function() {

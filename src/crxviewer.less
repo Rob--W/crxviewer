@@ -64,6 +64,8 @@ body {
         margin: -0.1rem 0;
         padding: 0.1rem 3px;
         background: white;
+        height: 1.8rem;
+        // ^^^ = 2 * 0.1 (padding) + 0.8 (description) + 0.8 (checkbox/counter) = 1.8rem.
 
         &:hover {
             outline: 1px solid rgba(0, 0, 0, 0.2);
@@ -94,8 +96,10 @@ body {
         }
 
         .gcount {
-            // So that this counter does not influence the sizing of the label / label description.
-            width: 0;
+            // Set a very small width so that the flex label does not get too wide.
+            // It is not zero so that the counter always has some size.
+            padding-left: 2px;
+            width: 2px;
         }
     }
     #file-filter-feedback {

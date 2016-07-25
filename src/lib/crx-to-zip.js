@@ -22,7 +22,7 @@ var CRXtoZIP = (function() {
 
         // 43 72 32 34
         if (view[0] !== 67 || view[1] !== 114 || view[2] !== 50 || view[3] !== 52)
-            return errCallback('Invalid header: Does not start with Cr24'), void 0;
+            return errCallback('Invalid header: Does not start with Cr24.'), void 0;
 
         // 02 00 00 00
         if (view[4] !== 2 || view[5] || view[6] || view[7])
@@ -106,8 +106,15 @@ function openCRXasZip_url(url, callback, errCallback, xhrProgressListener) {
         }
         /* jshint newcap:false */
         CRXtoZIP(x.response, callback, function(err) {
-            if (x.status >= 400 || !x.response.length) {
+            if (x.status >= 400) {
                 err = 'Failed to load ' + url + '. Server responded with ' + x.status + ' ' + x.statusText;
+            } else if (!x.response.byteLength) {
+                err = 'Failed to load ' + url + '. Server did not send any response.';
+            } else {
+                var mimeType = x.getResponseHeader('Content-Type');
+                if (!/^application\/(x-chrome-extension|x-navigator-extension|zip)/i.test(mimeType)) {
+                    err += ' According to the server, the file type is ' + mimeType;
+                }
             }
             errCallback(err);
         });

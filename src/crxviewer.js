@@ -104,10 +104,9 @@ function handleZipEntries(entries) {
     // Render number of files of the following generic types:
     Object.keys(genericTypeCounts).forEach(function(genericType) {
         var checkbox = document.querySelector('input[data-filter-type="' + genericType + '"]');
-        var counter = document.createElement('span');
-        counter.className = 'gcount';
+        var label = checkbox.parentNode;
+        var counter = label.querySelector('.gcount');
         counter.textContent = genericTypeCounts[genericType];
-        checkbox.parentNode.appendChild(counter);
     });
 }
 function getGenericType(filename) {

@@ -25,7 +25,16 @@ body {
     height: 2rem;
     border-bottom: 2px solid #DDD;
     padding: @barPadding;
+
+    // On small screens the togglers may overflow to the next line.
+    // Make sure that they are visible if the user interacts with the top bar.
+    &:hover {
+        position: relative;
+        z-index: 10;
+    }
+
     #file-filter {
+        vertical-align: middle;
         width: @fileFilterWidth;
         max-width: 100%;
         height: 1.4rem;
@@ -46,6 +55,48 @@ body {
     }
     label {
         vertical-align: middle;
+        display: -webkit-inline-flex;
+        display: inline-flex;
+        -webkit-flex-wrap: wrap;
+        flex-wrap: wrap;
+        // This weird play with negative margins is to make sure that there is some
+        // visible padding when the labels overflow to the next line.
+        margin: -0.1rem 0;
+        padding: 0.1rem 3px;
+        background: white;
+
+        &:hover {
+            outline: 1px solid rgba(0, 0, 0, 0.2);
+        }
+
+        // The meaning of the checkbox, displayed above the checkbox.
+        .filter-label-description {
+            -webkit-flex: 0 0 100%;
+            flex: 0 0 100%;
+            order: 1;
+            font-size: 0.7rem;
+            height: 0.8rem;
+        }
+
+        // Below the label description, checkbox at the left,
+        // file counter at the right (gcount is inserted by JS).
+        input[data-filter-type],
+        .gcount {
+            -webkit-flex: 0 0 auto;
+            flex: 0 0 auto;
+            order: 2;
+            margin: 0;
+            font-size: 0.7rem;
+            height: 0.8rem;
+        }
+
+        input[data-filter-type] {
+        }
+
+        .gcount {
+            // So that this counter does not influence the sizing of the label / label description.
+            width: 0;
+        }
     }
     #file-filter-feedback {
         -webkit-flex: 1;
@@ -56,21 +107,6 @@ body {
     }
     & > a:not([href]) {
         display: none;
-    }
-}
-
-.gcount:not(:empty) {
-    &,
-    &::before,
-    &::after {
-        vertical-align: top;
-        font-size: smaller;
-    }
-    &::before {
-        content: '(';
-    }
-    &::after {
-        content: ')';
     }
 }
 

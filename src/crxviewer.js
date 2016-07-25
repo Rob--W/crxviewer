@@ -688,7 +688,10 @@ function appendFileChooser() {
 // crx_blob: Blob of the zip file.
 // One (or both) of crx_url or crx_blob must be set.
 function openCRXinViewer(crx_url, zipname, crx_blob) {
+    // Now we have fixed the crx_url, update the global var.
+    window.crx_url = crx_url;
     zipname = get_zip_name(crx_url, zipname);
+
     if (crx_blob) {
         if (crx_url && is_not_crx_url(crx_url)) {
             handleBlob(zipname, crx_blob, null, null);
@@ -749,9 +752,6 @@ function loadBlobInViewer(crx_blob, human_readable_name, onHasBlob) {
 }
 
 function loadUrlInViewer(crx_url, onHasBlob) {
-    // Now we have fixed the crx_url, update the global var.
-    window.crx_url = crx_url;
-
     var progressDiv = document.getElementById('initial-status');
     progressDiv.hidden = false;
     progressDiv.textContent = 'Loading ' + crx_url;

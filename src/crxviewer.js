@@ -570,6 +570,16 @@ var checkAndApplyFilter = (function() {
 // Go load the stuff
 initialize();
 function initialize() {
+    if (getParam('noview')) {
+        // TODO: Implement UI to set extension ID, arch, nacl_arch, os, etc.
+        // Would fix https://github.com/Rob--W/crxviewer/issues/23 and
+        // https://github.com/Rob--W/crxviewer/issues/13
+        // and also https://github.com/Rob--W/crxviewer/issues/9
+        console.warn('noview parameter not implemented yet. ' +
+                'Should prevent the source from loading and prepopulate advanced ' +
+                'open fields (TBD) with the URL.');
+        return;
+    }
     var crx_url = getParam('crx');
     var blob_url = getParam('blob');
     if (!crx_url && !blob_url) {
@@ -691,6 +701,12 @@ function openCRXinViewer(crx_url, zipname, crx_blob) {
     // Now we have fixed the crx_url, update the global var.
     window.crx_url = crx_url;
     zipname = get_zip_name(crx_url, zipname);
+
+    // We are switching from the initial view (selecting an extenzion/zip)
+    // to the next view (showing the contents of the extension/zip file).
+    // Show a link to open a new CRX Viewer, prepopulated with the current
+    // settings to allow the user to modify one bit of the download.
+    setCrxViewerLink(crx_url);
 
     if (crx_blob) {
         if (crx_url && is_not_crx_url(crx_url)) {
@@ -839,6 +855,21 @@ function handleBlob(zipname, blob, publicKey, raw_crx_data) {
 }
 
 if (typeof URL === 'undefined') window.URL = window.webkitURL;
+function setCrxViewerLink(crx_url) {
+    var viewerUrl = 'crxviewer.html';
+
+    if (crx_url) {
+        viewerUrl += '?' + encodeQueryString({
+            noview: 'on',
+            crx: crx_url,
+        });
+    }
+
+    var link = document.getElementById('open-crxviewer');
+    link.href = viewerUrl;
+    link.title = 'View the source of another extension or zip file';
+
+}
 function setBlobAsDownload(zipname, blob) {
     var dl_link = document.getElementById('download-link');
     dl_link.href = URL.createObjectURL(blob);

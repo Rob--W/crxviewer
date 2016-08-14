@@ -46,11 +46,11 @@ storageArea.get({showContextMenu:true}, function(items) {
 });
 
 //#if FIREFOX
-if (/Firefox\/(4\d|50)\./.test(navigator.userAgent)) {
+if (/Firefox\/4\d\./.test(navigator.userAgent)) {
     document.getElementById('contextmenu').parentNode.insertAdjacentHTML('beforeend',
         '<em>Because of a <a href="https://bugzil.la/1275126">bug in Firefox</a>, ' +
        'the menu item appears on all links (instead of just the addon links). ' +
-       'This bug will be fixed in Firefox 50 or 51.</em>');
+       'This bug has been fixed in Firefox 50.</em>');
     // ^ If not done by someone else I will submit a patch, hence that statement must be true.
 }
 //#endif

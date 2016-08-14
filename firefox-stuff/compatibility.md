@@ -38,10 +38,11 @@ about them in the source code).
 - Context menus are properly cleaned up when the addon is re-enabled
   (https://bugzil.la/1287359). Now it is not possible to accidentally have two
   duplicate context menu items.
+- Page-specific context menus are now working as intended (bugzil.la/1275116).
+- Link-specific context menus are now working as intended (bugzil.la/1275126).
 
 
 ### Open bugs
 The following bugs are still open in Firefox Nightly:
 
-- Contextmenus appear on every page (bugzil.la/1275116)
-- Contextmenus appear on every link (bugzil.la/1275126)
+(no relevant bugs)

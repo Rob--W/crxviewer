@@ -67,8 +67,7 @@
         });
 //#if FIREFOX
         if (/Firefox\/4\d\./.test(navigator.userAgent)) {
-            // documentUrlPatterns is not supported yet, the menu is always hidden (bugzil.la/1275116).
-            // It will probably be fixed in 50 or 51, hence the condition targets 49 and lower.
+            // documentUrlPatterns was not supported until 50, the menu is always hidden (bugzil.la/1275116).
             // Not returning causes a useless menu item to appear on every page in Firefox 46 and 47 (bugzil.la/1250685).
             return;
         }

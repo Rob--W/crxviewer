@@ -95,8 +95,15 @@ function openCRXasZip_blob(blob, callback, errCallback, frProgressListener) {
     fr.readAsArrayBuffer(blob);
 }
 function openCRXasZip_url(url, callback, errCallback, xhrProgressListener) {
+    var requestUrl = url;
+//#if WEB
+    if (/^https?:/.test(url)) {
+        // Proxy request through CORS Anywhere.
+        requestUrl = 'https://cors-anywhere.herokuapp.com/' + url;
+    }
+//#endif
     var x = new XMLHttpRequest();
-    x.open('GET', url);
+    x.open('GET', requestUrl);
     x.responseType = 'arraybuffer';
     x.onprogress = xhrProgressListener;
     x.onload = function() {

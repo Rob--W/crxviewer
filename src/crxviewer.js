@@ -864,9 +864,16 @@ function loadNonCrxUrlInViewer(url, human_readable_name, onHasBlob, onHasNoBlob)
     progressDiv.hidden = false;
     progressDiv.textContent = 'Loading ' + human_readable_name;
 
+    var requestUrl = url;
+//#if WEB
+    if (/^https?:/.test(url)) {
+        // Proxy request through CORS Anywhere.
+        requestUrl = 'https://cors-anywhere.herokuapp.com/' + url;
+    }
+//#endif
     try {
         var x = new XMLHttpRequest();
-        x.open('GET', url);
+        x.open('GET', requestUrl);
         x.responseType = 'blob';
         x.onerror = function() {
             onHasNoBlob('Network error for ' + url);

@@ -6,7 +6,7 @@
 /* globals chrome, URL,
            getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url, is_not_crx_url,
            get_extensionID, getPlatformInfo,
-           cws_pattern, get_crx_url,
+           cws_pattern, get_crx_url, cws_download_pattern,
            zip,
            beautify, prettyPrintOne,
            CryptoJS
@@ -583,9 +583,16 @@ function initialize() {
         return;
     }
     var webstore_url = crx_url && get_webstore_url(crx_url);
-    if (cws_pattern.test(crx_url)) {
-        webstore_url = crx_url;
-        crx_url = get_crx_url(get_extensionID(webstore_url));
+    // Only consider rewriting the URL if it is not a known webstore download, because
+    // the get_crx_url method only takes the extension ID and generates the other
+    // parameters based on the current platform.
+    if (!cws_download_pattern.test(crx_url)) {
+        if (cws_pattern.test(crx_url)) {
+            // Prefer given URL because its slug contains an extra human-readable short name.
+            webstore_url = crx_url;
+        }
+        // This is a no-op if the URL is not recognized.
+        crx_url = get_crx_url(webstore_url);
     }
     if (webstore_url) {
         var webstore_link = document.getElementById('webstore-link');

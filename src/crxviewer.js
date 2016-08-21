@@ -6,6 +6,7 @@
 /* globals chrome, URL,
            getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url, is_not_crx_url,
            get_extensionID, getPlatformInfo,
+           cws_pattern, get_crx_url,
            zip,
            beautify, prettyPrintOne,
            CryptoJS
@@ -582,6 +583,10 @@ function initialize() {
         return;
     }
     var webstore_url = crx_url && get_webstore_url(crx_url);
+    if (cws_pattern.test(crx_url)) {
+        webstore_url = crx_url;
+        crx_url = get_crx_url(get_extensionID(webstore_url));
+    }
     if (webstore_url) {
         var webstore_link = document.getElementById('webstore-link');
         webstore_link.href = webstore_url;

@@ -114,9 +114,66 @@ body {
     }
 }
 
-#right-panel, #left-panel {
+#advanced-open, #right-panel, #left-panel {
     height: -webkit-calc(100% - 2rem);
     height: calc(100% - 2rem);
+}
+#advanced-open {
+    display: none;
+    text-align: center;
+    padding: 2rem 1rem 0;
+
+    &.visible {
+        & ~ #right-panel, & ~ #left-panel {
+            display: none;
+        }
+        display: block;
+    }
+    input {
+        padding: 0.5rem;
+    }
+    input[type=url] {
+        display: block;
+        width: 90%;
+        margin: 0 5%;
+    }
+    .url-center-of-the-world {
+        margin: 0.3rem 0;
+    }
+}
+#advanced-open-cws-extension {
+    display: inline-block;
+    text-align: left;
+    padding: 1rem;
+    transition: opacity 0.2s;
+
+    &.disabled-cws:not(:hover):not(.focused-form) {
+        opacity: 0.3;
+    }
+
+    .labeltext {
+        display: inline-block;
+        width: 16ch;
+    }
+    > div:hover {
+        background-color: #F5F5F5;
+    }
+    label, input[type=text] {
+        display: inline-block;
+        padding: 0.5rem;
+    }
+    label {
+        &:hover, &:active {
+            background-color: #ddd;
+        }
+    }
+    input[type=text] {
+        // Fit at least the extension ID (32 chars) and browser version (max 24 chars)
+        width: 64ch;
+    }
+    input:invalid {
+        outline: auto red
+    }
 }
 #right-panel {
     padding-left: (2 * @resizerWidth + @rightPanelWidth);

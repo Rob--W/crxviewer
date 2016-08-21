@@ -5,6 +5,7 @@
 /* jshint browser:true, devel:true */
 /* globals chrome, URL,
            getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url, is_not_crx_url,
+           get_extensionID, getPlatformInfo,
            zip,
            beautify, prettyPrintOne,
            CryptoJS
@@ -571,20 +572,13 @@ var checkAndApplyFilter = (function() {
 initialize();
 function initialize() {
     if (getParam('noview')) {
-        // TODO: Implement UI to set extension ID, arch, nacl_arch, os, etc.
-        // Would fix https://github.com/Rob--W/crxviewer/issues/23 and
-        // https://github.com/Rob--W/crxviewer/issues/13
-        // and also https://github.com/Rob--W/crxviewer/issues/9
-        console.warn('noview parameter not implemented yet. ' +
-                'Should prevent the source from loading and prepopulate advanced ' +
-                'open fields (TBD) with the URL.');
+        showAdvancedOpener();
         return;
     }
     var crx_url = getParam('crx');
     var blob_url = getParam('blob');
     if (!crx_url && !blob_url) {
-        // No crx found in parameters, show Select file dialog.
-        appendFileChooser();
+        showAdvancedOpener();
         return;
     }
     var webstore_url = crx_url && get_webstore_url(crx_url);
@@ -619,6 +613,135 @@ function initialize() {
 
     // Plain and simple: Open the CRX at the given URL.
     openCRXinViewer(crx_url, zipname);
+}
+
+function showAdvancedOpener() {
+    // TODO: Implement UI to set extension ID, arch, nacl_arch, os, etc.
+    // Would fix https://github.com/Rob--W/crxviewer/issues/23 and
+    // https://github.com/Rob--W/crxviewer/issues/13
+    // and also https://github.com/Rob--W/crxviewer/issues/9
+    var openForm = document.getElementById('advanced-open');
+    var cwsOptions = document.getElementById('advanced-open-cws-extension');
+    var urlInput = openForm.querySelector('input[type=url]');
+    var fileInput = openForm.querySelector('input[type=file]');
+    function getCwsOption(name) {
+        var input = cwsOptions.querySelector('input[name="' + name + '"]');
+        if (input && input.type == 'text') {
+            return input.value;
+        }
+        input = cwsOptions.querySelector('input[name="' + name + '"]:checked');
+        return input ? input.value : '';
+    }
+    function setCwsOption(name, value) {
+        var input = cwsOptions.querySelector('input[name="' + name + '"]');
+        if (input && input.type == 'text') {
+            input.value = value;
+            return;
+        }
+        // Otherwise a radio element.
+        var choice = cwsOptions.querySelector('input[name="' + name + '"][value="' + value  + '"');
+        if (choice) {
+            choice.checked = true;
+        } else if (input) {
+            console.warn('No element found for option ' + name + ' and value ' + value + ', fall back to first option');
+            input.checked = true;
+        } else {
+            console.warn('No element found for option ' + name + ' and value ' + value + ', ignored.');
+        }
+    }
+    function toCwsUrl() {  // Assuming that all inputs are valid.
+        // See cws_pattern.js for an explanation of this URL.
+        var url = 'https://clients2.google.com/service/update2/crx?response=redirect';
+        url += '&os=' + getCwsOption('os');
+        url += '&arch=' + getCwsOption('arch');
+        url += '&nacl_arch=' + getCwsOption('nacl_arch');
+        url += '&prod=chromiumcrx';
+        url += '&prodchannel=unknown';
+        url += '&prodversion=' + getCwsOption('prodversion');
+        url += '&x=id%3D' + getCwsOption('xid');
+        url += '%26uc';
+        return url;
+    }
+    function maybeToggleWebStore() {
+        var extensionId = get_extensionID(urlInput.value);
+        if (!extensionId) {
+            cwsOptions.classList.add('disabled-cws');
+            cwsOptions.querySelector('input[name=xid]').required = false;
+            return;
+        }
+        function setOptionFromUrl(key) {
+            var prev = getCwsOption(key);
+            var next = getParam(key, urlInput.value);
+            if (next && prev !== next) {
+                setCwsOption(key, next);
+            }
+        }
+        cwsOptions.classList.remove('disabled-cws');
+        cwsOptions.querySelector('input[name=xid]').required = true;
+        setCwsOption('xid', extensionId);
+        setOptionFromUrl('os');
+        setOptionFromUrl('arch');
+        setOptionFromUrl('nacl_arch');
+    }
+    function maybeSaveBack() {
+        if (!/^[a-p]{32}$/.test(getCwsOption('xid'))) {
+            return; // Not a valid extension ID, ignore.
+        }
+        urlInput.value = toCwsUrl();
+    }
+    function toggleForm(enable) {
+        if (enable) {
+            cwsOptions.classList.add('focused-form');
+        } else {
+            cwsOptions.classList.remove('focused-form');
+        }
+    }
+
+    openForm.onsubmit = function(e) {
+        e.preventDefault();
+        if (!urlInput.value) {
+            if (fileInput.files[0]) {
+                // Navigate back in history or just reloaded page.
+                fileInput.onchange();
+            }
+            return;
+        }
+        var url = location.pathname + '?' + encodeQueryString({
+            crx: urlInput.value,
+        });
+        // For now let's just navigate.
+        location.href = url;
+    };
+    fileInput.onchange = function() {
+        var file = fileInput.files[0];
+        if (file) {
+            openForm.classList.toggle('visible');
+            openCRXinViewer('', file.name, file);
+        }
+    };
+
+    [].forEach.call(cwsOptions.querySelectorAll('input'), function(input) {
+        // Sync back changes when radio / text input changes
+        input.addEventListener('input', maybeSaveBack);
+        input.addEventListener('change', maybeSaveBack);
+        input.addEventListener('focus', toggleForm.bind(null, true));
+        input.addEventListener('blur', toggleForm.bind(null, false));
+    });
+    urlInput.addEventListener('input', maybeToggleWebStore);
+    urlInput.value = getParam('crx') || '';
+
+    // Render default webstore options.
+    var platformInfo = getPlatformInfo();
+    setCwsOption('os', platformInfo.os);
+    setCwsOption('arch', platformInfo.arch);
+    setCwsOption('nacl_arch', platformInfo.nacl_arch);
+    var prodversion = /Chrome\/(\d+\.\d+\.\d+\.\d+)/.exec(navigator.userAgent);
+    prodversion = prodversion ? prodversion[1] : '52.0.2743.116';
+    setCwsOption('prodversion', prodversion);
+
+    maybeToggleWebStore();
+
+    openForm.classList.toggle('visible');
 }
 
 // |crx_url| is the canonical representation (absolute URL) of the zip file.

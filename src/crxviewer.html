@@ -45,6 +45,53 @@
     <a id="download-link-crx">CRX</a>
     <a id="open-crxviewer">Open</a>
 </div>
+<form id="advanced-open">
+    <div>
+        Enter the URL of a Chrome Extension, Firefox addon, zip file,
+        or the page in the Chrome Web Store, Firefox addon gallery or Opera addon gallery.
+    </div>
+    <div class="url-center-of-the-world">
+        <input type="url" placeholder="URL of Chrome extension, Firefox addon or zip file">
+    </div>
+    <div>
+        <input type="submit" value="Open in this viewer">
+        or select a local file &rarr;
+        <input type="file">
+    </div>
+    <div id="advanced-open-cws-extension">
+        <h3>Generate or modify URL of Chrome Web Store item</h3>
+        <div title="Extension ID. This is the 32-character word in a Chrome Web Store URL">
+            <span class="labeltext">Extension ID</span>
+            <input type="text" pattern="[a-p]{32}" name="xid" placeholder="32-characters, a-p">
+        </div>
+        <div>
+            <span class="labeltext">Operating system</span>
+            <label><input type="radio" name="os" value="win"    > Windows</label>
+            <label><input type="radio" name="os" value="linux"  > Linux</label>
+            <label><input type="radio" name="os" value="mac"    > macOS</label>
+            <label><input type="radio" name="os" value="cros"   > Chrome OS</label>
+            <label><input type="radio" name="os" value="openbsd"> BSD</label>
+            <label><input type="radio" name="os" value="android"> Android</label>
+        </div>
+        <div>
+            <span class="labeltext">Architecture</span>
+            <label><input type="radio" name="arch" value="arm"   > ARM</label>
+            <label><input type="radio" name="arch" value="x86-64"> x86-64</label>
+            <label><input type="radio" name="arch" value="x86-32"> x86-32</label>
+        </div>
+        <div title="NativeClient architecture">
+            <span class="labeltext">NaCl architecture</span>
+            <label><input type="radio" name="nacl_arch" value="arm"   > ARM</label>
+            <label><input type="radio" name="nacl_arch" value="x86-64"> x86-64</label>
+            <label><input type="radio" name="nacl_arch" value="x86-32"> x86-32</label>
+            <!-- Maybe also "mips32"? -->
+        </div>
+        <div title="Version of Chrome browser. The Chrome Webstore may reject versions that are too old.">
+            <span class="labeltext">Chrome version</span>
+            <input type="text" pattern="[0-9]{1,5}(\.[0-9]{1,5}){3}" name="prodversion">
+        </div>
+    </div>
+</form>
 <div id="left-panel">
     <div class="content">
         <ol id="file-list"></ol>

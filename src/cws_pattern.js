@@ -172,8 +172,8 @@ function is_not_crx_url(url) {
 // |name| should not contain special RegExp characters, except possibly maybe a '[]' at the end.
 // If |name| ends with a '[]', then the return value is an array. Otherwise the first match is
 // returned.
-function getParam(name) { // Assume name contains no RegEx-specific char
-    var haystack = location.search || location.hash;
+function getParam(name, querystring) { // Assume name contains no RegEx-specific char
+    var haystack = querystring || location.search || location.hash;
 //#if FIREFOX
     // Work-around for bugzil.la/719905 - see encodeQueryString below.
     haystack = haystack.replace(/%u003A/g, '%3A');

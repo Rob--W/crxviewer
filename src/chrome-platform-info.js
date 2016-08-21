@@ -14,6 +14,7 @@
 // Then, when available, query the platform information
 
 /* globals chrome, localStorage, navigator */
+/* exported getPlatformInfo */
 
 'use strict';
 
@@ -89,4 +90,3 @@ function getPlatformInfoFallback() {
         nacl_arch: arch
     };
 }
-

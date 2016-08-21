@@ -71,7 +71,7 @@ function getPlatformInfoFallback() {
     } else if (ua.indexOf('BSD') >= 0) {
         os = 'openbsd';
     } else { // if (ua.indexOf('Linux') >= 0) {
-        os = 'Linux';
+        os = 'linux';
     }
 
     if (/\barm/.test(ua)) {

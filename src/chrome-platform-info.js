@@ -47,8 +47,8 @@ function getPlatformInfoFallback() {
     // UA := "Mozilla/5.0 (%s) AppleWebKit/%d.%d (KHTML, like Gecko) %s Safari/%d.%d"
     //                     ^^                                        ^^
     //                     Platform + CPUinfo                        Product, Chrome/d.d.d.d
-    // appVersion = UA without "Mozilla/"
-    var ua = navigator.appVersion.split('AppleWebKit')[0];
+    var ua = navigator.userAgent;
+    ua = ua.split('AppleWebKit')[0] || ua;
     // After splitting, we get the next string:
     // ua := "5.0 (%s) "
 

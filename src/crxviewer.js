@@ -72,6 +72,8 @@ function handleZipEntries(entries) {
             viewFileInfo(entry);
         });
 
+        bindSearchHandler(listItem, entry);
+
         listItem.dataset.filename = filename;
 
         var genericType = getGenericType(filename);
@@ -412,6 +414,109 @@ var viewFileInfo = (function() {
     }
     return viewFileInfo;
 })();
+
+var bindSearchHandler = (function() {
+    var _searchHandlerWorker;
+    var _searchHandlerNextId = 0;
+
+    var _initializedWorkers = {};
+    // Posts |message| to worker, unless this is the first time that
+    // the worker is used for |dataId|. In that case onFirstRun is called.
+    function postMessageToWorker(dataId, onFirstRun, message) {
+        if (!_searchHandlerWorker) {
+            _searchHandlerWorker = new Worker('search-worker.js');
+        }
+        if (!_initializedWorkers[dataId]) {
+            _initializedWorkers[dataId] = true;
+            onFirstRun(_searchHandlerWorker);
+        } else {
+            _searchHandlerWorker.postMessage(message);
+        }
+    }
+
+    // TODO: Skip reading data if it was already filtered out.
+    function bindSearchHandler(listItem, entry) {
+        var dataId = ++_searchHandlerNextId;
+        var dataChunks;
+        var pendingGetData = false;
+        var latestSearchTerm = '';
+        var pendingSearchTerm = '';
+
+        // When this was the first one.
+        function onFirstRun(worker) {
+            function sendInitialData() {
+                worker.postMessage({
+                    dataId: dataId,
+                    dataChunks: dataChunks,
+                    searchTerm: latestSearchTerm,
+                });
+            }
+            worker.addEventListener('message', function(event) {
+                var message = event.data;
+                if (message.dataId !== dataId) {
+                    return;
+                }
+                if (message.found === null) {
+                    // Not expected to happen, but just in case I ever decide
+                    // to evict old items from the cache in the worker.
+                    sendInitialData();
+                    return;
+                }
+                if (message.searchTerm !== pendingSearchTerm || !latestSearchTerm) {
+                    return;
+                }
+                listItem.classList.remove('grep-unknown');
+                listItem.classList.toggle('grep-no-match', !message.found);
+            });
+            sendInitialData();
+        }
+
+        function checkSearchTerms() {
+            if (latestSearchTerm === pendingSearchTerm) {
+                return;
+            }
+            if (!latestSearchTerm) {
+                // Special case, if there are no terms then we know
+                // that the term always matches.
+                listItem.classList.remove('grep-no-match');
+                listItem.classList.remove('grep-unknown');
+                return;
+            }
+            // TODO: Use local result cache here.
+            listItem.classList.add('grep-unknown');
+            if (dataChunks) {
+                pendingSearchTerm = latestSearchTerm;
+                postMessageToWorker(dataId, onFirstRun, {
+                    dataId: dataId,
+                    searchTerm: latestSearchTerm,
+                });
+            }
+        }
+        listItem.rob_applySearchTerm = function(searchTerm) {
+            latestSearchTerm = searchTerm;
+            if (!latestSearchTerm || pendingGetData || dataChunks) {
+                checkSearchTerms();
+                return;
+            }
+            pendingGetData = true;
+            var writer = Object.create(zip.Writer.prototype);
+            writer.init = function(callback) { this.chunks = []; callback(); };
+            writer.writeUint8Array = function(chunk, callback) {
+                this.chunks.push(chunk);
+                callback();
+            };
+            writer.getData = function(callback) {
+                callback(this.chunks);
+            };
+            entry.getData(writer, function(chunks) {
+                dataChunks = chunks;
+                checkSearchTerms();
+            });
+        };
+    }
+    return bindSearchHandler;
+})();
+
 function escapeHTML(string, useAsAttribute) {
     string = string
         .replace(/&/g, '&amp;')
@@ -485,10 +590,33 @@ var checkAndApplyFilter = (function() {
             }
         }
     }
-    function checkAndApplyFilter() {
+    // Filter on files containing |searchTerm|, *NOT* a regexp.
+    function grepSearch(searchTerm) {
+        var listItems = document.querySelectorAll('#file-list li');
+        for (var i = 0; i < listItems.length; ++i) {
+            // With rob_ prefix to make it very clear that it is not a standard
+            // property of a DOM element.
+            listItems[i].rob_applySearchTerm(searchTerm);
+        }
+    }
+    var debounceGrep;
+    function checkAndApplyFilter(shouldDebounce) {
         var fileFilterElem = document.getElementById('file-filter');
         var feedback = document.getElementById('file-filter-feedback');
         var pattern = fileFilterElem.value;
+        var grepTerm = '';
+
+        // Allow ! to be escaped if a user really wants to look for a ! in the filename.
+        var i = pattern.indexOf('!');
+        if (i !== -1) {
+            for (var j = i; j > 0 && pattern.charAt(j - 1) === '\\'; --j);
+            if ((j - i) % 2 === 0) {
+                // An unescaped !. Let's treat this as the delimiter for grep.
+                grepTerm = pattern.slice(i + 1);
+                pattern = pattern.slice(0, i);
+            }
+        }
+
         try {
             // TODO: Really want to force case-sensitivity?
             pattern = new RegExp(pattern, 'i');
@@ -502,6 +630,17 @@ var checkAndApplyFilter = (function() {
             return;
         }
         applyFilter(pattern);
+
+        clearTimeout(debounceGrep);
+        if (shouldDebounce && !debounceGrep) {
+            debounceGrep = setTimeout(function() {
+                debounceGrep = null;
+                grepSearch(grepTerm);
+            }, 300);
+        } else {
+            debounceGrep = null;
+            grepSearch(grepTerm);
+        }
     }
     (function() {
         // Bind to checkbox filter
@@ -561,7 +700,9 @@ var checkAndApplyFilter = (function() {
     })();
     // Bind event
     var fileFilterElem = document.getElementById('file-filter');
-    fileFilterElem.addEventListener('input', checkAndApplyFilter);
+    fileFilterElem.addEventListener('input', function() {
+        checkAndApplyFilter(true);
+    });
     fileFilterElem.form.onsubmit = function(e) {
         e.preventDefault();
         checkAndApplyFilter();

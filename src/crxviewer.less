@@ -246,8 +246,11 @@ body {
     &.gfilter-markup    li.gtype-markup,
     &.gfilter-locales   li.gtype-locales,
     &.gfilter-misc      li.gtype-misc,
-    li.file-filtered {
+    li.file-filtered, li.grep-no-match {
         display: none;
+    }
+    li.grep-unknown {
+        opacity: 0.5;
     }
     li {
         position: relative;

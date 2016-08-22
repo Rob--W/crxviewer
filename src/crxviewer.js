@@ -632,7 +632,8 @@ function showAdvancedOpener() {
     // Would fix https://github.com/Rob--W/crxviewer/issues/23 and
     // https://github.com/Rob--W/crxviewer/issues/13
     // and also https://github.com/Rob--W/crxviewer/issues/9
-    var openForm = document.getElementById('advanced-open');
+    var advancedOpenView = document.getElementById('advanced-open');
+    var openForm = document.getElementById('advanced-open-form');
     var cwsOptions = document.getElementById('advanced-open-cws-extension');
     var urlInput = openForm.querySelector('input[type=url]');
     var fileInput = openForm.querySelector('input[type=file]');
@@ -678,7 +679,6 @@ function showAdvancedOpener() {
         var extensionId = get_extensionID(urlInput.value);
         if (!extensionId) {
             cwsOptions.classList.add('disabled-cws');
-            cwsOptions.querySelector('input[name=xid]').required = false;
             return;
         }
         function setOptionFromUrl(key) {
@@ -689,17 +689,25 @@ function showAdvancedOpener() {
             }
         }
         cwsOptions.classList.remove('disabled-cws');
-        cwsOptions.querySelector('input[name=xid]').required = true;
         setCwsOption('xid', extensionId);
         setOptionFromUrl('os');
         setOptionFromUrl('arch');
         setOptionFromUrl('nacl_arch');
     }
     function maybeSaveBack() {
-        if (!/^[a-p]{32}$/.test(getCwsOption('xid'))) {
-            return; // Not a valid extension ID, ignore.
+        var isExtensionId = /^[a-p]{32}$/.test(getCwsOption('xid'));
+        cwsOptions.querySelector('.submit-if-valid').hidden = !isExtensionId;
+        if (!isExtensionId) {
+            return;
         }
-        urlInput.value = toCwsUrl();
+
+        // Only synchronize if there is no information to be lost, e.g. if it is not a URL or
+        // already a Chrome Web Store item.
+        var crx_url = toCwsUrl();
+        if (!/^https:?/.test(urlInput.value) || get_extensionID(urlInput.value)) {
+            urlInput.value = crx_url;
+        }
+        cwsOptions.querySelector('.submit-if-valid a').href = crx_url;
     }
     function toggleForm(enable) {
         if (enable) {
@@ -724,10 +732,17 @@ function showAdvancedOpener() {
         // For now let's just navigate.
         location.href = url;
     };
+    cwsOptions.onsubmit = function(e) {
+        e.preventDefault();
+        // Note: let's assume that the extension ID is valid, otherwise form validation would have
+        // kicked in. This is not necessarily true in old browsers, but whatever.
+        urlInput.value = toCwsUrl();
+        openForm.submit(e);
+    };
     fileInput.onchange = function() {
         var file = fileInput.files[0];
         if (file) {
-            openForm.classList.toggle('visible');
+            advancedOpenView.classList.remove('visible');
             openCRXinViewer('', file.name, file);
         }
     };
@@ -753,7 +768,7 @@ function showAdvancedOpener() {
 
     maybeToggleWebStore();
 
-    openForm.classList.toggle('visible');
+    advancedOpenView.classList.add('visible');
 }
 
 // |crx_url| is the canonical representation (absolute URL) of the zip file.

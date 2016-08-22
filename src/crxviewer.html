@@ -45,24 +45,20 @@
     <a id="download-link-crx">CRX</a>
     <a id="open-crxviewer">Open</a>
 </div>
-<form id="advanced-open">
-    <div>
+<div id="advanced-open">
+    <form id="advanced-open-form">
         Enter the URL of a Chrome Extension, Firefox addon, zip file,
         or the page in the Chrome Web Store, Firefox addon gallery or Opera addon gallery.
-    </div>
-    <div class="url-center-of-the-world">
         <input type="url" placeholder="URL of Chrome extension, Firefox addon or zip file">
-    </div>
-    <div>
         <input type="submit" value="Open in this viewer">
         or select a local file &rarr;
         <input type="file">
-    </div>
-    <div id="advanced-open-cws-extension">
+    </form>
+    <form id="advanced-open-cws-extension">
         <h3>Generate or modify URL of Chrome Web Store item</h3>
         <div title="Extension ID. This is the 32-character word in a Chrome Web Store URL">
             <span class="labeltext">Extension ID</span>
-            <input type="text" pattern="[a-p]{32}" name="xid" placeholder="32-characters, a-p">
+            <input type="text" pattern="[a-p]{32}" name="xid" placeholder="32-characters, a-p" required>
         </div>
         <div>
             <span class="labeltext">Operating system</span>
@@ -90,8 +86,12 @@
             <span class="labeltext">Chrome version</span>
             <input type="text" pattern="[0-9]{1,5}(\.[0-9]{1,5}){3}" name="prodversion">
         </div>
-    </div>
-</form>
+        <div class="submit-if-valid" hidden>
+            <input type="submit" value="View extension source in this viewer">
+            <a href="">Link to listing in the Chrome web store</a>
+        </div>
+    </form>
+</div>
 <div id="left-panel">
     <div class="content">
         <ol id="file-list"></ol>

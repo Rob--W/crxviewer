@@ -878,7 +878,7 @@ function showAdvancedOpener() {
         // Note: let's assume that the extension ID is valid, otherwise form validation would have
         // kicked in. This is not necessarily true in old browsers, but whatever.
         urlInput.value = toCwsUrl();
-        openForm.submit(e);
+        openForm.onsubmit(e);
     };
     fileInput.onchange = function() {
         var file = fileInput.files[0];

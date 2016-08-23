@@ -1143,12 +1143,6 @@ function handleBlob(zipname, blob, publicKey, raw_crx_data) {
     zip.createReader(new zip.BlobReader(blob), function(zipReader) {
         renderPanelResizer();
         zipReader.getEntries(handleZipEntries);
-        window.addEventListener('unload', function() {
-            zipReader.close();
-            // Close background page as well, to avoid memory leak.....
-            //chrome.extension.getBackgroundPage().close();
-            // F***, Extension crashes if navigating away >.>
-        });
     });
 }
 

@@ -2,23 +2,10 @@
 /* globals Uint8Array, TextEncoder, setTimeout, zip */
 'use strict';
 
-/**
- * Receives messages:
- * - required identifier dataId
- * - optional Array<Uint8Array> dataChunks
- * - optional string searchTerm
- *
- * Sends messages:
- * - required identifier dataId
- * - result: true, false, null.
- *   true = found
- *   false = not found
- *   null = unknown because of missing data
- */
-
 importScripts('lib/zip.js/zip.js', 'lib/zip.js/inflate.js');
 zip.useWebWorkers = false; // No nested workers please.
 
+// The file names in the zip file, sorted by file size (smallest first).
 var allFilenames = [];
 
 // File name to entry

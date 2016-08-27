@@ -33,7 +33,7 @@ self.onmessage = function(event) {
         return;
     }
     currentSearchTerm = message.searchTerm;
-    if (!fileEntries) {
+    if (!fileEntries || !currentSearchTerm) {
         return;
     }
     // For now just search through all files.

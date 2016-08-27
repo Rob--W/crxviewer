@@ -458,6 +458,9 @@ var TextSearchEngine = (function() {
         }
         if (!searchTerm) {
             this._currentSearchTerm = '';
+            this.worker.postMessage({
+                searchTerm: '',
+            });
             // No search term = every file matches.
             this.resultCallback(null, true);
             return;

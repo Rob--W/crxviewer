@@ -72,8 +72,6 @@ function handleZipEntries(entries) {
             viewFileInfo(entry);
         });
 
-        bindSearchHandler(listItem, entry);
-
         listItem.dataset.filename = filename;
 
         var genericType = getGenericType(filename);
@@ -415,106 +413,79 @@ var viewFileInfo = (function() {
     return viewFileInfo;
 })();
 
-var bindSearchHandler = (function() {
-    var _searchHandlerWorker;
-    var _searchHandlerNextId = 0;
-
-    var _initializedWorkers = {};
-    // Posts |message| to worker, unless this is the first time that
-    // the worker is used for |dataId|. In that case onFirstRun is called.
-    function postMessageToWorker(dataId, onFirstRun, message) {
-        if (!_searchHandlerWorker) {
-            _searchHandlerWorker = new Worker('search-worker.js');
-        }
-        if (!_initializedWorkers[dataId]) {
-            _initializedWorkers[dataId] = true;
-            onFirstRun(_searchHandlerWorker);
-        } else {
-            _searchHandlerWorker.postMessage(message);
-        }
-    }
-
-    // TODO: Skip reading data if it was already filtered out.
-    function bindSearchHandler(listItem, entry) {
-        var dataId = ++_searchHandlerNextId;
-        var dataChunks;
-        var pendingGetData = false;
-        var latestSearchTerm = '';
-        var pendingSearchTerm = '';
-
-        // When this was the first one.
-        function onFirstRun(worker) {
-            function sendInitialData() {
+var textSearchEngine;  // Initialized as soon as we have a zip file.
+var TextSearchEngine = (function() {
+    // A text search engine. It is guaranteed to report a result for every entry in the zip file.
+    // When a new search is started before the previous search completes, no old search results will
+    // appear again.
+    function TextSearchEngine(zipBlob) {
+        // Lazily initialize the worker.
+        Object.defineProperty(this, 'worker', {
+            configurable: true,
+            enumerable: true,
+            get: function() {
+                var worker = initializeWorker(this);
                 worker.postMessage({
-                    dataId: dataId,
-                    dataChunks: dataChunks,
-                    searchTerm: latestSearchTerm,
+                    zipBlob: zipBlob,
                 });
-            }
-            worker.addEventListener('message', function(event) {
-                var message = event.data;
-                if (message.dataId !== dataId) {
-                    return;
-                }
-                if (message.found === null) {
-                    // Not expected to happen, but just in case I ever decide
-                    // to evict old items from the cache in the worker.
-                    sendInitialData();
-                    return;
-                }
-                if (message.searchTerm !== pendingSearchTerm || !latestSearchTerm) {
-                    return;
-                }
-                listItem.classList.remove('grep-unknown');
-                listItem.classList.toggle('grep-no-match', !message.found);
-            });
-            sendInitialData();
-        }
-
-        function checkSearchTerms() {
-            if (latestSearchTerm === pendingSearchTerm) {
-                return;
-            }
-            if (!latestSearchTerm) {
-                // Special case, if there are no terms then we know
-                // that the term always matches.
-                listItem.classList.remove('grep-no-match');
-                listItem.classList.remove('grep-unknown');
-                return;
-            }
-            // TODO: Use local result cache here.
-            listItem.classList.add('grep-unknown');
-            if (dataChunks) {
-                pendingSearchTerm = latestSearchTerm;
-                postMessageToWorker(dataId, onFirstRun, {
-                    dataId: dataId,
-                    searchTerm: latestSearchTerm,
-                });
-            }
-        }
-        listItem.rob_applySearchTerm = function(searchTerm) {
-            latestSearchTerm = searchTerm;
-            if (!latestSearchTerm || pendingGetData || dataChunks) {
-                checkSearchTerms();
-                return;
-            }
-            pendingGetData = true;
-            var writer = Object.create(zip.Writer.prototype);
-            writer.init = function(callback) { this.chunks = []; callback(); };
-            writer.writeUint8Array = function(chunk, callback) {
-                this.chunks.push(chunk);
-                callback();
-            };
-            writer.getData = function(callback) {
-                callback(this.chunks);
-            };
-            entry.getData(writer, function(chunks) {
-                dataChunks = chunks;
-                checkSearchTerms();
-            });
-        };
+                delete this.worker;
+                this.worker = worker;
+                return worker;
+            },
+        });
+        /**
+         * Called twice for every new search. First with null, and then again with true or false.
+         *
+         * @callback resultCallback
+         * @param {string|null} filename The filename of the result. null for all files.
+         * @param {boolean|null} found true if found, false if not found, null if unknown.
+         */
+        this.resultCallback = null;
+        this._currentSearchTerm = '';
     }
-    return bindSearchHandler;
+
+    TextSearchEngine.prototype.setResultCallback = function(resultCallback) {
+        this.resultCallback = resultCallback;
+    };
+    TextSearchEngine.prototype.doPlaintextSearch = function(searchTerm) {
+        if (!this.resultCallback) {
+            console.warn('Ignored search request because the result handler was not set.');
+            return;
+        }
+        if (this._currentSearchTerm === searchTerm) {
+            return; // No change in result.
+        }
+        if (!searchTerm) {
+            this._currentSearchTerm = '';
+            // No search term = every file matches.
+            this.resultCallback(null, true);
+            return;
+        }
+        this.resultCallback(null, null); // Should not call doPlaintextSearch again.
+        this._currentSearchTerm = searchTerm;
+        this.worker.postMessage({
+            searchTerm: searchTerm,
+        });
+    };
+
+    function initializeWorker(textSearchEngine) {
+        var worker = new Worker('search-worker.js');
+        worker.addEventListener('message', function(event) {
+            var message = event.data;
+            if (message.searchTerm !== textSearchEngine._currentSearchTerm) {
+                return;
+            }
+            if (message.found.length) {
+                textSearchEngine.resultCallback(message.found, true);
+            }
+            if (message.notfound.length) {
+                textSearchEngine.resultCallback(message.notfound, false);
+            }
+        });
+        return worker;
+    }
+
+    return TextSearchEngine;
 })();
 
 function escapeHTML(string, useAsAttribute) {
@@ -592,12 +563,22 @@ var checkAndApplyFilter = (function() {
     }
     // Filter on files containing |searchTerm|, *NOT* a regexp.
     function grepSearch(searchTerm) {
-        var listItems = document.querySelectorAll('#file-list li');
-        for (var i = 0; i < listItems.length; ++i) {
-            // With rob_ prefix to make it very clear that it is not a standard
-            // property of a DOM element.
-            listItems[i].rob_applySearchTerm(searchTerm);
+        if (!textSearchEngine) {
+            return;
         }
+        textSearchEngine.setResultCallback(function(filenames, found) {
+            var listItems = document.querySelectorAll('#file-list li');
+            for (var i = 0; i < listItems.length; ++i) {
+                var listItem = listItems[i];
+                if (filenames !== null && filenames.indexOf(listItem.dataset.filename) === -1) {
+                    continue;
+                }
+                listItem.classList.toggle('grep-unknown', found === null);
+                listItem.classList.toggle('grep-no-match', found === false);
+            }
+        });
+        // TODO: Exclude CLASS_FILTERED ?
+        textSearchEngine.doPlaintextSearch(searchTerm);
     }
     var debounceGrep;
     function checkAndApplyFilter(shouldDebounce) {
@@ -1139,6 +1120,7 @@ function handleBlob(zipname, blob, publicKey, raw_crx_data) {
     setBlobAsDownload(zipname, blob);
     setRawCRXAsDownload(zipname, publicKey && raw_crx_data);
     setPublicKey(publicKey);
+    textSearchEngine = new TextSearchEngine(blob);
 
     zip.createReader(new zip.BlobReader(blob), function(zipReader) {
         renderPanelResizer();

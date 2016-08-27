@@ -588,13 +588,20 @@ var checkAndApplyFilter = (function() {
         var grepTerm = '';
 
         // Allow ! to be escaped if a user really wants to look for a ! in the filename.
-        var i = pattern.indexOf('!');
-        if (i !== -1) {
-            for (var j = i; j > 0 && pattern.charAt(j - 1) === '\\'; --j);
-            if ((j - i) % 2 === 0) {
-                // An unescaped !. Let's treat this as the delimiter for grep.
-                grepTerm = pattern.slice(i + 1);
-                pattern = pattern.slice(0, i);
+        var i = -1;
+        exclamation_search_loop: while ((i = pattern.indexOf('!', i + 1)) != -1) {
+            // (?! is a negative look-ahead, don't treat it as a search either.
+            if (pattern.substring(i - 2, i) != '(?') {
+                // Allow '!' to be escaped. Note that in a RegExp, '\!' is identical to '!', so we
+                // don't have to worry about changing semantics by requiring ! to be escaped to
+                // disable search.
+                for (var j = i; j > 0 && pattern.charAt(j - 1) === '\\'; --j);
+                if ((j - i) % 2 === 0) {
+                    // An unescaped !. Let's treat this as the delimiter for grep.
+                    grepTerm = pattern.slice(i + 1);
+                    pattern = pattern.slice(0, i);
+                    break exclamation_search_loop;
+                }
             }
         }
 

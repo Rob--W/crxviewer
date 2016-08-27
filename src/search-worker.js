@@ -135,6 +135,7 @@ function SearchTask(filenames, searchTerm) {
     // continuously updating the UI in separate messages.
     this.found = [];
     this.notfound = [];
+    this.querytime = 0;
     pendingSearch = this;
 }
 SearchTask.prototype.next = function() {
@@ -182,6 +183,11 @@ SearchTask.prototype.next = function() {
     } while ((Date.now() - startTime) < 500);
     // ^ Do not work too much
 
+    // Keep track of the time spent in the loop to measure the impact of search algorithm changes
+    // on the runtime. If existent, retrieving the file data has minimal overhead so clocking the
+    // loop gives an accurate representation of time.
+    this.querytime += Date.now() - startTime;
+
     this.sendResults();
 
     if (this.paused) {
@@ -209,6 +215,8 @@ SearchTask.prototype.sendResults = function() {
         found: this.found,
         notfound: this.notfound,
         searchTerm: this.searchTerm,
+        remaining: this.filenames.length,
+        querytime: this.querytime,
     });
     this.found.length = 0;
     this.notfound.length = 0;

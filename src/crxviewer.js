@@ -442,6 +442,7 @@ var TextSearchEngine = (function() {
          */
         this.resultCallback = null;
         this._currentSearchTerm = '';
+        this._currentSearchStart = 0;
     }
 
     TextSearchEngine.prototype.setResultCallback = function(resultCallback) {
@@ -463,6 +464,7 @@ var TextSearchEngine = (function() {
         }
         this.resultCallback(null, null); // Should not call doPlaintextSearch again.
         this._currentSearchTerm = searchTerm;
+        this._currentSearchStart = Date.now();
         this.worker.postMessage({
             searchTerm: searchTerm,
         });
@@ -480,6 +482,14 @@ var TextSearchEngine = (function() {
             }
             if (message.notfound.length) {
                 textSearchEngine.resultCallback(message.notfound, false);
+            }
+            if (message.remaining === 0) {
+                // This is the time spent on waiting until the zip file is extracted (first time
+                // only) and busy main thread (e.g. updating the UI).
+                var totalTime = Date.now() - textSearchEngine._currentSearchStart;
+                console.log('Query finished in ' + message.querytime + 'ms' +
+                        (totalTime > 10 ? ' (' + totalTime + 'ms total)' : '') +
+                        ' for ' + message.searchTerm);
             }
         });
         return worker;

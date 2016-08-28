@@ -33,7 +33,15 @@ if (typeof chrome === 'object' && chrome.runtime &&
  **/
 function getPlatformInfo() {
     var platformInfo = localStorage.getItem('platformInfo');
-    return platformInfo ? JSON.parse(platformInfo) : getPlatformInfoFallback();
+    if (!platformInfo) {
+        return getPlatformInfoFallback();
+    }
+    platformInfo = JSON.parse(platformInfo);
+    // Firefox does not have nacl_arch.
+    if (!platformInfo.nacl_arch) {
+        platformInfo.nacl_arch = getPlatformInfoFallback().nacl_arch;
+    }
+    return platformInfo;
 }
 
 

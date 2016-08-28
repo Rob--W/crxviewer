@@ -936,8 +936,11 @@ function showAdvancedOpener() {
         var url = location.pathname + '?' + encodeQueryString({
             crx: urlInput.value,
         });
-        // For now let's just navigate.
-        location.href = url;
+        advancedOpenView.classList.remove('visible');
+        // This open dialog only appears at the start of the page, and there is
+        // no data to lose, so we just replace the current URL.
+        history.replaceState(history.state, null, url);
+        initialize();
     };
     cwsOptions.onsubmit = function(e) {
         e.preventDefault();

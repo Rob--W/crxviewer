@@ -626,7 +626,7 @@ var checkAndApplyFilter = (function() {
             }
         }
     }
-    // Filter on files containing |searchTerm|, *NOT* a regexp.
+    // Filter on files containing |searchTerm|. See search-worker.js for the algorithm.
     function grepSearch(searchTerm) {
         if (!textSearchEngine) {
             return;
@@ -679,6 +679,21 @@ var checkAndApplyFilter = (function() {
             // Invalid regular expression: /..pattern.../ : blablabla
             feedback.textContent = (e.message+'').replace(': /' + pattern + '/', '');
             return;
+        }
+        
+        // Validate the grep pattern here to make sure that we don't apply the filter if the
+        // pattern is invalid.
+        if (grepTerm.lastIndexOf('regexp:', 0) === 0) {
+            var grepTermPattern = grepTerm.slice(7);
+            try {
+                new RegExp(grepTermPattern, 'i');
+                feedback.textContent = '';
+                fileFilterElem.classList.remove('invalid');
+            } catch (e) {
+                fileFilterElem.classList.add('invalid');
+                feedback.textContent = 'Search: ' + (e.message+'').replace(': /' + grepTermPattern + '/', '');
+                return;
+            }
         }
         applyFilter(pattern);
 

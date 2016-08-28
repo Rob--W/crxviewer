@@ -41,6 +41,7 @@ self.onmessage = function(event) {
     var filenames = prioritizedFilenames(allFilenames);
     if (pendingSearch) {
         pendingSearch.cancel();
+        pendingSearch = null;
     }
     new SearchTask(filenames, message.searchTerm).next();
 };
@@ -106,6 +107,12 @@ function getFileData(filename) {
 function SearchTask(filenames, searchTerm) {
     this.filenames = filenames;
     this.searchTerm = searchTerm;
+    if (searchTerm.lastIndexOf('regexp:', 0) === 0) {
+        // Callers should have validated that the regexp is valid.
+        this.searchTermRegExp = new RegExp(searchTerm.slice(7), 'i');
+    } else {
+        this.searchTermRegExp = null;
+    }
     this.paused = true;
     // Temporarily save the results until it's flushed in a batch to minimize the overhead of
     // continuously updating the UI in separate messages.
@@ -139,7 +146,12 @@ SearchTask.prototype.next = function() {
             break;
         }
 
-        var found = data.indexOf(this.searchTerm) !== -1;
+        var found;
+        if (this.searchTermRegExp) {
+            found = this.searchTermRegExp.test(data);
+        } else {
+            found = data.indexOf(this.searchTerm) !== -1;
+        }
         if (found) {
             this.found.push(filename);
         } else {

@@ -458,7 +458,7 @@ var TextSearchEngine = (function() {
         this.resultCallback = resultCallback;
     };
     /**
-     * @param {string} searchTerm
+     * @param {string} searchTerm A case-insensitive search query.
      * @param {Array<string>} lowPrioFilenames List of files that the caller is not really
      *     interested in, e.g. because the files are hidden anyway.
      */
@@ -467,6 +467,7 @@ var TextSearchEngine = (function() {
             console.warn('Ignored search request because the result handler was not set.');
             return;
         }
+        searchTerm = searchTerm.toLocaleLowerCase();
         if (this._currentSearchTerm === searchTerm) {
             return; // No change in result.
         }
@@ -669,7 +670,6 @@ var checkAndApplyFilter = (function() {
         }
 
         try {
-            // TODO: Really want to force case-sensitivity?
             pattern = new RegExp(pattern, 'i');
             feedback.textContent = '';
             fileFilterElem.classList.remove('invalid');

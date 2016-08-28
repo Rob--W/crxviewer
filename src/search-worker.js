@@ -95,7 +95,7 @@ function getFileData(filename) {
         return null; // Already opening...
     }
     entry.getData(new EfficientTextWriter(), function(data) {
-        dataMap[filename] = data;
+        dataMap[filename] = data.toLocaleLowerCase();
         if (pendingSearch) {
             pendingSearch.resume();
         }

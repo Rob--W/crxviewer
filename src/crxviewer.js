@@ -1207,7 +1207,9 @@ function handleBlob(zipname, blob, publicKey, raw_crx_data) {
     
     setBlobAsDownload(zipname, blob);
     setRawCRXAsDownload(zipname, publicKey && raw_crx_data);
-    setPublicKey(publicKey);
+    if (publicKey || raw_crx_data) {
+        setPublicKey(publicKey);
+    }
     textSearchEngine = new TextSearchEngine(blob);
 
     zip.createReader(new zip.BlobReader(blob), function(zipReader) {

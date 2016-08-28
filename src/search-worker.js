@@ -14,6 +14,7 @@ var fileEntries = null;
 var dataMap = {};
 
 var currentSearchTerm = '';
+var lowPrioFilenames = [];
 
 // When not all data is available yet, the search job is suspended and stored here.
 // It will be resumed when new data is available.
@@ -33,17 +34,27 @@ self.onmessage = function(event) {
         return;
     }
     currentSearchTerm = message.searchTerm;
+    lowPrioFilenames = message.lowPrioFilenames;
     if (!fileEntries || !currentSearchTerm) {
         return;
     }
-    // For now just search through all files.
-    // In the future I may restrict to the visible files.
-    var filenames = allFilenames.slice();
+    var filenames = prioritizedFilenames(allFilenames);
     if (pendingSearch) {
         pendingSearch.cancel();
     }
     new SearchTask(filenames, message.searchTerm).next();
 };
+
+function prioritizedFilenames(filenames) {
+    filenames = filenames.slice();
+    lowPrioFilenames.forEach(function(filename) {
+        var i = filenames.indexOf(filename);
+        if (i === -1) throw new Error("Unknown file: " + filename);
+        filenames.splice(i, 1);
+        filenames.push(filename);
+    });
+    return filenames;
+}
 
 function loadFromZip(zipBlob) {
     if (fileEntries) {
@@ -65,9 +76,7 @@ function loadFromZip(zipBlob) {
                 allFilenames.push(entry.filename);
             });
             if (currentSearchTerm) {
-                // TODO: If I ever want to add file filtering, then I should change this logic as
-                // well.
-                new SearchTask(allFilenames.slice(), currentSearchTerm).next();
+                new SearchTask(prioritizedFilenames(allFilenames), currentSearchTerm).next();
             }
         });
     }, function(e) {

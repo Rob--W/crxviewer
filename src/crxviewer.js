@@ -457,7 +457,12 @@ var TextSearchEngine = (function() {
     TextSearchEngine.prototype.setResultCallback = function(resultCallback) {
         this.resultCallback = resultCallback;
     };
-    TextSearchEngine.prototype.doPlaintextSearch = function(searchTerm) {
+    /**
+     * @param {string} searchTerm
+     * @param {Array<string>} lowPrioFilenames List of files that the caller is not really
+     *     interested in, e.g. because the files are hidden anyway.
+     */
+    TextSearchEngine.prototype.doPlaintextSearch = function(searchTerm, lowPrioFilenames) {
         if (!this.resultCallback) {
             console.warn('Ignored search request because the result handler was not set.');
             return;
@@ -479,10 +484,12 @@ var TextSearchEngine = (function() {
         // Re-use the last search results if possible.
         if (this._recentSearchResults.searchTerm.indexOf(searchTerm) !== -1) {
             // E.g. "test" -> "tes". If the result contained "test" then it also includes "tes".
+            lowPrioFilenames = mergeUnique(lowPrioFilenames, this._recentSearchResults.found);
             this.resultCallback(this._recentSearchResults.found, true);
         } else if (searchTerm.indexOf(this._recentSearchResults.searchTerm) !== -1) {
             // E.g. "tes" -> "test". If the result did not contain "tes" then it will not contain
             // "test" either.
+            lowPrioFilenames = mergeUnique(lowPrioFilenames, this._recentSearchResults.notfound);
             this.resultCallback(this._recentSearchResults.notfound, false);
         }
         this._recentSearchResults.searchTerm = searchTerm;
@@ -493,8 +500,21 @@ var TextSearchEngine = (function() {
         this._currentSearchStart = Date.now();
         this.worker.postMessage({
             searchTerm: searchTerm,
+            lowPrioFilenames: lowPrioFilenames,
         });
     };
+
+    // Stably merge two arrays, ignoring duplicate entries from the second array.
+    function mergeUnique(a, b) {
+        var merged = a.slice();
+        // a is probably not large, in the worst case thousands, so this algorithm should be fine.
+        for (var i = 0; i < b.length; ++i) {
+            if (a.indexOf(b[i]) === -1) {
+                merged.push(b[i]);
+            }
+        }
+        return merged;
+    }
 
     function initializeWorker(textSearchEngine) {
         var worker = new Worker('search-worker.js');
@@ -587,17 +607,21 @@ function renderPanelResizer() {
 }
 
 var checkAndApplyFilter = (function() {
+    var filteredFilenames = [];
     // Filter for file names
     function applyFilter(/*regex*/pattern) {
         var CLASS_FILTERED = 'file-filtered';
         var fileList = document.getElementById('file-list');
         var listItems = fileList.querySelectorAll('li');
-        for (var i=0; i<listItems.length; ++i) {
+        filteredFilenames.length = 0;
+        for (var i = 0; i < listItems.length; ++i) {
             var listItem = listItems[i];
-            if (pattern.test(listItem.dataset.filename)) {
+            var filename = listItem.dataset.filename;
+            if (pattern.test(filename)) {
                 listItem.classList.remove(CLASS_FILTERED);
             } else {
                 listItem.classList.add(CLASS_FILTERED);
+                filteredFilenames.push(filename);
             }
         }
     }
@@ -617,8 +641,7 @@ var checkAndApplyFilter = (function() {
                 listItem.classList.toggle('grep-no-match', found === false);
             }
         });
-        // TODO: Exclude CLASS_FILTERED ?
-        textSearchEngine.doPlaintextSearch(searchTerm);
+        textSearchEngine.doPlaintextSearch(searchTerm, filteredFilenames);
     }
     var debounceGrep;
     function checkAndApplyFilter(shouldDebounce) {

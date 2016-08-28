@@ -910,7 +910,7 @@ function showAdvancedOpener() {
         if (!/^https:?/.test(urlInput.value) || get_extensionID(urlInput.value)) {
             urlInput.value = crx_url;
         }
-        cwsOptions.querySelector('.submit-if-valid a').href = crx_url;
+        cwsOptions.querySelector('.submit-if-valid a').href = get_webstore_url(crx_url);
     }
     function toggleForm(enable) {
         if (enable) {

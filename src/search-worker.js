@@ -1,5 +1,5 @@
 /* jshint worker:true */
-/* globals Uint8Array, TextEncoder, setTimeout, zip */
+/* globals Uint8Array, TextDecoder, setTimeout, zip */
 'use strict';
 
 importScripts('lib/zip.js/zip.js', 'lib/zip.js/inflate.js');
@@ -10,7 +10,7 @@ var allFilenames = [];
 
 // File name to entry
 var fileEntries = null;
-// File name to Uint8Array
+// File name to string
 var dataMap = {};
 
 var currentSearchTerm = '';
@@ -119,7 +119,7 @@ function getFileData(filename) {
         return null; // Already opening...
     }
     entry.getData(new Uint8ArrayWriter(), function(uint8Array) {
-        dataMap[filename] = uint8Array;
+        dataMap[filename] = new TextDecoder().decode(uint8Array);
         if (pendingSearch) {
             pendingSearch.resume();
         }
@@ -163,18 +163,7 @@ SearchTask.prototype.next = function() {
             break;
         }
 
-        var needle = new TextEncoder().encode(this.searchTerm);
-        var needleLength = needle.length;
-        var found = false;
-        outerloop: for (var i = 0, ii = data.length - needleLength; i <= ii; ++i) {
-            for (var j = 0, jj = needleLength; j < jj; ++j) {
-                if (data[i + j] !== needle[j]) {
-                    continue outerloop;
-                }
-            }
-            found = true;
-            break;
-        }
+        var found = data.indexOf(this.searchTerm) !== -1;
         if (found) {
             this.found.push(filename);
         } else {

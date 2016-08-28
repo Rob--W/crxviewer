@@ -443,6 +443,14 @@ var TextSearchEngine = (function() {
         this.resultCallback = null;
         this._currentSearchTerm = '';
         this._currentSearchStart = 0;
+        this._recentSearchResults = {
+            // This is often identical to this._currentSearchTerm, except the latter may become an
+            // empty string, whereas this is not. This allows known-good search results to be
+            // supplied much faster.
+            searchTerm: '',
+            found: [],
+            notfound: [],
+        };
     }
 
     TextSearchEngine.prototype.setResultCallback = function(resultCallback) {
@@ -466,6 +474,20 @@ var TextSearchEngine = (function() {
             return;
         }
         this.resultCallback(null, null); // Should not call doPlaintextSearch again.
+
+        // Re-use the last search results if possible.
+        if (this._recentSearchResults.searchTerm.indexOf(searchTerm) !== -1) {
+            // E.g. "test" -> "tes". If the result contained "test" then it also includes "tes".
+            this.resultCallback(this._recentSearchResults.found, true);
+        } else if (searchTerm.indexOf(this._recentSearchResults.searchTerm) !== -1) {
+            // E.g. "tes" -> "test". If the result did not contain "tes" then it will not contain
+            // "test" either.
+            this.resultCallback(this._recentSearchResults.notfound, false);
+        }
+        this._recentSearchResults.searchTerm = searchTerm;
+        this._recentSearchResults.found.length = 0;
+        this._recentSearchResults.notfound.length = 0;
+
         this._currentSearchTerm = searchTerm;
         this._currentSearchStart = Date.now();
         this.worker.postMessage({
@@ -481,9 +503,13 @@ var TextSearchEngine = (function() {
                 return;
             }
             if (message.found.length) {
+                textSearchEngine._recentSearchResults.found =
+                    textSearchEngine._recentSearchResults.found.concat(message.found);
                 textSearchEngine.resultCallback(message.found, true);
             }
             if (message.notfound.length) {
+                textSearchEngine._recentSearchResults.notfound =
+                    textSearchEngine._recentSearchResults.notfound.concat(message.notfound);
                 textSearchEngine.resultCallback(message.notfound, false);
             }
             if (message.remaining === 0) {

@@ -9,7 +9,7 @@ https://addons.opera.com/extensions/details/extension-source-viewer/
 And also available for Firefox and addons.mozilla.org (WebExtensions and other Firefox addon types).
 https://addons.mozilla.org/firefox/addon/crxviewer/
 
-Online demo (select a .crx / .nex / .zip / .xpi from your disk to try out the viewer):  
+Online demo (select a .crx / .nex / .zip / .xpi from your disk or a URL to try out the viewer):  
 https://robwu.nl/crxviewer/
 
 ## Features
@@ -25,10 +25,13 @@ The "View source" option opens a new tab with a simple viewer, with the followin
 
   - Download-as-zip and download-as-crx at the upper-right corner.
   - List of file names, and the option to filter files with a regular expression.
+  - Find files containing a string, or with content matching a regular expression.
   - Automatic beautification (formatting) of code
   - Syntax highlighting
   - Image preview
   - View content of embedded zip files.
+  - Download Chrome Web Store extensions for a different platform (e.g. Chrome OS or NaCl).
+  - View the contents of any URL or zip file.
 
 As mentioned before, this extension activates on the Chrome Web Store by default.
 It's also possible to view the source code of Chrome, Opera 15+ and Firefox extensions that are

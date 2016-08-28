@@ -12,7 +12,13 @@
 <body>
 <div id="top-bar">
     <form>
-        <input type="text" id="file-filter" placeholder="filter (regex)" title="Only show files matching this regular expression" list="file-filter-patterns">
+        <input type="text" id="file-filter" placeholder="filter (regex) ! file search"
+title="File filter (case-insensitive). Formats:
+1. [filename filter regexp]
+2. [filename filter regexp]!file content search term
+3. [filename filter regexp]!regexp:filter content regexp
+The filename filter is optional, '!search term' can also be used directly to search in all files.
+" list="file-filter-patterns">
         <label title="Filter: Images">
             <input type="checkbox" data-filter-type="images">
             <span class="filter-label-description">Images</span>
@@ -107,6 +113,9 @@
     <option value="\.css$" label="CSS">
     <option value="\.html?$" label="HTML">
     <option value="\.(js|css|html)$" label="JS / CSS / HTML">
+    <option value="!chrome." label="Files containing chrome.">
+    <option value="!regexp:(chrome|browser)\." label="Regexp file search">
+    <option value="\.html$!http:" label="All HTML files containing http:.">
 </datalist>
 <script src="lib/zip.js/zip.js"></script>
 <script src="lib/zip.js/mime-types.js"></script>

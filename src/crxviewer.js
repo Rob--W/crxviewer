@@ -835,10 +835,6 @@ function initialize() {
 }
 
 function showAdvancedOpener() {
-    // TODO: Implement UI to set extension ID, arch, nacl_arch, os, etc.
-    // Would fix https://github.com/Rob--W/crxviewer/issues/23 and
-    // https://github.com/Rob--W/crxviewer/issues/13
-    // and also https://github.com/Rob--W/crxviewer/issues/9
     var advancedOpenView = document.getElementById('advanced-open');
     var openForm = document.getElementById('advanced-open-form');
     var cwsOptions = document.getElementById('advanced-open-cws-extension');

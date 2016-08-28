@@ -1,4 +1,5 @@
-CRX Viewer for Firefox is implemented as a
+[CRX Viewer for Firefox](https://addons.mozilla.org/firefox/addon/crxviewer/)
+is implemented as a
 [WebExtension](https://developer.mozilla.org/en-US/Add-ons/WebExtensions).
 This is recent technology, and not all Firefox versions support it. This page
 lists the bugs that affect this extension. There are also bugs for which I have

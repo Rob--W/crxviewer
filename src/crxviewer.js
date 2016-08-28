@@ -156,7 +156,7 @@ function getMimeTypeForFilename(filename) {
         // They are viewable as plain text.
         return 'text/plain';
     }
-    if (/^(CHANGELOG|LICENSE|README)$/i.test(filename)) {
+    if (/(^|\/)(AUTHORS|CHANGELOG|COPYING|INSTALL|LICENSE|NEWS|README|THANKS)$/i.test(filename)) {
         return 'text/plain';
     }
     var extension = filename.split('.').pop().toLowerCase();

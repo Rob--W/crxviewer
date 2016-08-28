@@ -1,8 +1,8 @@
 /* jshint worker:true */
-/* globals Uint8Array, TextDecoder, setTimeout, zip */
+/* globals EfficientTextWriter, setTimeout, zip */
 'use strict';
 
-importScripts('lib/zip.js/zip.js', 'lib/zip.js/inflate.js');
+importScripts('lib/zip.js/zip.js', 'lib/zip.js/inflate.js', 'lib/efficienttextwriter.js');
 zip.useWebWorkers = false; // No nested workers please.
 
 // The file names in the zip file, sorted by file size (smallest first).
@@ -75,39 +75,6 @@ function loadFromZip(zipBlob) {
     });
 }
 
-function Uint8ArrayWriter() {
-    this.chunks = [];
-}
-Uint8ArrayWriter.prototype = Object.create(zip.Writer.prototype);
-Uint8ArrayWriter.prototype.init = function(callback) {
-    this.chunks.length = [];
-    callback();
-};
-Uint8ArrayWriter.prototype.writeUint8Array = function(chunk, callback) {
-    this.chunks.push(chunk);
-    callback();
-};
-Uint8ArrayWriter.prototype.getData = function(callback) {
-    var chunks = this.chunks;
-    if (chunks.length === 1) {
-        callback(chunks[0]);
-        return;
-    }
-    var length = chunks.reduce(function(total, chunk) {
-        return total + chunk.length;
-    }, 0);
-    var data = new Uint8Array(length);
-    var offset = 0;
-    this.chunks.forEach(function(chunk) {
-        data.set(chunk, offset);
-        offset += chunk.length;
-    });
-    this.chunks.length = 1;
-    this.chunks[0] = data;
-
-    callback(data);
-};
-
 function getFileData(filename) {
     var data = dataMap[filename];
     if (data) {
@@ -118,8 +85,8 @@ function getFileData(filename) {
     if (!entry) {
         return null; // Already opening...
     }
-    entry.getData(new Uint8ArrayWriter(), function(uint8Array) {
-        dataMap[filename] = new TextDecoder().decode(uint8Array);
+    entry.getData(new EfficientTextWriter(), function(data) {
+        dataMap[filename] = data;
         if (pendingSearch) {
             pendingSearch.resume();
         }

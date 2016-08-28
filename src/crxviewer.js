@@ -8,6 +8,7 @@
            get_extensionID, getPlatformInfo,
            cws_pattern, get_crx_url, cws_download_pattern,
            zip,
+           EfficientTextWriter,
            beautify, prettyPrintOne,
            CryptoJS
            */
@@ -257,7 +258,7 @@ var viewFileInfo = (function() {
     handlers['application/xhtml+xml'] =
     handlers['application/xml-dtd'] =
     handlers.text = {
-        Writer: zip.TextWriter,
+        Writer: EfficientTextWriter,
         callback: function(entry, text, finalCallback) {
             var type = beautify.getType(entry.filename);
             if (type) {

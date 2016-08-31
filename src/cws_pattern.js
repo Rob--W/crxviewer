@@ -174,7 +174,7 @@ function is_not_crx_url(url) {
 // returned.
 function getParam(name, querystring) { // Assume name contains no RegEx-specific char
     var haystack = querystring || location.search || location.hash;
-//#if FIREFOX
+//#if FIREFOX || WEB
     // Work-around for bugzil.la/719905 - see encodeQueryString below.
     haystack = haystack.replace(/%u003A/g, '%3A');
 //#endif

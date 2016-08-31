@@ -137,11 +137,11 @@ target.web = function() {
             [SRC_DIR + '*.css', dest_dir],
             [SRC_DIR + 'lib', dest_dir],
             [SRC_DIR + 'chrome-platform-info.js', dest_dir],
-            [SRC_DIR + 'cws_pattern.js', dest_dir]
         ],
         preprocess: [
             [SRC_DIR + 'crxviewer.html', dest_dir],
             [SRC_DIR + 'crxviewer.js', dest_dir],
+            [SRC_DIR + 'cws_pattern.js', dest_dir],
             [SRC_DIR + 'lib/crx-to-zip.js', dest_dir + 'lib'],
         ]
     };

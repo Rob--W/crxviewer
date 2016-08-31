@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // Build tool, adapted from PDF.js
 /* jshint node:true */
-/* globals cat, cd, cp, echo, env, exec, exit, find, ls, mkdir, mv, process, rm,
-           sed, target, test */
+/* globals cd, cp, echo, exec, find, grep, mkdir, rm, target, test */
 
 'use strict';
 require('shelljs/make');
@@ -16,6 +15,13 @@ var CHROME_BUILD_DIR = BUILD_DIR + 'chrome/';
 var OPERA_BUILD_DIR = BUILD_DIR + 'opera/';
 var FIREFOX_BUILD_DIR = BUILD_DIR + 'firefox/';
 var WEB_BUILD_DIR = BUILD_DIR + 'web/';
+var ALLOWED_FILES = [
+    'manifest.json',
+    '.css',
+    '.html',
+    '.js',
+    '.png',
+];
 
 function getBuildConfig(options) {
     var dest_dir = options.build_dir;
@@ -62,6 +68,37 @@ function build(setup, output_root_dir) {
     rm('lib/beautify/jsbeautifier/get-jsb.sh');
 }
 
+function lintDir(dest_dir) {
+    var warningCount = 0;
+    find(dest_dir).forEach(function(filepath) {
+        if (/\/\.[^\/]*$/.test(filepath)) {
+            echo('WARNING: Found dot file: ' + filepath);
+            ++warningCount;
+            return;
+        }
+        if (test('-d', filepath)) {
+            return;
+        }
+        var unprocessed = grep('//#', filepath).trim();
+        if (unprocessed) {
+            echo('WARNING: unprocessed text in' + filepath);
+            echo(unprocessed);
+            ++warningCount;
+        }
+        if (!ALLOWED_FILES.some(function(p) {
+            return p.test ? p.test(filepath) : filepath.endsWith(p);
+        })) {
+            echo('WARNING: Unrecognized file: ' + filepath);
+            ++warningCount;
+        }
+    });
+    if (warningCount) {
+        process.nextTick(function() {
+            echo('WARNING: ' + warningCount + ' warnings in ' + dest_dir);
+        });
+    }
+}
+
 target.all = function() {
     target.chrome();
     target.opera();
@@ -86,6 +123,7 @@ target.chrome = function() {
     cd(CHROME_BUILD_DIR);
     rm('-f', '../crxviewer.zip');
     exec('7z a ../crxviewer.zip * -tzip');
+    lintDir(CHROME_BUILD_DIR);
 };
 
 target.opera = function() {
@@ -103,6 +141,7 @@ target.opera = function() {
     cd(OPERA_BUILD_DIR);
     rm('-f', '../crxviewer_opera.zip');
     exec('7z a ../crxviewer_opera.zip * -tzip');
+    lintDir(OPERA_BUILD_DIR);
 };
 
 target.firefox = function() {
@@ -122,6 +161,7 @@ target.firefox = function() {
     rm('incognito-events.js');
     rm('-f', '../crxviewer_firefox.zip');
     exec('7z a ../crxviewer_firefox.zip * -tzip');
+    lintDir(FIREFOX_BUILD_DIR);
 };
 
 target.web = function() {
@@ -148,4 +188,5 @@ target.web = function() {
         ]
     };
     build(setup, WEB_BUILD_DIR);
+    lintDir(WEB_BUILD_DIR);
 };

@@ -1,7 +1,7 @@
 {
     "name": "Extension source viewer",
     "description": "View source code of extensions in the Chrome Web Store, Firefox or Opera addon gallery. Has button to install from Chrome Web Store.",
-    "version": "1.3",
+    "version": "1.3.1",
     "manifest_version": 2,
     "developer": {
         "name": "Rob Wu",

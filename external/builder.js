@@ -1,5 +1,5 @@
 /* jshint node:true */
-/* globals cp, ls, test */
+/* globals cp, ls, mkdir, test */
 
 'use strict';
 
@@ -274,12 +274,17 @@ exports.preprocessCSS = preprocessCSS;
  * Simplifies common build steps.
  * @param {object} setup
  *        .defines defines for preprocessors
+ *        .mkdirs array of directories to be created before copying/processing.
  *        .copy array of arrays of source and destination pairs of files to copy
  *        .preprocess array of arrays of source and destination pairs of files
  *                    run through preprocessor.
  */
 function build(setup) {
   var defines = setup.defines;
+
+  (setup.mkdirs || []).forEach(function(directory) {
+    mkdir('-p', directory);
+  });
 
   setup.copy.forEach(function(option) {
     var source = option[0];

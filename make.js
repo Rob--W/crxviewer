@@ -33,6 +33,7 @@ function getBuildConfig(options) {
         preprocess: [
             [SRC_DIR + '*.html', dest_dir],
             [SRC_DIR + '*.js', dest_dir],
+            [SRC_DIR + 'lib/crx-to-zip.js', dest_dir + 'lib'],
         ]
     };
     if (options.defines)
@@ -140,7 +141,8 @@ target.web = function() {
         ],
         preprocess: [
             [SRC_DIR + 'crxviewer.html', dest_dir],
-            [SRC_DIR + 'crxviewer.js', dest_dir]
+            [SRC_DIR + 'crxviewer.js', dest_dir],
+            [SRC_DIR + 'lib/crx-to-zip.js', dest_dir + 'lib'],
         ]
     };
     build(setup, WEB_BUILD_DIR);

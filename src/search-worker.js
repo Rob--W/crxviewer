@@ -87,7 +87,7 @@ function loadFromZip(zipBlob) {
 
 function getFileData(filename) {
     var data = dataMap[filename];
-    if (data) {
+    if (typeof data === 'string') {
         return data;
     }
     var entry = fileEntries[filename];
@@ -135,12 +135,12 @@ SearchTask.prototype.next = function() {
         for (data = null, dataIndex = 0; dataIndex < this.filenames.length; ++dataIndex) {
             filename = this.filenames[dataIndex];
             data = getFileData(filename);
-            if (data) {
+            if (typeof data === 'string') {
                 this.filenames.splice(dataIndex, 1);
                 break;
             }
         }
-        if (!data) {
+        if (typeof data !== 'string') {
             this.paused = true;
             // Callers will call resume() if needed when data becomes available.
             break;

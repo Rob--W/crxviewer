@@ -56,11 +56,12 @@ function handleZipEntries(entries) {
         var filename = entry.filename;
         var listItem = listItemBase.cloneNode(true);
 
-        // "path/to/file" -> ["path/to", "file"]
-        var path = entry.filename.split(/\/(?=[^\/]+$)/);
+        // "path/to/file" -> ["path/to/", "file"]
+        var filenameIndex = filename.lastIndexOf('/');
+        filenameIndex = filenameIndex === -1 ? 0 : filenameIndex + 1;
         listItem.querySelector('.file-path').title = filename;
-        listItem.querySelector('.file-name').textContent = path.pop();
-        listItem.querySelector('.file-dir').textContent = path[0] || '';
+        listItem.querySelector('.file-name').textContent = filename.slice(filenameIndex);
+        listItem.querySelector('.file-dir').textContent = filename.slice(0, filenameIndex);
         var fileSize = entry.uncompressedSize;
         var fileSizeElem = listItem.querySelector('.file-size');
         fileSizeElem.title = formatByteSize(fileSize) + ' bytes';

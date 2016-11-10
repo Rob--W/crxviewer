@@ -349,7 +349,7 @@ var viewFileInfo = (function() {
         var sourceCodeElem = document.getElementById('source-code');
         sourceCodeElem.textContent = '';
         var pre = document.createElement('pre');
-        pre.className = 'linenums';
+        pre.className = 'linenums auto-wordwrap';
         var lineCount = text.match(/\n/g);
         lineCount = lineCount ? lineCount.length + 1 : 1;
         // Calculate max width of counters:
@@ -358,12 +358,10 @@ var viewFileInfo = (function() {
         
         // Auto-highlight for <30kb source
         if (text.length < 3e4) {
-            pre.classList.add('auto-wordwrap');
             pre.innerHTML = Prism.rob.highlightSource(text, filename);
         } else {
             var startTag = '<li>';
             var endTag = '</li>';
-            pre.classList.add('auto-wordwrap');
             pre.innerHTML =
                 '<ol>' +
                 startTag +
@@ -371,7 +369,6 @@ var viewFileInfo = (function() {
                 endTag +
                 '</ol>';
             Prism.rob.highlightSourceAsync(text, filename, function(html) {
-                pre.classList.add('auto-wordwrap');
                 pre.innerHTML = html;
             });
         }

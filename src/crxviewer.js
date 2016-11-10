@@ -320,31 +320,6 @@ var viewFileInfo = (function() {
             };
         }
     };
-    function calcWrapLength(text) {
-        var textLength = text.length;
-
-        var testElem = document.createElement('span');
-        testElem.style.cssText = 'position:absolute;top:-9999px;left:-9999px;' +
-                                 'padding:0;border:0;font:inherit;';
-        var testText = 'Calculate character width';
-        testElem.textContent = testText;
-
-        var sourceCodeElem = document.getElementById('source-code');
-        sourceCodeElem.appendChild(testElem);
-
-        var lineWidth = sourceCodeElem.offsetWidth;
-        var charPxWidth = testElem.offsetWidth / testText.length;
-        var maxLineLength = Math.floor(lineWidth / charPxWidth);
-        sourceCodeElem.removeChild(testElem);
-
-        // Assume: Average line is half full
-        var minLineCount = Math.ceil(textLength / maxLineLength / 2);
-        // 1 space at the left, 1 dot and 1 space at the right + width of counters
-        var paddingFromLineNum = Math.floor( Math.log(minLineCount)/Math.log(10) ) + 4;
-        // Minus 2 to deal with rounding errors and scrollbar
-        var charsPerLine = maxLineLength - paddingFromLineNum - 2;
-        return charsPerLine;
-    }
     function viewTextSource(text, filename, finalCallback) {
         var sourceCodeElem = document.getElementById('source-code');
         sourceCodeElem.textContent = '';

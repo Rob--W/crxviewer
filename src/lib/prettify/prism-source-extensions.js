@@ -3,7 +3,23 @@
  * My glue for prism.js, designed for viewing untrusted source code.
  */
 'use strict';
-/* globals Prism */
+/* globals Prism, Worker, self, importScripts */
+
+if (typeof importScripts === 'function') { // In a Web Worker.
+    // Prism.js adds an "message" handler unless "addEventListener" is absent.
+    // So temporarily null it.
+    var ael = self.addEventListener;
+    self.addEventListener = null;
+    importScripts('prism.js');
+    self.addEventListener = ael;
+    self.addEventListener('message', function(event) {
+        self.postMessage({
+            id: event.data.id,
+            highlightedCode:
+                Prism.rob.highlightSource(event.data.code, event.data.filename),
+        });
+    });
+}
 
 Prism.hooks.add('wrap', function(env) {
     // Delete spellcheck attribute (from core).
@@ -244,4 +260,27 @@ Prism.rob.highlightSource = function(code, filename) {
 
     highlightedCode = Prism.rob.wrapSourceLines(highlightedCode);
     return highlightedCode;
+};
+
+Prism.rob.highlightSourceAsync = function(code, filename, callback) {
+    var worker = Prism.rob.highlightSourceAsync._worker;
+    if (!worker) {
+        var workerSrc = Prism.filename;
+        workerSrc = workerSrc.replace('prism.js', 'prism-source-extensions.js');
+        worker = new Worker(workerSrc);
+        worker.idCounter = 0;
+        Prism.rob.highlightSourceAsync._worker = worker;
+    }
+    var id = ++worker.idCounter;
+    worker.addEventListener('message', function listener(event) {
+        if (event.data.id === id) {
+            worker.removeEventListener('message', listener);
+            callback(event.data.highlightedCode);
+        }
+    });
+    worker.postMessage({
+        code: code,
+        filename: filename,
+        id: id,
+    });
 };

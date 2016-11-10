@@ -356,14 +356,10 @@ var viewFileInfo = (function() {
         var lineCountExp = Math.floor( Math.log(lineCount)/Math.log(10) ) + 1;
         pre.className += ' linenumsltE' + lineCountExp;
         
-        var withSyntaxHighlighting = function() {
-            var html = Prism.rob.highlightSource(text, filename);
-            pre.classList.add('auto-wordwrap');
-            pre.innerHTML = html;
-        };
         // Auto-highlight for <30kb source
         if (text.length < 3e4) {
-            withSyntaxHighlighting();
+            pre.classList.add('auto-wordwrap');
+            pre.innerHTML = Prism.rob.highlightSource(text, filename);
         } else {
             beautify({
                 text: text,
@@ -373,19 +369,15 @@ var viewFileInfo = (function() {
                 var startTag = '<li>';
                 var endTag = '</li>';
                 pre.innerHTML =
-                    '<button title="Click to add syntax highlighting">' +
-                        'Pretty print' +
-                    '</button>' +
                     '<ol>' +
                     startTag +
                     escapeHTML(wrappedText).replace(/\n/g, endTag+startTag) +
                     endTag +
                     '</ol>';
-                pre.querySelector('button').onclick = function() {
-                    sourceCodeElem.removeChild(pre);
-                    withSyntaxHighlighting();
-                    sourceCodeElem.appendChild(pre);
-                };
+                Prism.rob.highlightSourceAsync(text, filename, function(html) {
+                    pre.classList.add('auto-wordwrap');
+                    pre.innerHTML = html;
+                });
             });
         }
 

@@ -361,23 +361,18 @@ var viewFileInfo = (function() {
             pre.classList.add('auto-wordwrap');
             pre.innerHTML = Prism.rob.highlightSource(text, filename);
         } else {
-            beautify({
-                text: text,
-                type: beautify.getType(filename),
-                wrap: calcWrapLength(text)
-            }, function(wrappedText) {
-                var startTag = '<li>';
-                var endTag = '</li>';
-                pre.innerHTML =
-                    '<ol>' +
-                    startTag +
-                    escapeHTML(wrappedText).replace(/\n/g, endTag+startTag) +
-                    endTag +
-                    '</ol>';
-                Prism.rob.highlightSourceAsync(text, filename, function(html) {
-                    pre.classList.add('auto-wordwrap');
-                    pre.innerHTML = html;
-                });
+            var startTag = '<li>';
+            var endTag = '</li>';
+            pre.classList.add('auto-wordwrap');
+            pre.innerHTML =
+                '<ol>' +
+                startTag +
+                escapeHTML(text).replace(/\n/g, endTag+startTag) +
+                endTag +
+                '</ol>';
+            Prism.rob.highlightSourceAsync(text, filename, function(html) {
+                pre.classList.add('auto-wordwrap');
+                pre.innerHTML = html;
             });
         }
 

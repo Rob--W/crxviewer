@@ -9,7 +9,8 @@
            cws_pattern, get_crx_url, cws_download_pattern,
            zip,
            EfficientTextWriter,
-           beautify, prettyPrintOne,
+           beautify,
+           Prism,
            CryptoJS
            */
 
@@ -268,10 +269,10 @@ var viewFileInfo = (function() {
                     type: type,
                     wrap: 0
                 }, function(text) {
-                    viewTextSource(text, type, finalCallback);
+                    viewTextSource(text, entry.filename, finalCallback);
                 });
             } else {
-                viewTextSource(text, type, finalCallback);
+                viewTextSource(text, entry.filename, finalCallback);
             }
         }
     };
@@ -344,11 +345,11 @@ var viewFileInfo = (function() {
         var charsPerLine = maxLineLength - paddingFromLineNum - 2;
         return charsPerLine;
     }
-    function viewTextSource(text, type, finalCallback) {
+    function viewTextSource(text, filename, finalCallback) {
         var sourceCodeElem = document.getElementById('source-code');
         sourceCodeElem.textContent = '';
         var pre = document.createElement('pre');
-        pre.className = 'prettyprint linenums';
+        pre.className = 'linenums';
         var lineCount = text.match(/\n/g);
         lineCount = lineCount ? lineCount.length + 1 : 1;
         // Calculate max width of counters:
@@ -356,9 +357,9 @@ var viewFileInfo = (function() {
         pre.className += ' linenumsltE' + lineCountExp;
         
         var withSyntaxHighlighting = function() {
+            var html = Prism.rob.highlightSource(text, filename);
             pre.classList.add('auto-wordwrap');
-            pre.textContent = text;
-            pre.innerHTML = prettyPrintOne(pre.innerHTML, null, 1);
+            pre.innerHTML = html;
         };
         // Auto-highlight for <30kb source
         if (text.length < 3e4) {
@@ -366,7 +367,7 @@ var viewFileInfo = (function() {
         } else {
             beautify({
                 text: text,
-                type: type,
+                type: beautify.getType(filename),
                 wrap: calcWrapLength(text)
             }, function(wrappedText) {
                 var startTag = '<li>';

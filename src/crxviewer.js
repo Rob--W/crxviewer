@@ -271,46 +271,7 @@ var viewFileInfo = (function() {
             var goToLineButton = document.createElement('button');
             goToLineButton.textContent = 'Go to line';
             goToLineButton.onclick = function() {
-                var ol = preCurrent.querySelector('ol');
-                if (!ol) {
-                    // When the source is beautified asynchronously,
-                    // initially the <ol> does not exist yet.
-                    alert('Not ready yet, wait until the source is shown');
-                    return;
-                }
-                var lineCount = ol.childElementCount;
-                var lineInput = prompt('Enter a line to jump to (max ' + lineCount + ')', '');
-                // Converting to Number first to avoid '123bogus' -> 123.
-                var line = parseInt(Number(lineInput));
-                if (isNaN(line) || line <= 0) {
-                    if (lineInput !== null) {
-                        alert('Line number must be an integer between 1 and ' + lineCount + ', but got "' + lineInput + '"!');
-                    }
-                    return;
-                }
-                // While the dialog was shown, the asynchronous highlighter might
-                // have overwritten the displayed list, so fetch the new list.
-                ol = preCurrent.querySelector('ol');
-                lineCount = ol.childElementCount;
-                if (line > lineCount) {
-                    var msg = 'Line ' + line + ' not found.\n' +
-                        'This file has ' + lineCount + ' lines.\n' +
-                        'Want to go to the last line?';
-                    if (confirm(msg)) {
-                        sourceCodeElem.scrollTop = sourceCodeElem.scrollHeight;
-                    }
-                    return;
-                }
-                // Note: offsetTop is relative to the nearest positioned container.
-                // As of writing, the nearest such container is <body>, so the
-                // following centers the line relative to the viewport.
-                // We will center the line approximately above the center of the page.
-                var li = ol.children[line - 1];
-                sourceCodeElem.scrollTop = li.offsetTop + li.offsetHeight - sourceCodeElem.offsetHeight / 2;
-                li.style.outline = '2px solid red';
-                setTimeout(function() {
-                    li.style.outline = '';
-                }, 1000);
+                showGoToLine(sourceCodeElem, preCurrent);
             };
             heading.appendChild(goToLineButton);
 
@@ -478,6 +439,48 @@ var viewFileInfo = (function() {
             });
         };
         return a;
+    }
+    function showGoToLine(sourceCodeElem, preCurrent) {
+        var ol = preCurrent.querySelector('ol');
+        if (!ol) {
+            // When the source is beautified asynchronously,
+            // initially the <ol> does not exist yet.
+            alert('Not ready yet, wait until the source is shown');
+            return;
+        }
+        var lineCount = ol.childElementCount;
+        var lineInput = prompt('Enter a line to jump to (max ' + lineCount + ')', '');
+        // Converting to Number first to avoid '123bogus' -> 123.
+        var line = parseInt(Number(lineInput));
+        if (isNaN(line) || line <= 0) {
+            if (lineInput !== null) {
+                alert('Line number must be an integer between 1 and ' + lineCount + ', but got "' + lineInput + '"!');
+            }
+            return;
+        }
+        // While the dialog was shown, the asynchronous highlighter might
+        // have overwritten the displayed list, so fetch the new list.
+        ol = preCurrent.querySelector('ol');
+        lineCount = ol.childElementCount;
+        if (line > lineCount) {
+            var msg = 'Line ' + line + ' not found.\n' +
+                'This file has ' + lineCount + ' lines.\n' +
+                'Want to go to the last line?';
+            if (confirm(msg)) {
+                sourceCodeElem.scrollTop = sourceCodeElem.scrollHeight;
+            }
+            return;
+        }
+        // Note: offsetTop is relative to the nearest positioned container.
+        // As of writing, the nearest such container is <body>, so the
+        // following centers the line relative to the viewport.
+        // We will center the line approximately above the center of the page.
+        var li = ol.children[line - 1];
+        sourceCodeElem.scrollTop = li.offsetTop + li.offsetHeight - sourceCodeElem.offsetHeight / 2;
+        li.style.outline = '2px solid red';
+        setTimeout(function() {
+            li.style.outline = '';
+        }, 1000);
     }
     return viewFileInfo;
 })();

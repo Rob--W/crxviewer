@@ -177,6 +177,7 @@ function getMimeTypeForFilename(filename) {
 var viewFileInfo = (function() {
     var _lastView = 0;
     var handlers = {};
+    var wantRawSourceGlobalDefault = false;
 
     // To increase performance, intermediate results are cached
     // _cachedResult = extracted content
@@ -280,33 +281,44 @@ var viewFileInfo = (function() {
             var preCurrent; // The currently selected <pre>.
             var type = beautify.getType(entry.filename);
             if (type) {
-                preCurrent = preBeauty;
-                beautify({
-                    text: text,
-                    type: type,
-                    wrap: 0
-                }, function(text) {
-                    viewTextSource(text, entry.filename, preBeauty);
-                });
                 var toggleBeautify = document.createElement('button');
                 toggleBeautify.title = 'Click on this button to toggle between beautified code and non-beautified (original) code.';
-                toggleBeautify.textContent = 'Show original code';
-                toggleBeautify.onclick = function() {
-                    if (preCurrent === preBeauty) {
-                        preCurrent = preRaw;
-                        if (!preRaw.firstChild) {
-                            // Lazily initialize viewer of raw text.
-                            // (the beautified version is initialized above).
-                            viewTextSource(text, entry.filename, preRaw);
-                        }
+                var selectPre = function(pre) {
+                    preCurrent = pre;
+                    if (pre === preRaw) {
                         toggleBeautify.textContent = 'Show beautified code';
                     } else {
-                        preCurrent = preBeauty;
                         toggleBeautify.textContent = 'Show original code';
                     }
+                    if (pre._didInitializeSourceViewer) return;
+                    pre._didInitializeSourceViewer = true;
+                    if (pre === preRaw) {
+                        viewTextSource(text, entry.filename, preRaw);
+                        return;
+                    }
+                    beautify({
+                        text: text,
+                        type: type,
+                        wrap: 0
+                    }, function(text) {
+                        viewTextSource(text, entry.filename, preBeauty);
+                    });
+                };
+                toggleBeautify.onclick = function() {
+                    // Note: Toggling the state is based on the local preCurrent
+                    // variable instead of `!wantRawSourceGlobalDefault` because
+                    // the two may differ when the user switches to a different
+                    // file and modifies toggles the beautifier in that file.
+                    wantRawSourceGlobalDefault = preCurrent !== preRaw;
+                    selectPre(wantRawSourceGlobalDefault ? preRaw : preBeauty);
                     doRenderSourceCodeViewer();
                 };
                 heading.appendChild(toggleBeautify);
+
+                // Use the last selected option for new views.
+                // Note: This state only changes when the user clicks on the
+                // `toggleBeautify` button, not when they change the file view.
+                selectPre(wantRawSourceGlobalDefault ? preRaw : preBeauty);
             } else {
                 preCurrent = preRaw;
                 viewTextSource(text, entry.filename, preRaw);

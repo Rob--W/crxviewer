@@ -288,12 +288,16 @@ var viewFileInfo = (function() {
                     }
                     return;
                 }
+                // While the dialog was shown, the asynchronous highlighter might
+                // have overwritten the displayed list, so fetch the new list.
+                ol = preCurrent.querySelector('ol');
+                lineCount = ol.childElementCount;
                 if (line > lineCount) {
                     var msg = 'Line ' + line + ' not found.\n' +
                         'This file has ' + lineCount + ' lines.\n' +
                         'Want to go to the last line?';
                     if (confirm(msg)) {
-                        ol.lastElementChild.scrollIntoView(false);
+                        sourceCodeElem.scrollTop = sourceCodeElem.scrollHeight;
                     }
                     return;
                 }

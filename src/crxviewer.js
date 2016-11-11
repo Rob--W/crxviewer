@@ -264,6 +264,7 @@ var viewFileInfo = (function() {
         callback: function(entry, text, finalCallback) {
             var sourceCodeElem = document.getElementById('source-code');
             var heading = document.createElement('div');
+            heading.className = 'file-specific-toolbar';
 
             heading.appendChild(createDownloadLink(entry));
 

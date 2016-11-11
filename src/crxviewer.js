@@ -268,6 +268,43 @@ var viewFileInfo = (function() {
 
             heading.appendChild(createDownloadLink(entry));
 
+            var goToLineButton = document.createElement('button');
+            goToLineButton.textContent = 'Go to line';
+            goToLineButton.onclick = function() {
+                var ol = preCurrent.querySelector('ol');
+                if (!ol) {
+                    // When the source is beautified asynchronously,
+                    // initially the <ol> does not exist yet.
+                    alert('Not ready yet, wait until the source is shown');
+                    return;
+                }
+                var lineCount = ol.childElementCount;
+                var line = prompt('Enter a line to jump to (max ' + lineCount + ')', '');
+                line = parseInt(line);
+                if (line > 0) {
+                    if (line > lineCount) {
+                        var msg = 'Line ' + line + ' not found.\n' +
+                            'This file has ' + lineCount + ' lines.\n' +
+                            'Want to go to the last line?';
+                        if (confirm(msg)) {
+                            ol.lastElementChild.scrollIntoView(false);
+                        }
+                        return;
+                    }
+                    // Note: offsetTop is relative to the nearest positioned container.
+                    // As of writing, the nearest such container is <body>, so the
+                    // following centers the line relative to the viewport.
+                    // We will center the line approximately above the center of the page.
+                    var li = ol.children[line - 1];
+                    sourceCodeElem.scrollTop = li.offsetTop + li.offsetHeight - sourceCodeElem.offsetHeight / 2;
+                    li.style.outline = '2px solid red';
+                    setTimeout(function() {
+                        li.style.outline = '';
+                    }, 1000);
+                }
+            };
+            heading.appendChild(goToLineButton);
+
             var preRaw = document.createElement('pre');
             var preBeauty = document.createElement('pre');
             var preCurrent; // The currently selected <pre>.

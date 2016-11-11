@@ -262,18 +262,65 @@ var viewFileInfo = (function() {
     handlers.text = {
         Writer: EfficientTextWriter,
         callback: function(entry, text, finalCallback) {
+            var sourceCodeElem = document.getElementById('source-code');
+            var heading = document.createElement('div');
+            var preRaw = document.createElement('pre');
+            var preBeauty = document.createElement('pre');
+            var preCurrent; // The currently selected <pre>.
             var type = beautify.getType(entry.filename);
             if (type) {
+                preCurrent = preBeauty;
                 beautify({
                     text: text,
                     type: type,
                     wrap: 0
                 }, function(text) {
-                    viewTextSource(text, entry.filename, finalCallback);
+                    viewTextSource(text, entry.filename, preBeauty);
                 });
+                var toggleBeautify = document.createElement('button');
+                toggleBeautify.title = 'Click on this button to toggle between beautified code and non-beautified (original) code.';
+                toggleBeautify.textContent = 'Show original code';
+                toggleBeautify.onclick = function() {
+                    if (preCurrent === preBeauty) {
+                        preCurrent = preRaw;
+                        if (!preRaw.firstChild) {
+                            // Lazily initialize viewer of raw text.
+                            // (the beautified version is initialized above).
+                            viewTextSource(text, entry.filename, preRaw);
+                        }
+                        toggleBeautify.textContent = 'Show beautified code';
+                    } else {
+                        preCurrent = preBeauty;
+                        toggleBeautify.textContent = 'Show original code';
+                    }
+                    doRenderSourceCodeViewer();
+                };
+                heading.appendChild(toggleBeautify);
             } else {
-                viewTextSource(text, entry.filename, finalCallback);
+                preCurrent = preRaw;
+                viewTextSource(text, entry.filename, preRaw);
             }
+            doRenderSourceCodeViewer();
+
+            function doRenderSourceCodeViewer() {
+                if (sourceCodeElem.firstChild !== heading) {
+                    // Switched from another view.
+                    sourceCodeElem.textContent = '';
+                    sourceCodeElem.appendChild(heading);
+                }
+                var lastPre = sourceCodeElem.lastChild;
+                if (lastPre !== preCurrent) {
+                    if (lastPre == preRaw || lastPre == preBeauty) {
+                        // Last element is a <pre>, but not matching
+                        // the desired <pre>. So remove the existing
+                        // pre before appending the desired pre,
+                        lastPre.remove();
+                    }
+                    sourceCodeElem.appendChild(preCurrent);
+                }
+            }
+
+            finalCallback(doRenderSourceCodeViewer);
         }
     };
     handlers.image = {
@@ -320,10 +367,10 @@ var viewFileInfo = (function() {
             };
         }
     };
-    function viewTextSource(text, filename, finalCallback) {
-        var sourceCodeElem = document.getElementById('source-code');
-        sourceCodeElem.textContent = '';
-        var pre = document.createElement('pre');
+
+    // Render `text` in the given pre tag. The pre element should be blank,
+    // i.e. the caller should create it and not add any attributes or content.
+    function viewTextSource(text, filename, pre) {
         pre.className = 'linenums auto-wordwrap';
         var lineCount = text.match(/\n/g);
         lineCount = lineCount ? lineCount.length + 1 : 1;
@@ -347,15 +394,6 @@ var viewFileInfo = (function() {
                 pre.innerHTML = html;
             });
         }
-
-        sourceCodeElem.appendChild(pre);
-
-        finalCallback(function() {
-            var sourceCodeElem = document.getElementById('source-code');
-            if (sourceCodeElem.firstChild === pre) return;
-            sourceCodeElem.textContent = '';
-            sourceCodeElem.appendChild(pre);
-        });
     }
     var scrollingOffsets = {};
     // identifier = filename, for example

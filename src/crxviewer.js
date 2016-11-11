@@ -264,6 +264,9 @@ var viewFileInfo = (function() {
         callback: function(entry, text, finalCallback) {
             var sourceCodeElem = document.getElementById('source-code');
             var heading = document.createElement('div');
+
+            heading.appendChild(createDownloadLink(entry));
+
             var preRaw = document.createElement('pre');
             var preBeauty = document.createElement('pre');
             var preCurrent; // The currently selected <pre>.
@@ -409,6 +412,25 @@ var viewFileInfo = (function() {
         if (!identifier) identifier = sourceCodeElem.dataset.filename;
         else sourceCodeElem.dataset.filename = identifier;
         sourceCodeElem.scrollTop = scrollingOffsets[identifier] || 0;
+    }
+    function createDownloadLink(entry) {
+        var mimeType = getMimeTypeForFilename(entry.filename);
+        var filename = entry.filename.split('/').pop();
+
+        var a = document.createElement('a');
+        a.className = 'file-specific-download-link';
+        a.textContent = 'Show download link';
+        a.title = 'Download ' + entry.filename + ' (' + formatByteSize(entry.uncompressedSize) + ' bytes, type ' + mimeType + ')';
+        a.onclick = function() {
+            a.onclick = null;
+            a.textContent = 'Generating link...';
+            entry.getData(new zip.BlobWriter(mimeType), function(blob) {
+                a.download = filename;
+                a.textContent = 'Download file';
+                a.href = URL.createObjectURL(blob);
+            });
+        };
+        return a;
     }
     return viewFileInfo;
 })();

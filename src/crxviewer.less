@@ -305,3 +305,14 @@ body {
         word-break: break-all;
     }
 }
+
+.file-specific-download-link {
+    margin: 0 1em;
+    &:not([href]) {
+        cursor: pointer;
+        border-bottom: 1px dotted;
+        &:hover {
+            border-bottom-style: solid;
+        }
+    }
+}

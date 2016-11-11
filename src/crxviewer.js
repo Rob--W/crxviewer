@@ -457,7 +457,7 @@ var viewFileInfo = (function() {
 
         var a = document.createElement('a');
         a.className = 'file-specific-download-link';
-        a.textContent = 'Show download link';
+        a.textContent = 'Show download';
         a.title = 'Download ' + entry.filename + ' (' + formatByteSize(entry.uncompressedSize) + ' bytes, type ' + mimeType + ')';
         a.onclick = function() {
             a.onclick = null;

@@ -577,12 +577,18 @@ var viewFileInfo = (function() {
             }
             return;
         }
-        // Note: offsetTop is relative to the nearest positioned container.
-        // As of writing, the nearest such container is <body>, so the
-        // following centers the line relative to the viewport.
-        // We will center the line approximately above the center of the page.
+        var scrollableRect = sourceCodeElem.getBoundingClientRect();
         var li = ol.children[line - 1];
-        sourceCodeElem.scrollTop = li.offsetTop + li.offsetHeight - sourceCodeElem.offsetHeight / 2;
+        var liRect = li.getBoundingClientRect();
+        if (liRect.height >= scrollableRect.height) {
+            // Show start of line if it does not fit.
+            sourceCodeElem.scrollTop += liRect.top - scrollableRect.top;
+        } else if (liRect.top < scrollableRect.top || liRect.bottom > scrollableRect.bottom) {
+            // Vertically center otherwise.
+            sourceCodeElem.scrollTop +=
+                liRect.top - scrollableRect.top +
+                liRect.height / 2 - scrollableRect.height / 2;
+        }
         li.style.outline = '2px solid red';
         setTimeout(function() {
             li.style.outline = '';

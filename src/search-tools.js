@@ -407,12 +407,12 @@ class SearchEngineElement {
         resultElement.classList.add('search-result-important');
         this.currentResultElement = resultElement;
 
-        var scrollableRect = this.scrollableElement.getBoundingClientRect();
+        let scrollableRect = this.scrollableElement.getBoundingClientRect();
         // Note: `resultElement.firstChild` contains the actual text, whereas
         // `resultElement` is a zero-height element used for positioning.
         // So we need `resultElement.firstChild` to determine the dimensions of
         // the rendered result.
-        var resultRect = resultElement.firstChild.getBoundingClientRect();
+        let resultRect = resultElement.firstChild.getBoundingClientRect();
         if (resultRect.height >= scrollableRect.height) {
             // Show start of result if it does not fit.
             this.scrollableElement.scrollTop +=
@@ -454,15 +454,15 @@ class SearchEngineElement {
         // visual marker will align well with the actual text.
 
         // Contains the results. Will be positioned over the actual text.
-        var wrapperElement = document.createElement('div');
+        let wrapperElement = document.createElement('div');
         wrapperElement.className = 'search-result-wrapper';
 
-        for (var i = 0; i < resultTexts.length; i += 2) {
-            var prefixElement = document.createElement('span');
+        for (let i = 0; i < resultTexts.length; i += 2) {
+            let prefixElement = document.createElement('span');
             prefixElement.className = 'search-result-prefix';
             prefixElement.textContent = resultTexts[i];
 
-            var highlightedElement = document.createElement('span');
+            let highlightedElement = document.createElement('span');
             highlightedElement.className = highlightClassName;
             highlightedElement.textContent = resultTexts[i + 1];
 

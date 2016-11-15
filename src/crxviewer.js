@@ -373,7 +373,10 @@ var viewFileInfo = (function() {
                     }
                     enableFind(true);
                 }
-                searchEngine.setElement(list);
+                searchEngine.setElement({
+                    element: list,
+                    scrollableElement: sourceCodeElem,
+                });
             };
             if (beautify.getType(entry.filename)) {
                 toggleBeautify.title = 'Click on this button to toggle between beautified code and non-beautified (original) code.';

@@ -216,12 +216,11 @@ class SearchEngineLogic {
 class SearchEngineElement {
     /**
      * @param {string} text - The text to search through
-     * @param {HTMLElement} [element] - The container containing the exact text,
-     *   with every line being wrapped in a separate child element.
      */
-    constructor(text, element = null) {
+    constructor(text) {
         this.logic = new SearchEngineLogic(text);
-        this.element = element;
+        this.element = null;
+        this.scrollableElement = null;
 
         this.currentSearchTermSerialized = null;
         this.currentResult = null;
@@ -236,6 +235,7 @@ class SearchEngineElement {
         this.currentResultElement = null;
         this.unhighlightAll();
         this.element = null;
+        this.scrollableElement = null;
     }
 
     /**
@@ -259,13 +259,16 @@ class SearchEngineElement {
      * construction to render results. Any previously rendered results in the
      * previous element are moved to the new element during this call.
      *
-     * The element must have the same characteristics as the `element` parameter
-     * in the constructor.
-     *
-     * @param {HTMLElement} element
+     * @param {object} o
+     * @param {HTMLElement} o.element - The container containing the exact text,
+     *    with every line being wrapped in a separate child element.
+     * @param {HTMLElement} o.scrollableElement - The container that shows
+     *    scroll bars when the content in `element` overflows.
      */
-    setElement(element) {
+    setElement({element, scrollableElement}) {
         this.element = element;
+        this.scrollableElement = scrollableElement;
+
         if (this.currentResultElement) {
             let lineElement =
                 this.element.children[this.currentResult.lineStart];
@@ -286,10 +289,18 @@ class SearchEngineElement {
         this.logic.setCurrentPosition(line, column);
     }
 
+    /**
+     * Search backwards for the query set in `setQuery` and render the result in
+     * the element as set by `setElement`.
+     */
     findPrev() {
         this._renderResult(this.logic.findPrev());
     }
 
+    /**
+     * Search forwards for the query set in `setQuery` and render the result in
+     * the element as set by `setElement`.
+     */
     findNext() {
         this._renderResult(this.logic.findNext());
     }
@@ -301,6 +312,10 @@ class SearchEngineElement {
         this.shownResults.length = 0;
     }
 
+    /**
+     * Find all matches of the query set in `setQuery` and highlight all
+     * matching results in the element as set by `setElement`.
+     */
     highlightAll() {
         // Normally (in _renderResult), the result is rendered by appending an
         // invisible prefix (for positioning), followed by the actual text.
@@ -376,10 +391,23 @@ class SearchEngineElement {
         resultElement.classList.add('search-result-important');
         this.currentResultElement = resultElement;
 
-        // TODO: Don't change scroll if already visible + center if needed.
-        // Nb. .firstChild because the actual content is in the child
-        // and absolutely positioned.
-        resultElement.firstChild.scrollIntoView(false);
+        var scrollableRect = this.scrollableElement.getBoundingClientRect();
+        // Note: `resultElement.firstChild` contains the actual text, whereas
+        // `resultElement` is a zero-height element used for positioning.
+        // So we need `resultElement.firstChild` to determine the dimensions of
+        // the rendered result.
+        var resultRect = resultElement.firstChild.getBoundingClientRect();
+        if (resultRect.height >= scrollableRect.height) {
+            // Show start of result if it does not fit.
+            this.scrollableElement.scrollTop +=
+                resultRect.top - scrollableRect.top;
+        } else if (resultRect.top < scrollableRect.top ||
+                   resultRect.bottom > scrollableRect.bottom) {
+            // Vertically center otherwise.
+            this.scrollableElement.scrollTop +=
+                resultRect.top - scrollableRect.top +
+                resultRect.height / 2 - scrollableRect.height / 2;
+        }
     }
 
     /**

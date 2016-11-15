@@ -527,7 +527,7 @@ var viewFileInfo = (function() {
         a.title = 'Download ' + entry.filename + ' (' + formatByteSize(entry.uncompressedSize) + ' bytes, type ' + mimeType + ')';
         a.onclick = function() {
             a.onclick = null;
-            a.textContent = 'Generating link...';
+            a.textContent = 'Creating link';
             entry.getData(new zip.BlobWriter(mimeType), function(blob) {
                 a.download = filename;
                 a.textContent = 'Download file';

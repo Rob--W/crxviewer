@@ -234,6 +234,9 @@ class SearchEngineElement {
         this.currentResult = null;
         this.currentResultElement = null;
         this.unhighlightAll();
+        if (this.element) {
+            this.element.removeEventListener('dblclick', this, true);
+        }
         this.element = null;
         this.scrollableElement = null;
     }
@@ -266,7 +269,11 @@ class SearchEngineElement {
      *    scroll bars when the content in `element` overflows.
      */
     setElement({element, scrollableElement}) {
+        if (this.element) {
+            this.element.removeEventListener('dblclick', this, true);
+        }
         this.element = element;
+        this.element.addEventListener('dblclick', this, true);
         this.scrollableElement = scrollableElement;
 
         if (this.currentResultElement) {
@@ -280,13 +287,6 @@ class SearchEngineElement {
             // Move from old tree to new tree.
             lineElement.insertBefore(resultElement, lineElement.firstChild);
         }
-    }
-
-    /**
-     * @see SearchEngineLogic#setCurrentPosition
-     */
-    setCurrentPosition(line, column) {
-        this.logic.setCurrentPosition(line, column);
     }
 
     /**
@@ -361,6 +361,22 @@ class SearchEngineElement {
             lastColumn = result.columnEnd;
         }
         flushBufferedResults();
+    }
+
+    /**
+     * The handler for the 'dblclick' event on `this.element`.
+     */
+    handleEvent(event) {
+        let {target} = event;
+        // Find the child element of this.element. Note that an element is
+        // always found in this way, because the event is only dispatched on
+        // descendants of `this.element`.
+        while (target.parentNode !== this.element) {
+            target = target.parentNode;
+        }
+        let line = Array.prototype.indexOf.call(this.element.children, target);
+        let column = 0;
+        this.logic.setCurrentPosition(line, column);
     }
 
     /**

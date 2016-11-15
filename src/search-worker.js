@@ -106,6 +106,8 @@ function getFileData(filename) {
 
 function SearchTask(filenames, searchTerm) {
     this.filenames = filenames;
+    // Keep this search term parsing logic in sync with
+    // TextSearchEngine.prototype.getCurrentSearchTerm.
     this.searchTerm = searchTerm;
     if (searchTerm.lastIndexOf('regexp:', 0) === 0) {
         // Callers should have validated that the regexp is valid.

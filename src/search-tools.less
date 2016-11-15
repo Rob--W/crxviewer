@@ -1,0 +1,32 @@
+// Supports search-tools.js
+// See comments in that file (at _renderResult) for more information.
+
+.search-result-anchor {
+    position: relative;
+    width: 100%;
+    height: 0;
+    pointer-events: none;
+    &.search-result-important {
+        z-index: 1;
+    }
+}
+.search-result-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: transparent;
+    background: transparent;
+}
+.search-result-prefix {
+    // No styles for now. Inheriting the color/background from the wrapper.
+}
+// "Highlight all results"
+.search-result-highlight {
+    outline: 1px solid orange;
+    background: rgba(255, 255, 100, 0.3);
+}
+// A specific result from find.
+.search-result-match {
+    outline: 2px solid red;
+}
+

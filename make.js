@@ -177,6 +177,7 @@ target.web = function() {
         },
         copy: [
             [SRC_DIR + 'search-worker.js', dest_dir],
+            [SRC_DIR + 'search-tools.js', dest_dir],
             [SRC_DIR + 'lib', dest_dir],
             [SRC_DIR + 'chrome-platform-info.js', dest_dir],
         ],

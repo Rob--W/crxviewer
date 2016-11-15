@@ -11,6 +11,7 @@
            EfficientTextWriter,
            beautify,
            Prism,
+           SearchEngineElement,
            CryptoJS
            */
 
@@ -276,6 +277,74 @@ var viewFileInfo = (function() {
             };
             heading.appendChild(goToLineButton);
 
+            heading.insertAdjacentHTML('beforeend',
+                '<button class="find-prev" title="Find previous">&#9650;</button>' +
+                '<button class="find-next" title="Find next">&#9660;</button>' +
+                '<button class="find-all" title="Highlight all">All</button>' +
+                '');
+
+            var textBeauty;
+            var searchEngine;
+            heading.querySelector('.find-prev').onclick = function() {
+                searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
+                searchEngine.findPrev();
+            };
+            heading.querySelector('.find-next').onclick = function() {
+                searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
+                searchEngine.findNext();
+            };
+            heading.querySelector('.find-all').onclick = function() {
+                searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
+                searchEngine.highlightAll();
+            };
+            heading.querySelector('.find-all').ondblclick = function() {
+                // TODO: Remove dblclick. The button should be a toggle,
+                // and the highlight should update automatically when the query
+                // changes.
+                searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
+                searchEngine.unhighlightAll();
+            };
+            function enableFind(enabled) {
+                heading.querySelector('.find-next').disabled =
+                heading.querySelector('.find-prev').disabled =
+                heading.querySelector('.find-all').disabled =
+                    !enabled;
+            }
+            // Disable find by default because 1) there is initially no content
+            // (<ol>). and 2) the search engine is unavailable in old browsers.
+            enableFind(false);
+
+            // TODO: Keep buttons in sync with engine? (search as you type)
+
+            // TODO: Add counter of total search results.
+
+            var onPreRendered = function(pre) {
+                if (sourceCodeElem.firstChild !== heading || pre !== preCurrent) {
+                    // While asynchronously generating the content for the pre
+                    // element, the user switched to another element, or the
+                    // user toggled the beautify option..
+                    // Do nothing for now. When the user switches back,
+                    // onPreRendered will be called again via a call to
+                    // doRenderSourceCodeViewer.
+                    return;
+                }
+                var list = pre.querySelector('ol');
+                console.assert(list, '<pre> should contain <ol>');
+                if (!searchEngine) {
+                    if (typeof SearchEngineElement === 'undefined') {
+                        console.warn('search-tools.js failed to load. In-file search not available.');
+                        return;
+                    }
+                    if (pre === preRaw) {
+                        searchEngine = new SearchEngineElement(text);
+                    } else { // pre === preBeauty
+                        searchEngine = new SearchEngineElement(textBeauty);
+                    }
+                    enableFind(true);
+                }
+                searchEngine.setElement(list);
+            };
+
             var preRaw = document.createElement('pre');
             var preBeauty = document.createElement('pre');
             var preCurrent; // The currently selected <pre>.
@@ -293,7 +362,7 @@ var viewFileInfo = (function() {
                     if (pre._didInitializeSourceViewer) return;
                     pre._didInitializeSourceViewer = true;
                     if (pre === preRaw) {
-                        viewTextSource(text, entry.filename, preRaw);
+                        viewTextSource(text, entry.filename, preRaw, onPreRendered);
                         return;
                     }
                     beautify({
@@ -301,7 +370,8 @@ var viewFileInfo = (function() {
                         type: type,
                         wrap: 0
                     }, function(text) {
-                        viewTextSource(text, entry.filename, preBeauty);
+                        textBeauty = text;
+                        viewTextSource(text, entry.filename, preBeauty, onPreRendered);
                     });
                 };
                 toggleBeautify.onclick = function() {
@@ -310,6 +380,11 @@ var viewFileInfo = (function() {
                     // the two may differ when the user switches to a different
                     // file and modifies toggles the beautifier in that file.
                     wantRawSourceGlobalDefault = preCurrent !== preRaw;
+                    if (searchEngine) {
+                        searchEngine.destroy();
+                        searchEngine = null;
+                        enableFind(false);
+                    }
                     selectPre(wantRawSourceGlobalDefault ? preRaw : preBeauty);
                     doRenderSourceCodeViewer();
                 };
@@ -321,7 +396,7 @@ var viewFileInfo = (function() {
                 selectPre(wantRawSourceGlobalDefault ? preRaw : preBeauty);
             } else {
                 preCurrent = preRaw;
-                viewTextSource(text, entry.filename, preRaw);
+                viewTextSource(text, entry.filename, preRaw, onPreRendered);
             }
             doRenderSourceCodeViewer();
 
@@ -340,6 +415,9 @@ var viewFileInfo = (function() {
                         lastPre.remove();
                     }
                     sourceCodeElem.appendChild(preCurrent);
+                    if (preCurrent.firstChild) {
+                        onPreRendered(preCurrent);
+                    }
                 }
             }
 
@@ -393,7 +471,8 @@ var viewFileInfo = (function() {
 
     // Render `text` in the given pre tag. The pre element should be blank,
     // i.e. the caller should create it and not add any attributes or content.
-    function viewTextSource(text, filename, pre) {
+    // onPreRendered is called when the content (`<ol>`) has been rendered.
+    function viewTextSource(text, filename, pre, onPreRendered) {
         pre.className = 'linenums auto-wordwrap';
         var lineCount = text.match(/\n/g);
         lineCount = lineCount ? lineCount.length + 1 : 1;
@@ -404,6 +483,7 @@ var viewFileInfo = (function() {
         // Auto-highlight for <30kb source
         if (text.length < 3e4) {
             pre.innerHTML = Prism.rob.highlightSource(text, filename);
+            onPreRendered(pre);
         } else {
             var startTag = '<li>';
             var endTag = '</li>';
@@ -415,7 +495,9 @@ var viewFileInfo = (function() {
                 '</ol>';
             Prism.rob.highlightSourceAsync(text, filename, function(html) {
                 pre.innerHTML = html;
+                onPreRendered(pre);
             });
+            onPreRendered(pre);
         }
     }
     var scrollingOffsets = {};
@@ -540,6 +622,26 @@ var TextSearchEngine = (function() {
     TextSearchEngine.prototype.setResultCallback = function(resultCallback) {
         this.resultCallback = resultCallback;
     };
+
+    /**
+     * @returns {RegExp|null} The current search term, as a RegExp.
+     *     null if there there is no search query.
+     */
+    TextSearchEngine.prototype.getCurrentSearchTerm = function() {
+        // Keep this search term parsing logic in sync with search-worker.js.
+        var searchTerm = this._currentSearchTerm;
+        if (searchTerm.lastIndexOf('regexp:', 0) === 0) {
+            // Assuming a valid RegExp
+            searchTerm = new RegExp(searchTerm.slice(7), 'i');
+        } else if (searchTerm) {
+            searchTerm = searchTerm.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
+            searchTerm = new RegExp(searchTerm, 'i');
+        } else {
+            searchTerm = null;
+        }
+        return searchTerm;
+    };
+
     /**
      * @param {string} searchTerm A case-insensitive search query.
      * @param {Array<string>} lowPrioFilenames List of files that the caller is not really

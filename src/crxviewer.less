@@ -2,6 +2,7 @@
 @rightPanelWidth: 250px;
 @resizerWidth: 8px;
 @fileSizeWidth: 4rem;
+@fileSpecificToolbarHeight: 2rem;
 
 * {
     box-sizing: border-box;
@@ -292,8 +293,12 @@ body {
     }
 }
 
+#source-toolbar {
+    height: @fileSpecificToolbarHeight;
+    line-height: @fileSpecificToolbarHeight;
+}
 #source-code {
-    max-height: 100%;
+    max-height: calc(100% - @fileSpecificToolbarHeight);
     overflow: auto;
     font-family: monospace;
     white-space: pre;
@@ -307,12 +312,6 @@ body {
 }
 
 .file-specific-toolbar {
-    position: sticky;
-    z-index: 2; // To not be covered by search results (see search-tools.less).
-    top: 0;
-    background: white;
-    padding: 0.3rem 0.1rem;
-
     button {
         margin: 0 0.1rem;
     }

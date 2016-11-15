@@ -264,6 +264,7 @@ var viewFileInfo = (function() {
     handlers.text = {
         Writer: EfficientTextWriter,
         callback: function(entry, text, finalCallback) {
+            var sourceToolbarElem = document.getElementById('source-toolbar');
             var sourceCodeElem = document.getElementById('source-code');
 
             var preRaw = document.createElement('pre');
@@ -349,7 +350,7 @@ var viewFileInfo = (function() {
             // TODO: Add counter of total search results.
 
             var onPreRendered = function(pre) {
-                if (sourceCodeElem.firstChild !== heading || pre !== preCurrent) {
+                if (sourceToolbarElem.firstChild !== heading || pre !== preCurrent) {
                     // While asynchronously generating the content for the pre
                     // element, the user switched to another element, or the
                     // user toggled the beautify option..
@@ -403,10 +404,11 @@ var viewFileInfo = (function() {
             doRenderSourceCodeViewer();
 
             function doRenderSourceCodeViewer() {
-                if (sourceCodeElem.firstChild !== heading) {
+                if (sourceToolbarElem.firstChild !== heading) {
                     // Switched from another view.
+                    sourceToolbarElem.textContent = '';
+                    sourceToolbarElem.appendChild(heading);
                     sourceCodeElem.textContent = '';
-                    sourceCodeElem.appendChild(heading);
                 }
                 var lastPre = sourceCodeElem.lastChild;
                 if (lastPre !== preCurrent) {
@@ -429,6 +431,10 @@ var viewFileInfo = (function() {
     handlers.image = {
         Writer: zip.Data64URIWriter,
         callback: function(entry, data_url) {
+            // TODO: Add tools to toolbar for images.
+            var sourceToolbarElem = document.getElementById('source-toolbar');
+            sourceToolbarElem.textContent = '';
+
             var sourceCodeElem = document.getElementById('source-code');
             sourceCodeElem.innerHTML = '<img>';
             sourceCodeElem.firstChild.src = data_url;
@@ -457,6 +463,10 @@ var viewFileInfo = (function() {
                     zipname: entry.filename,
                 });
             }
+
+            // TODO: Add tools to toolbar for zip files.
+            var sourceToolbarElem = document.getElementById('source-toolbar');
+            sourceToolbarElem.textContent = '';
 
             var sourceCodeElem = document.getElementById('source-code');
             sourceCodeElem.innerHTML = '<button>View the content of this file in a new CRX Viewer</button>';

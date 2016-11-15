@@ -254,6 +254,7 @@ class SearchEngineElement {
             if (searchterm) {
                 this.logic.setQuery(searchterm);
             }
+            // TODO: Remove invalid highlights.
         }
     }
 
@@ -458,15 +459,17 @@ class SearchEngineElement {
         wrapperElement.className = 'search-result-wrapper';
 
         for (let i = 0; i < resultTexts.length; i += 2) {
-            let prefixElement = document.createElement('span');
-            prefixElement.className = 'search-result-prefix';
-            prefixElement.textContent = resultTexts[i];
+            if (resultTexts[i]) {
+                let prefixElement = document.createElement('span');
+                prefixElement.className = 'search-result-prefix';
+                prefixElement.textContent = resultTexts[i];
+                wrapperElement.appendChild(prefixElement);
+            }
 
             let highlightedElement = document.createElement('span');
             highlightedElement.className = highlightClassName;
             highlightedElement.textContent = resultTexts[i + 1];
 
-            wrapperElement.appendChild(prefixElement);
             wrapperElement.appendChild(highlightedElement);
         }
 

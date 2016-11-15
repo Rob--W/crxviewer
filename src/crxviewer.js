@@ -311,7 +311,7 @@ var viewFileInfo = (function() {
             heading.insertAdjacentHTML('beforeend',
                 '<button class="find-prev" title="Find previous">&#9650;</button>' +
                 '<button class="find-next" title="Find next">&#9660;</button>' +
-                '<button class="find-all" title="Highlight all">All</button>' +
+                '<button class="find-all" title="Highlight all occurrences of the search term"><span class="find-all-indicator">H</span></button>' +
                 '');
 
             var textBeauty;
@@ -325,15 +325,14 @@ var viewFileInfo = (function() {
                 searchEngine.findNext();
             };
             heading.querySelector('.find-all').onclick = function() {
-                searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
-                searchEngine.highlightAll();
-            };
-            heading.querySelector('.find-all').ondblclick = function() {
-                // TODO: Remove dblclick. The button should be a toggle,
-                // and the highlight should update automatically when the query
-                // changes.
-                searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
-                searchEngine.unhighlightAll();
+                // This class name is used to keep track of the toggle state,
+                // and for styling.
+                if (this.firstChild.classList.toggle('find-all-enabled')) {
+                    searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
+                    searchEngine.highlightAll();
+                } else {
+                    searchEngine.unhighlightAll();
+                }
             };
             function enableFind(enabled) {
                 heading.querySelector('.find-next').disabled =

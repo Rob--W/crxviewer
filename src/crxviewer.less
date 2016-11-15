@@ -312,8 +312,15 @@ body {
 }
 
 .file-specific-toolbar {
-    button {
+    > button {
         margin: 0 0.1rem;
+    }
+    .find-all-enabled {
+        color: red;
+        // Same style as .search-result-highlight in search-tools.less to help
+        // users with getting familiar with the look of highlighted results.
+        outline: 1px solid orange;
+        background: rgba(255, 255, 100, 0.3);
     }
 }
 .file-specific-download-link {

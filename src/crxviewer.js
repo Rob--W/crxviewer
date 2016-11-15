@@ -265,6 +265,11 @@ var viewFileInfo = (function() {
         Writer: EfficientTextWriter,
         callback: function(entry, text, finalCallback) {
             var sourceCodeElem = document.getElementById('source-code');
+
+            var preRaw = document.createElement('pre');
+            var preBeauty = document.createElement('pre');
+            var preCurrent; // The currently selected <pre>.
+
             var heading = document.createElement('div');
             heading.className = 'file-specific-toolbar';
 
@@ -276,6 +281,31 @@ var viewFileInfo = (function() {
                 showGoToLine(sourceCodeElem, preCurrent);
             };
             heading.appendChild(goToLineButton);
+
+            var toggleBeautify = document.createElement('button');
+            var selectPre = function(pre) {
+                preCurrent = pre;
+                if (pre === preRaw) {
+                    toggleBeautify.textContent = 'Show beautified code';
+                } else {
+                    toggleBeautify.textContent = 'Show original code';
+                }
+                if (pre._didInitializeSourceViewer) return;
+                pre._didInitializeSourceViewer = true;
+                if (pre === preRaw) {
+                    viewTextSource(text, entry.filename, preRaw, onPreRendered);
+                    return;
+                }
+                beautify({
+                    text: text,
+                    type: beautify.getType(entry.filename),
+                    wrap: 0
+                }, function(text) {
+                    textBeauty = text;
+                    viewTextSource(text, entry.filename, preBeauty, onPreRendered);
+                });
+            };
+            heading.appendChild(toggleBeautify);
 
             heading.insertAdjacentHTML('beforeend',
                 '<button class="find-prev" title="Find previous">&#9650;</button>' +
@@ -344,36 +374,8 @@ var viewFileInfo = (function() {
                 }
                 searchEngine.setElement(list);
             };
-
-            var preRaw = document.createElement('pre');
-            var preBeauty = document.createElement('pre');
-            var preCurrent; // The currently selected <pre>.
-            var type = beautify.getType(entry.filename);
-            if (type) {
-                var toggleBeautify = document.createElement('button');
+            if (beautify.getType(entry.filename)) {
                 toggleBeautify.title = 'Click on this button to toggle between beautified code and non-beautified (original) code.';
-                var selectPre = function(pre) {
-                    preCurrent = pre;
-                    if (pre === preRaw) {
-                        toggleBeautify.textContent = 'Show beautified code';
-                    } else {
-                        toggleBeautify.textContent = 'Show original code';
-                    }
-                    if (pre._didInitializeSourceViewer) return;
-                    pre._didInitializeSourceViewer = true;
-                    if (pre === preRaw) {
-                        viewTextSource(text, entry.filename, preRaw, onPreRendered);
-                        return;
-                    }
-                    beautify({
-                        text: text,
-                        type: type,
-                        wrap: 0
-                    }, function(text) {
-                        textBeauty = text;
-                        viewTextSource(text, entry.filename, preBeauty, onPreRendered);
-                    });
-                };
                 toggleBeautify.onclick = function() {
                     // Note: Toggling the state is based on the local preCurrent
                     // variable instead of `!wantRawSourceGlobalDefault` because
@@ -388,15 +390,15 @@ var viewFileInfo = (function() {
                     selectPre(wantRawSourceGlobalDefault ? preRaw : preBeauty);
                     doRenderSourceCodeViewer();
                 };
-                heading.appendChild(toggleBeautify);
 
                 // Use the last selected option for new views.
                 // Note: This state only changes when the user clicks on the
                 // `toggleBeautify` button, not when they change the file view.
                 selectPre(wantRawSourceGlobalDefault ? preRaw : preBeauty);
             } else {
-                preCurrent = preRaw;
-                viewTextSource(text, entry.filename, preRaw, onPreRendered);
+                toggleBeautify.title = 'Beautify not available for this file type';
+                toggleBeautify.disabled = true;
+                selectPre(preRaw);
             }
             doRenderSourceCodeViewer();
 

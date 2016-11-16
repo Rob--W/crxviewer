@@ -228,6 +228,8 @@ class SearchEngineElement {
         this.currentSearchTermSerialized = null;
         this.currentResult = null;
         this.currentResultElement = null;
+        // Set of already-rendered highlights.
+        this.highlightedResults = new Set();
         // List of pairs [line, result element]
         this.shownResults = [];
     }
@@ -310,6 +312,7 @@ class SearchEngineElement {
     }
 
     unhighlightAll() {
+        this.highlightedResults.clear();
         for (let [, resultElement] of this.shownResults) {
             resultElement.remove();
         }
@@ -321,6 +324,43 @@ class SearchEngineElement {
      * matching results in the element as set by `setElement`.
      */
     highlightAll() {
+        this.unhighlightAll();
+        this._renderBetweenLines(0, this.element.children.length - 1);
+    }
+
+    /**
+     * Render highlighted results in the given line range (inclusive, 0-based).
+     *
+     * @param {number} lineStart - Start of range. Must be at least 0.
+     * @param {number} lineEnd - End of range. Must be at least as high as
+     *    `lineStart`, and no more than the number of '\n's in `this.text`.
+     */
+    _renderBetweenLines(lineStart, lineEnd) {
+        let allResults = this.logic.findAll();
+        let results = [];
+        for (let result of allResults) {
+            if (result.lineEnd < lineStart) {
+                continue;
+            }
+            if (result.lineStart > lineEnd) {
+                break;
+            }
+            if (!this.highlightedResults.has(result)) {
+                this.highlightedResults.add(result);
+                results.push(result);
+            }
+        }
+
+        this._renderHighlightedResults(results);
+    }
+
+    /**
+     * Create highlights for all given results, and insert each highlight in the
+     * document.
+     *
+     * @param {Object[]} results - The results to render.
+     */
+    _renderHighlightedResults(results) {
         // Normally (in _renderResult), the result is rendered by appending an
         // invisible prefix (for positioning), followed by the actual text.
         // When we highlight all results, we combine results that appear on the
@@ -328,8 +368,6 @@ class SearchEngineElement {
         // memory usage (in terms of the text size) when the text is one long
         // line and the search matches one result (because every character would
         // then have its own wrapper and prefix).
-        let allResults = this.logic.findAll();
-
         let bufferedResults = [];
         // The line where the first item in the buffer starts.
         let firstLine = 0;
@@ -348,7 +386,7 @@ class SearchEngineElement {
         };
 
         this.unhighlightAll();
-        for (let result of allResults) {
+        for (let result of results) {
             if (lastLine !== result.lineStart) {
                 flushBufferedResults();
                 firstLine = result.lineStart;

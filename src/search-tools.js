@@ -120,7 +120,9 @@ class SearchEngineLogic {
      * findPrev or findNext is relative to the selected result.
      *
      * @param {number} i - The position of the result in `this.currentResults`.
-     * @returns {object} The result at position `i`.
+     * @returns {object} The result at position `i`. This object must not be
+     *    mutated, and is guaranteed to have a '==='-identity to previously
+     *    returned results until the query is reset via `setQuery`.
      */
     setAndReturnResult(i) {
         let result = this.currentResults[i];
@@ -144,6 +146,7 @@ class SearchEngineLogic {
      * true for the result. This method caches search results.
      *
      * @param {function} accept - Whether to return the result.
+     * @returns {number} The index of the accepted result, -1 if none.
      */
     findIndex(accept) {
         if (!this.currentQuery) {

@@ -176,7 +176,7 @@ function getMimeTypeForFilename(filename) {
 }
 
 var viewFileInfo = (function() {
-    var _lastView = 0;
+    var _currentEntry = null;
     var handlers = {};
     var wantRawSourceGlobalDefault = false;
 
@@ -184,7 +184,8 @@ var viewFileInfo = (function() {
     // _cachedResult = extracted content
     // _cachedCallback = If existent, a function which renders the (cached) result.
     function viewFileInfo(entry) {
-        var currentView = ++_lastView;
+        if (_currentEntry === entry) return;
+        _currentEntry = entry;
         if (entry._cachedCallback) {
             // If cachedCallback returns false, then nothing was rendered.
             if (entry._cachedCallback() !== false);
@@ -232,7 +233,7 @@ var viewFileInfo = (function() {
 
         entry.getData(writer, function(result) {
             entry._cachedResult = result;
-            if (_lastView !== currentView) {
+            if (_currentEntry !== entry) {
                 console.log('Finished reading file, but another file was opened!');
                 return;
             }

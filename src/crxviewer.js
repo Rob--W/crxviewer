@@ -409,13 +409,8 @@ var viewFileInfo = (function() {
                 toggleBeautify.disabled = true;
                 selectPre(preRaw);
             }
-            doRenderSourceCodeViewer();
 
             function doRenderSourceCodeViewer() {
-                if (sourceToolbarElem.firstChild !== heading) {
-                    // Switched from another view.
-                    sourceToolbarElem.appendChild(heading);
-                }
                 var lastPre = sourceCodeElem.lastChild;
                 if (lastPre !== preCurrent) {
                     if (lastPre == preRaw || lastPre == preBeauty) {
@@ -431,7 +426,13 @@ var viewFileInfo = (function() {
                 }
             }
 
-            finalCallback(doRenderSourceCodeViewer);
+            function onSourceViewShow() {
+                sourceToolbarElem.appendChild(heading);
+                doRenderSourceCodeViewer();
+            }
+
+            onSourceViewShow();
+            finalCallback(onSourceViewShow);
         }
     };
     handlers.image = {

@@ -378,10 +378,12 @@ var viewFileInfo = (function() {
                     }
                     enableFind(true);
                 }
+                searchEngine.disconnect();
                 searchEngine.setElement({
                     element: list,
                     scrollableElement: sourceCodeElem,
                 });
+                searchEngine.connect();
             };
             if (beautify.getType(entry.filename)) {
                 toggleBeautify.title = 'Click on this button to toggle between beautified code and non-beautified (original) code.';
@@ -427,8 +429,19 @@ var viewFileInfo = (function() {
             }
 
             function onSourceViewShow() {
+                sourceCodeElem.addEventListener('sourceviewhide', onSourceViewHide);
                 sourceToolbarElem.appendChild(heading);
                 doRenderSourceCodeViewer();
+                if (searchEngine) {
+                    searchEngine.connect();
+                }
+            }
+
+            function onSourceViewHide() {
+                sourceCodeElem.removeEventListener('sourceviewhide', onSourceViewHide);
+                if (searchEngine) {
+                    searchEngine.disconnect();
+                }
             }
 
             onSourceViewShow();

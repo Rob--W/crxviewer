@@ -232,6 +232,8 @@ class SearchEngineElement {
         this.highlightedResults = new Set();
         // List of pairs [line, result element]
         this.shownResults = [];
+
+        this._ondblclick_element = this._ondblclick_element.bind(this);
     }
 
     destroy() {
@@ -239,11 +241,28 @@ class SearchEngineElement {
         this.currentResult = null;
         this.currentResultElement = null;
         this.unhighlightAll();
-        if (this.element) {
-            this.element.removeEventListener('dblclick', this, true);
-        }
+        this.disconnect();
         this.element = null;
         this.scrollableElement = null;
+    }
+
+    /**
+     * Activate the search engine integration in the document.
+     * `setElement` must have been called before this call.
+     */
+    connect() {
+        this.element.addEventListener(
+            'dblclick', this._ondblclick_element, true);
+    }
+
+    /**
+     * Detach the search engine integration. This is the opposite of `connect`.
+     */
+    disconnect() {
+        if (this.element) {
+            this.element.removeEventListener(
+                'dblclick', this._ondblclick_element, true);
+        }
     }
 
     /**
@@ -268,6 +287,9 @@ class SearchEngineElement {
      * construction to render results. Any previously rendered results in the
      * previous element are moved to the new element during this call.
      *
+     * If `connect` was called before, make sure to call `disconnect` before
+     * calling this method.
+     *
      * @param {object} o
      * @param {HTMLElement} o.element - The container containing the exact text,
      *    with every line being wrapped in a separate child element.
@@ -275,11 +297,7 @@ class SearchEngineElement {
      *    scroll bars when the content in `element` overflows.
      */
     setElement({element, scrollableElement}) {
-        if (this.element) {
-            this.element.removeEventListener('dblclick', this, true);
-        }
         this.element = element;
-        this.element.addEventListener('dblclick', this, true);
         this.scrollableElement = scrollableElement;
 
         if (this.currentResultElement) {
@@ -408,7 +426,7 @@ class SearchEngineElement {
     /**
      * The handler for the 'dblclick' event on `this.element`.
      */
-    handleEvent(event) {
+    _ondblclick_element(event) {
         let {target} = event;
         // Find the child element of this.element. Note that an element is
         // always found in this way, because the event is only dispatched on

@@ -239,7 +239,7 @@ var viewFileInfo = (function() {
                 return;
             }
             willSwitchSourceView();
-            callback(entry, result, function(callbackResult) {
+            callback(entry, result, function finalCallback(callbackResult) {
                 if (callbackResult && typeof callbackResult !== 'function') {
                     throw new Error('callbackResult exists and is not a function!');
                 }

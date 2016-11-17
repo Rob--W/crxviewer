@@ -218,6 +218,7 @@ var viewFileInfo = (function() {
         var callback = handler.callback;
 
         if (entry._cachedResult) {
+            willSwitchSourceView();
             callback(entry, entry._cachedResult);
             return;
         }
@@ -237,13 +238,17 @@ var viewFileInfo = (function() {
                 console.log('Finished reading file, but another file was opened!');
                 return;
             }
+            willSwitchSourceView();
             callback(entry, result, function(callbackResult) {
                 if (callbackResult && typeof callbackResult !== 'function') {
                     throw new Error('callbackResult exists and is not a function!');
                 }
                 entry._cachedCallback = function() {
                     saveScroll();
-                    if (callbackResult) callbackResult();
+                    if (callbackResult) {
+                        willSwitchSourceView();
+                        callbackResult();
+                    }
                     restoreScroll(entry.filename);
                     return typeof callbackResult == 'function';
                 };
@@ -409,9 +414,7 @@ var viewFileInfo = (function() {
             function doRenderSourceCodeViewer() {
                 if (sourceToolbarElem.firstChild !== heading) {
                     // Switched from another view.
-                    sourceToolbarElem.textContent = '';
                     sourceToolbarElem.appendChild(heading);
-                    sourceCodeElem.textContent = '';
                 }
                 var lastPre = sourceCodeElem.lastChild;
                 if (lastPre !== preCurrent) {
@@ -435,8 +438,7 @@ var viewFileInfo = (function() {
         Writer: zip.Data64URIWriter,
         callback: function(entry, data_url) {
             // TODO: Add tools to toolbar for images.
-            var sourceToolbarElem = document.getElementById('source-toolbar');
-            sourceToolbarElem.textContent = '';
+            // var sourceToolbarElem = document.getElementById('source-toolbar');
 
             var sourceCodeElem = document.getElementById('source-code');
             sourceCodeElem.innerHTML = '<img>';
@@ -468,8 +470,7 @@ var viewFileInfo = (function() {
             }
 
             // TODO: Add tools to toolbar for zip files.
-            var sourceToolbarElem = document.getElementById('source-toolbar');
-            sourceToolbarElem.textContent = '';
+            // var sourceToolbarElem = document.getElementById('source-toolbar');
 
             var sourceCodeElem = document.getElementById('source-code');
             sourceCodeElem.innerHTML = '<button>View the content of this file in a new CRX Viewer</button>';
@@ -483,6 +484,16 @@ var viewFileInfo = (function() {
             };
         }
     };
+
+    // Called right before the source viewer switches to another view.
+    function willSwitchSourceView() {
+        var sourceToolbarElem = document.getElementById('source-toolbar');
+        sourceToolbarElem.textContent = '';
+
+        var sourceCodeElem = document.getElementById('source-code');
+        sourceCodeElem.dispatchEvent(new CustomEvent('sourceviewhide'));
+        sourceCodeElem.textContent = '';
+    }
 
     // Render `text` in the given pre tag. The pre element should be blank,
     // i.e. the caller should create it and not add any attributes or content.

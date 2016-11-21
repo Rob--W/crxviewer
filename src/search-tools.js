@@ -2,9 +2,47 @@
 // and DOM features, without requiring transpilation or breaking compatibility
 // of the viewer with non-bleeding-edge browsers.
 /* jshint esversion: 6 */
-/* globals console, document */
+/* globals console, document, requestAnimationFrame, setTimeout */
 /* exported SearchEngineElement, SearchEngineLogic */
 'use strict';
+
+/**
+ * Perform a binary search on `array`.
+ *
+ * @param {object} array - A sorted array or array-like object.
+ * @param {function} evaluate - A function that evaluates the selected array
+ *    element. Should return a negative number if the search should continue at
+ *    the left; positive if the search should continue at the right, and zero if
+ *    the desired element has been found.
+ * @param {boolean} [useCeiling=false] - By default, if the element is not
+ *    found, the index before the last evaluated element is returned.
+ *    If `useCeiling` is true, the index after the last evaluated element is
+ *    returned. If these indices are out of bounds, then the index of the last
+ *    evaluated element is returned.
+ * @returns {number} The index of the found element.
+ *    If an exact match was not found, the closest element is returned,
+ *    according to `useCeiling`.
+ */
+function binarySearch(array, evaluate, useCeiling = false) {
+    let left = 0;
+    let right = array.length - 1;
+    while (left <= right) {
+        let mid = Math.floor(left + (right - left) / 2);
+        let rating = evaluate(array[mid]);
+        if (rating > 0) {
+            left = mid + 1;
+        } else if (rating < 0) {
+            right = mid - 1;
+        } else {
+            return mid;
+        }
+    }
+    // At this point we have the range [right, left] (with left = right + 1).
+    let mid = useCeiling ? left : right;
+    if (mid === array.length) --mid;
+    if (mid === -1) ++mid;
+    return mid;
+}
 
 // A model that processes search queries and displays the result.
 class SearchEngineLogic {
@@ -224,16 +262,21 @@ class SearchEngineElement {
         this.logic = new SearchEngineLogic(text);
         this.element = null;
         this.scrollableElement = null;
+        this.connected = false;
 
         this.currentSearchTermSerialized = null;
         this.currentResult = null;
         this.currentResultElement = null;
         // Set of already-rendered highlights.
         this.highlightedResults = new Set();
-        // List of pairs [line, result element]
+        // List of pairs [line, result element] (unordered!)
         this.shownResults = [];
+        this.isHighlighting = false;
 
         this._ondblclick_element = this._ondblclick_element.bind(this);
+        this._onscroll_scrollableElement =
+            this._debounce(this._onscroll_scrollableElement);
+        this._onresize_window = this._debounce(this._onresize_window);
     }
 
     destroy() {
@@ -253,6 +296,11 @@ class SearchEngineElement {
     connect() {
         this.element.addEventListener(
             'dblclick', this._ondblclick_element, true);
+        this.scrollableElement.addEventListener(
+            'scroll', this._onscroll_scrollableElement);
+        this.scrollableElement.ownerDocument.defaultView.addEventListener(
+            'resize', this._onresize_window);
+        this.connected = true;
     }
 
     /**
@@ -263,6 +311,13 @@ class SearchEngineElement {
             this.element.removeEventListener(
                 'dblclick', this._ondblclick_element, true);
         }
+        if (this.scrollableElement) {
+            this.scrollableElement.removeEventListener(
+                'scroll', this._onscroll_scrollableElement);
+            this.scrollableElement.ownerDocument.defaultView
+                .removeEventListener('resize', this._onresize_window);
+        }
+        this.connected = false;
     }
 
     /**
@@ -329,12 +384,16 @@ class SearchEngineElement {
         this._renderResult(this.logic.findNext());
     }
 
+    /**
+     * Stop highlighting all results and remove all existing highlights.
+     */
     unhighlightAll() {
         this.highlightedResults.clear();
         for (let [, resultElement] of this.shownResults) {
             resultElement.remove();
         }
         this.shownResults.length = 0;
+        this.isHighlighting = false;
     }
 
     /**
@@ -342,8 +401,32 @@ class SearchEngineElement {
      * matching results in the element as set by `setElement`.
      */
     highlightAll() {
-        this.unhighlightAll();
-        this._renderBetweenLines(0, this.element.children.length - 1);
+        this.isHighlighting = true;
+        this.showVisibleHighlights();
+    }
+
+    /**
+     * Determine the approximate visible area and render all highlights in the
+     * given area.
+     */
+    showVisibleHighlights() {
+        if (!this.isHighlighting) {
+            return;
+        }
+        let scrollableRect = this.scrollableElement.getBoundingClientRect();
+        // We want one page before and after, in case of page up/page down.
+        let desiredYTop = scrollableRect.top - scrollableRect.height;
+        let desiredYBottom = scrollableRect.bottom + scrollableRect.height;
+
+        let topLine = binarySearch(this.element.children, child => {
+            return desiredYTop - child.getBoundingClientRect().bottom;
+        }, false);
+
+        let bottomLine = binarySearch(this.element.children, child => {
+            return desiredYBottom - child.getBoundingClientRect().top;
+        }, true);
+
+        this._renderBetweenLines(topLine, bottomLine);
     }
 
     /**
@@ -403,7 +486,6 @@ class SearchEngineElement {
             }
         };
 
-        this.unhighlightAll();
         for (let result of results) {
             if (lastLine !== result.lineStart) {
                 flushBufferedResults();
@@ -424,6 +506,32 @@ class SearchEngineElement {
     }
 
     /**
+     * Throttle a callback, to be used as an event handler.
+     *
+     * @param {function} callback - A method that is invoked on `this`.
+     * @returns {function} A debounced version of the callback.
+     */
+    _debounce(callback) {
+        let didScheduleDispatch = false;
+        return event => {
+            if (didScheduleDispatch) {
+                return;
+            }
+            didScheduleDispatch = true;
+            setTimeout(() => {
+                // Schedule at the next animation frame because the handler may
+                // force layout and modify DOM.
+                requestAnimationFrame(() => {
+                    didScheduleDispatch = false;
+                    if (this.connected) {
+                        callback.call(this);
+                    }
+                });
+            }, 100);
+        };
+    }
+
+    /**
      * The handler for the 'dblclick' event on `this.element`.
      */
     _ondblclick_element(event) {
@@ -437,6 +545,20 @@ class SearchEngineElement {
         let line = Array.prototype.indexOf.call(this.element.children, target);
         let column = 0;
         this.logic.setCurrentPosition(line, column);
+    }
+
+    /**
+     * The handler for a debounced 'scroll' event on `this.scrollableElement`.
+     */
+    _onscroll_scrollableElement() {
+        this.showVisibleHighlights();
+    }
+
+    /**
+     * The handler for a debounced 'resize' event on `window`.
+     */
+    _onresize_window() {
+        this.showVisibleHighlights();
     }
 
     /**

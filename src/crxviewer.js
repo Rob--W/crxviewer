@@ -350,8 +350,6 @@ var viewFileInfo = (function() {
             // (<ol>). and 2) the search engine is unavailable in old browsers.
             enableFind(false);
 
-            // TODO: Keep buttons in sync with engine? (search as you type)
-
             // TODO: Add counter of total search results.
 
             var onPreRendered = function(pre) {
@@ -384,6 +382,11 @@ var viewFileInfo = (function() {
                     scrollableElement: sourceCodeElem,
                 });
                 searchEngine.connect();
+                searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
+                textSearchEngine.setQueryChangeCallback(function() {
+                    searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
+                    searchEngine.showVisibleHighlights();
+                });
             };
             if (beautify.getType(entry.filename)) {
                 toggleBeautify.title = 'Click on this button to toggle between beautified code and non-beautified (original) code.';
@@ -431,10 +434,8 @@ var viewFileInfo = (function() {
             function onSourceViewShow() {
                 sourceCodeElem.addEventListener('sourceviewhide', onSourceViewHide);
                 sourceToolbarElem.appendChild(heading);
+                // This will connect searchEngine if needed.
                 doRenderSourceCodeViewer();
-                if (searchEngine) {
-                    searchEngine.connect();
-                }
             }
 
             function onSourceViewHide() {
@@ -442,6 +443,7 @@ var viewFileInfo = (function() {
                 if (searchEngine) {
                     searchEngine.disconnect();
                 }
+                textSearchEngine.setQueryChangeCallback(null);
             }
 
             onSourceViewShow();
@@ -653,6 +655,7 @@ var TextSearchEngine = (function() {
          * @param {boolean|null} found true if found, false if not found, null if unknown.
          */
         this.resultCallback = null;
+        this.queryChangeCallback = null;
         this._currentSearchTerm = '';
         this._currentSearchStart = 0;
         this._recentSearchResults = {
@@ -667,6 +670,12 @@ var TextSearchEngine = (function() {
 
     TextSearchEngine.prototype.setResultCallback = function(resultCallback) {
         this.resultCallback = resultCallback;
+    };
+
+    TextSearchEngine.prototype.setQueryChangeCallback = function(queryChangeCallback) {
+        // This is to support the in-file search. For now I only expect one callback
+        // at any time. If more listeners are needed, switch to an event emitter.
+        this.queryChangeCallback = queryChangeCallback;
     };
 
     /**
@@ -702,6 +711,7 @@ var TextSearchEngine = (function() {
         if (this._currentSearchTerm === searchTerm) {
             return; // No change in result.
         }
+
         if (!searchTerm) {
             this._currentSearchTerm = '';
             this.worker.postMessage({
@@ -709,6 +719,9 @@ var TextSearchEngine = (function() {
             });
             // No search term = every file matches.
             this.resultCallback(null, true);
+            if (this.queryChangeCallback) {
+                this.queryChangeCallback();
+            }
             return;
         }
         this.resultCallback(null, null); // Should not call doPlaintextSearch again.
@@ -734,6 +747,9 @@ var TextSearchEngine = (function() {
             searchTerm: searchTerm,
             lowPrioFilenames: lowPrioFilenames,
         });
+        if (this.queryChangeCallback) {
+            this.queryChangeCallback();
+        }
     };
 
     // Stably merge two arrays, ignoring duplicate entries from the second array.

@@ -212,6 +212,9 @@ class SearchEngineLogic {
      * considered part of the line that it terminates.
      */
     *runQuery() {
+        if (this.regex === null) {
+            return;
+        }
         let regex = new RegExp(this.regex.source, this.regex.flags);
         let line = 0;
         let match;
@@ -244,11 +247,15 @@ class SearchEngineLogic {
     }
 
     /**
-     * @param {RegExp} searchterm
+     * @param {RegExp} [searchterm]
      */
-    setQuery(searchterm) {
-        let flags = searchterm.ignoreCase ? 'ig' : 'g';
-        this.regex = new RegExp(searchterm.source, flags);
+    setQuery(searchterm = null) {
+        if (searchterm) {
+            let flags = searchterm.ignoreCase ? 'ig' : 'g';
+            this.regex = new RegExp(searchterm.source, flags);
+        } else {
+            this.regex = null;
+        }
         this.currentQuery = null;
         this.currentResults.length = 0;
     }
@@ -323,6 +330,8 @@ class SearchEngineElement {
     /**
      * Update the current query. If the search term was changed, the cached
      * results are reset.
+     * Highlights and search terms are not automatically restored. Call
+     * `findPrev`, `findNext` or `showVisibleHighlights` if wanted.
      *
      * @param {RegExp} [searchterm]
      */
@@ -330,10 +339,15 @@ class SearchEngineElement {
         let serialized = String(searchterm);
         if (serialized !== this.currentSearchTermSerialized) {
             this.currentSearchTermSerialized = serialized;
-            if (searchterm) {
-                this.logic.setQuery(searchterm);
+            this.logic.setQuery(searchterm);
+            if (this.isHighlighting) {
+                this.unhighlightAll();
+                this.isHighlighting = true;
             }
-            // TODO: Remove invalid highlights.
+            if (this.currentResultElement) {
+                this.currentResultElement.remove();
+                this.currentResultElement = null;
+            }
         }
     }
 

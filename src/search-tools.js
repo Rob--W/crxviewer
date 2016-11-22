@@ -2,7 +2,7 @@
 // and DOM features, without requiring transpilation or breaking compatibility
 // of the viewer with non-bleeding-edge browsers.
 /* jshint esversion: 6 */
-/* globals console, document, requestAnimationFrame, setTimeout */
+/* globals console, document, requestAnimationFrame, setTimeout, CSS */
 /* exported SearchEngineElement, SearchEngineLogic */
 'use strict';
 
@@ -407,15 +407,11 @@ class SearchEngineElement {
         this.scrollableElement = scrollableElement;
 
         if (this.currentResultElement) {
-            let lineElement =
-                this.element.children[this.currentResult.lineStart];
-            lineElement.insertBefore(
-                this.currentResultElement, lineElement.firstChild);
+            this._moveRenderedResult(
+                this.currentResult.lineStart, this.currentResultElement);
         }
         for (let [lineStart, resultElement] of this.shownResults) {
-            let lineElement = this.element.children[lineStart];
-            // Move from old tree to new tree.
-            lineElement.insertBefore(resultElement, lineElement.firstChild);
+            this._moveRenderedResult(lineStart, resultElement);
         }
     }
 
@@ -715,11 +711,6 @@ class SearchEngineElement {
             wrapperElement.appendChild(highlightedElement);
         }
 
-        // Auxilary element to help with positioning.
-        let resultElement = document.createElement('div');
-        resultElement.className = 'search-result-anchor';
-        resultElement.appendChild(wrapperElement);
-
         let lineElement = this.element.children[lineStart];
         if (!lineElement.firstChild) {
             // When the list item is empty, it initially has a height.
@@ -730,7 +721,54 @@ class SearchEngineElement {
             // it does not matter for rendering whether it is present or not.
             lineElement.appendChild(document.createElement('wbr'));
         }
-        lineElement.insertBefore(resultElement, lineElement.firstChild);
-        return resultElement;
+        // Auxilary element to help with positioning.
+        let anchorElement = lineElement.firstElementChild;
+        if (anchorElement &&
+            anchorElement.classList.contains('search-result-anchor')) {
+            anchorElement.appendChild(wrapperElement);
+        } else {
+            // Note: This node is added and not removed again, because doing so
+            // would require a restyle to work around a bug in Firefox.
+            // See _work_around_Firefox_bug_1319424 for more info.
+            anchorElement = document.createElement('div');
+            anchorElement.className = 'search-result-anchor';
+            anchorElement.appendChild(wrapperElement);
+            lineElement.insertBefore(anchorElement, lineElement.firstChild);
+            this._work_around_Firefox_bug_1319424(lineElement);
+        }
+        return wrapperElement;
     }
+
+    /**
+     * @param {number} lineStart - The line where the element should be
+     *     inserted.
+     * @param {HTMLElement} element - The return value of `_insertResults`.
+     */
+    _moveRenderedResult(lineStart, element) {
+        let lineElement = this.element.children[lineStart];
+        let anchorElement = element.parentNode;
+        if (lineElement !== anchorElement.parentNode) {
+            lineElement.insertBefore(anchorElement, lineElement.firstChild);
+        }
+    }
+
+    _work_around_Firefox_bug_1319424(lineElement) {
+        // The content of `lineElement` is expected to be word-wrapped. But due
+        // to a bug in Firefox, "word-break:break-all" is not correctly applied
+        // under certain circumstances, such as when a new <div> is inserted in
+        // `lineElement`. For details, see https://bugzil.la/1319424
+        //
+        // To work around the issue, I force a restyle.
+        lineElement.style.letterSpacing = '0';
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                lineElement.style.letterSpacing = '';
+            });
+        });
+    }
+}
+
+// Disable work-around in non-Firefox browsers to avoid overhead.
+if (!CSS.supports('-moz-appearance', 'none')) {
+    SearchEngineElement.prototype._work_around_Firefox_bug_1319424 = () => {};
 }

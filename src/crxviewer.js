@@ -323,6 +323,7 @@ var viewFileInfo = (function() {
 
             var textBeauty;
             var searchEngine;
+            var shouldHighlightAll = false;
             heading.querySelector('.find-prev').onclick = function() {
                 searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
                 searchEngine.findPrev();
@@ -334,9 +335,9 @@ var viewFileInfo = (function() {
                 showFindStatus();
             };
             heading.querySelector('.find-all').onclick = function() {
-                // This class name is used to keep track of the toggle state,
-                // and for styling.
-                if (this.firstChild.classList.toggle('find-all-enabled')) {
+                shouldHighlightAll = !shouldHighlightAll;
+                this.firstChild.classList.toggle('find-all-enabled', shouldHighlightAll);
+                if (shouldHighlightAll) {
                     searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
                     searchEngine.highlightAll();
                     showFindStatus();
@@ -415,6 +416,9 @@ var viewFileInfo = (function() {
                 });
                 searchEngine.connect();
                 searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
+                if (shouldHighlightAll) {
+                    searchEngine.highlightAll();
+                }
                 showFindStatus();
                 textSearchEngine.setQueryChangeCallback(function() {
                     searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());

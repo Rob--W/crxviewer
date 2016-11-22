@@ -3,7 +3,8 @@
  * My glue for prism.js, designed for viewing untrusted source code.
  */
 'use strict';
-/* globals Prism, Worker, self, importScripts */
+/* globals Prism, Worker, self, importScripts, setTimeout, clearTimeout,
+           console */
 
 if (typeof importScripts === 'function') { // In a Web Worker.
     // Prism.js adds an "message" handler unless "addEventListener" is absent.
@@ -13,11 +14,9 @@ if (typeof importScripts === 'function') { // In a Web Worker.
     importScripts('prism.js');
     self.addEventListener = ael;
     self.addEventListener('message', function(event) {
-        self.postMessage({
-            id: event.data.id,
-            highlightedCode:
-                Prism.rob.highlightSource(event.data.code, event.data.filename),
-        });
+        self.postMessage('PRISM_ROB_WORKER_MSG_RECEIVED');
+        self.postMessage(
+            Prism.rob.highlightSource(event.data.code, event.data.filename));
     });
 }
 
@@ -262,25 +261,53 @@ Prism.rob.highlightSource = function(code, filename) {
     return highlightedCode;
 };
 
+/**
+ * Similar to highlightSource, but asynchronous. The callback is invoked when
+ * the source has been prettified. If the code cannot be prettified (e.g. when
+ * it takes too long to do so), the callback is never invoked.
+ */
 Prism.rob.highlightSourceAsync = function(code, filename, callback) {
+    // highlightSourceAsync is expected to not be called too frequently.
     var worker = Prism.rob.highlightSourceAsync._worker;
-    if (!worker) {
+    if (worker) {
+        // The worker handles only one task at a time. We are going to process a
+        // task, so take ownership of the worker.
+        Prism.rob.highlightSourceAsync._worker = null;
+    } else {
         var workerSrc = Prism.filename;
         workerSrc = workerSrc.replace('prism.js', 'prism-source-extensions.js');
         worker = new Worker(workerSrc);
-        worker.idCounter = 0;
-        Prism.rob.highlightSourceAsync._worker = worker;
     }
-    var id = ++worker.idCounter;
+    var workerTooBusyTimer;
     worker.addEventListener('message', function listener(event) {
-        if (event.data.id === id) {
-            worker.removeEventListener('message', listener);
-            callback(event.data.highlightedCode);
+        // In response to the postMessage call below, the worker will send the
+        // following control message before highlighting the code. This allows
+        // us to detect whether the highlighting is taking too long.
+        if (event.data === 'PRISM_ROB_WORKER_MSG_RECEIVED') {
+            workerTooBusyTimer = setTimeout(function() {
+                worker.terminate();
+                console.log('Aborted highlightSourceAsync for ' + filename +
+                    ' because it did not finish in ' +
+                    Prism.rob.highlightSourceAsync.MAXIMUM_DEADLINE_MS + 'ms.');
+            }, Prism.rob.highlightSourceAsync.MAXIMUM_DEADLINE_MS);
+            return;
         }
+        clearTimeout(workerTooBusyTimer);
+        worker.removeEventListener('message', listener);
+        if (Prism.rob.highlightSourceAsync._worker) {
+            // There is already a free worker, we are not needed.
+            worker.terminate();
+        } else {
+            // Cache worker for the next call to highlightSourceAsync.
+            Prism.rob.highlightSourceAsync._worker = worker;
+        }
+        callback(event.data);
     });
     worker.postMessage({
         code: code,
         filename: filename,
-        id: id,
     });
 };
+
+// Number of seconds to wait before terminating the worker.
+Prism.rob.highlightSourceAsync.MAXIMUM_DEADLINE_MS = 10000;

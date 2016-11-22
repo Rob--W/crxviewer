@@ -327,12 +327,12 @@ var viewFileInfo = (function() {
             heading.querySelector('.find-prev').onclick = function() {
                 searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
                 searchEngine.findPrev();
-                showFindStatus();
+                showFindStatus(true);
             };
             heading.querySelector('.find-next').onclick = function() {
                 searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
                 searchEngine.findNext();
-                showFindStatus();
+                showFindStatus(true);
             };
             heading.querySelector('.find-all').onclick = function() {
                 shouldHighlightAll = !shouldHighlightAll;
@@ -340,16 +340,28 @@ var viewFileInfo = (function() {
                 if (shouldHighlightAll) {
                     searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
                     searchEngine.highlightAll();
-                    showFindStatus();
+                    showFindStatus(true);
                 } else {
                     searchEngine.unhighlightAll();
                 }
             };
-            function showFindStatus() {
+            function showFindStatus(isUserGesture) {
                 var statusElem = heading.querySelector('.find-status');
                 var status = searchEngine.getQueryStatus();
                 if (!status.hasQuery) {
-                    statusElem.textContent = statusElem.title = '';
+                    if (!isUserGesture && !statusElem.textContent.startsWith('???')) {
+                        statusElem.textContent = statusElem.title = '';
+                        return;
+                    }
+                    // If the user keeps clicking, switch between the two.
+                    // Hopefully this draws enough attention so they haver over
+                    // the text and see the detailed tips.
+                    statusElem.textContent =
+                        statusElem.textContent === '???' ? '???!' : '???';
+                    statusElem.title =
+                        'Go to the search box in the upper-left corner ' +
+                        'and start a search by typing:\n' +
+                        ' !(search term here)';
                     return;
                 }
                 if (!status.resultTotal) {
@@ -419,11 +431,11 @@ var viewFileInfo = (function() {
                 if (shouldHighlightAll) {
                     searchEngine.highlightAll();
                 }
-                showFindStatus();
+                showFindStatus(false);
                 textSearchEngine.setQueryChangeCallback(function() {
                     searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
                     searchEngine.showVisibleHighlights();
-                    showFindStatus();
+                    showFindStatus(false);
                 });
             };
             if (beautify.getType(entry.filename)) {

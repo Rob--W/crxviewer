@@ -318,6 +318,7 @@ var viewFileInfo = (function() {
                 '<button class="find-prev" title="Find previous">&#9650;</button>' +
                 '<button class="find-next" title="Find next">&#9660;</button>' +
                 '<button class="find-all" title="Highlight all occurrences of the search term"><span class="find-all-indicator">H</span></button>' +
+                '<span class="find-status"></span>' +
                 '');
 
             var textBeauty;
@@ -325,10 +326,12 @@ var viewFileInfo = (function() {
             heading.querySelector('.find-prev').onclick = function() {
                 searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
                 searchEngine.findPrev();
+                showFindStatus();
             };
             heading.querySelector('.find-next').onclick = function() {
                 searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
                 searchEngine.findNext();
+                showFindStatus();
             };
             heading.querySelector('.find-all').onclick = function() {
                 // This class name is used to keep track of the toggle state,
@@ -336,10 +339,41 @@ var viewFileInfo = (function() {
                 if (this.firstChild.classList.toggle('find-all-enabled')) {
                     searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
                     searchEngine.highlightAll();
+                    showFindStatus();
                 } else {
                     searchEngine.unhighlightAll();
                 }
             };
+            function showFindStatus() {
+                var statusElem = heading.querySelector('.find-status');
+                var status = searchEngine.getQueryStatus();
+                if (!status.hasQuery) {
+                    statusElem.textContent = statusElem.title = '';
+                    return;
+                }
+                if (!status.resultTotal) {
+                    statusElem.textContent = '0';
+                    statusElem.title = 'No results found';
+                    return;
+                }
+                // If there are many results, then not the total count is
+                // returned. In that case, we know that the total number is
+                // the minimum number of results, so add a visual indicator.
+                var totalShortStr =
+                    status.resultTotal + (status.isTotalDefinite ? '' : '+');
+                var totalLongStr =
+                    (status.isTotalDefinite ? '' : 'at least ') +
+                    status.resultTotal + ' occurrence' +
+                    (status.resultTotal === 1 ? '' : 's');
+                if (status.resultIndex === -1) {
+                    statusElem.textContent = totalShortStr;
+                    statusElem.title = 'Found ' + totalLongStr;
+                    return;
+                }
+                var resultIndexOneBased = status.resultIndex + 1;
+                statusElem.textContent = resultIndexOneBased + '/' + totalShortStr;
+                statusElem.title = 'Showing result ' + resultIndexOneBased + ' of ' + totalLongStr;
+            }
             function enableFind(enabled) {
                 heading.querySelector('.find-next').disabled =
                 heading.querySelector('.find-prev').disabled =
@@ -349,8 +383,6 @@ var viewFileInfo = (function() {
             // Disable find by default because 1) there is initially no content
             // (<ol>). and 2) the search engine is unavailable in old browsers.
             enableFind(false);
-
-            // TODO: Add counter of total search results.
 
             var onPreRendered = function(pre) {
                 if (sourceToolbarElem.firstChild !== heading || pre !== preCurrent) {
@@ -383,9 +415,11 @@ var viewFileInfo = (function() {
                 });
                 searchEngine.connect();
                 searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
+                showFindStatus();
                 textSearchEngine.setQueryChangeCallback(function() {
                     searchEngine.setQuery(textSearchEngine.getCurrentSearchTerm());
                     searchEngine.showVisibleHighlights();
+                    showFindStatus();
                 });
             };
             if (beautify.getType(entry.filename)) {

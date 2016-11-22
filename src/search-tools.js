@@ -56,6 +56,7 @@ class SearchEngineLogic {
         this.currentQuery = null;
         this.currentResults = [];
 
+        this.currentIndex = -1;
         this.currentLine = -1;
         this.currentColumn = -1;
     }
@@ -142,7 +143,10 @@ class SearchEngineLogic {
         return this.setAndReturnResult(0);
     }
 
-    // Note: Do not mutate the return value.
+    /**
+     * @returns {object[]} A direct reference to the internal result array.
+     *    Do not mutate this return value.
+     */
     findAll() {
         if (!this.currentQuery) {
             this.currentQuery = this.runQuery();
@@ -150,7 +154,38 @@ class SearchEngineLogic {
         for (let result of this.currentQuery) {
             this.currentResults.push(result);
         }
+        this.currentQuery.isAtEndOfSearch = true;
         return this.currentResults;
+    }
+
+    /**
+     * Get the lower bound of the number of results.
+     *
+     * @param {number} limitTo - The number of results to find before stopping
+     *    to look for more matches.
+     * @returns {number} The known number of results. This may be more than
+     *    `limitTo` if the results have already been generated before this call,
+     *    for instance by a call to `findPrev`.
+     */
+    getMinimumResultCount(limitTo = 100) {
+        if (!this.currentQuery) {
+            this.currentQuery = this.runQuery();
+        }
+        if (!this.currentQuery.isAtEndOfSearch) {
+            let yieldedResult;
+            while (this.currentResults.length < limitTo &&
+                !(yieldedResult = this.currentQuery.next()).done) {
+                this.currentResults.push(yieldedResult.value);
+            }
+            if (yieldedResult && yieldedResult.done) {
+                this.currentQuery.isAtEndOfSearch = true;
+            }
+        }
+        return this.currentResults.length;
+    }
+
+    hasFoundAllResults() {
+        return !!(this.currentQuery && this.currentQuery.isAtEndOfSearch);
     }
 
     /**
@@ -164,6 +199,7 @@ class SearchEngineLogic {
      */
     setAndReturnResult(i) {
         let result = this.currentResults[i];
+        this.currentIndex = i;
         this.setCurrentPosition(result.lineStart, result.columnStart);
         return result;
     }
@@ -203,6 +239,7 @@ class SearchEngineLogic {
                 return this.currentResults.length - 1;
             }
         }
+        this.currentQuery.isAtEndOfSearch = true;
         return -1;
     }
 
@@ -336,7 +373,7 @@ class SearchEngineElement {
      * @param {RegExp} [searchterm]
      */
     setQuery(searchterm = null) {
-        let serialized = String(searchterm);
+        let serialized = searchterm === null ? null : String(searchterm);
         if (serialized !== this.currentSearchTermSerialized) {
             this.currentSearchTermSerialized = serialized;
             this.logic.setQuery(searchterm);
@@ -417,6 +454,17 @@ class SearchEngineElement {
     highlightAll() {
         this.isHighlighting = true;
         this.showVisibleHighlights();
+    }
+
+    getQueryStatus() {
+        let resultTotal = this.logic.getMinimumResultCount();
+        let isTotalDefinite = this.logic.hasFoundAllResults();
+        return {
+            hasQuery: this.currentSearchTermSerialized !== null,
+            resultIndex: this.logic.currentIndex,
+            resultTotal,
+            isTotalDefinite,
+        };
     }
 
     /**
@@ -586,7 +634,6 @@ class SearchEngineElement {
         }
         if (!result) {
             // result === null, so no result. Do nothing for now.
-            // TODO: Show hint that search did not yield any results?
             console.log('No results for ' + this.currentSearchTermSerialized);
             return;
         }

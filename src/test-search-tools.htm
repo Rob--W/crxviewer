@@ -256,6 +256,52 @@ findNext = 0:0 - 0:2
 </script>
 
 <script>
+console.log('getMinimumResultCount and hasFoundAllResults');
+(() => {
+let text = 'a'.repeat(1001);
+let se = new SearchEngineLogic(text);
+se.setQuery(/a/);
+function assertResultCountEq(limitTo, expected) {
+    let actual = se.getMinimumResultCount(limitTo);
+    assertEq(expected, actual, `getMinimumResultCount(limitTo = ${limitTo})`);
+}
+function assertHasFoundAllResults(expected) {
+    let actual = se.hasFoundAllResults();
+    assertEq(expected, actual, `hasFoundAllResults()`);
+}
+
+assertHasFoundAllResults(false);
+assertResultCountEq(0, 0);
+assertResultCountEq(1, 1);
+assertResultCountEq(2, 2);
+// Once known, results do not disappear (even if limitTo is very low).
+assertResultCountEq(0, 2);
+// If not specified, yield the first 100 results.
+assertResultCountEq(undefined, 100);
+// Once known, results do not disappear.
+assertResultCountEq(0, 100);
+assertHasFoundAllResults(false);
+
+se.setQuery(/a/);
+// Results must be reset upon resetting the query.
+assertResultCountEq(0, 0);
+se.findNext();
+// findNext should find one result only.
+assertResultCountEq(0, 1);
+assertHasFoundAllResults(false);
+se.findPrev();
+// findPrev wrapped around and has to find all results to obtain the last one.
+assertResultCountEq(0, 1001);
+assertHasFoundAllResults(true);
+
+// Results must be reset again.
+se.setQuery(/a/);
+assertHasFoundAllResults(false);
+assertResultCountEq(0, 0);
+})();
+</script>
+
+<script>
 console.log('Running getText');
 // Empty match
 testGetText('x', 0, 0, 0, 0, '');

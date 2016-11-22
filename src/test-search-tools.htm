@@ -301,7 +301,7 @@ function testBinarySearch(array, needle, expectedF, expectedC) {
 // Empty list
 testBinarySearch([], 42, 0, 0);
 
-// Exact match
+// Exact match (42 == 42).
 testBinarySearch([42], 42, 0, 0);
 testBinarySearch([42, 51], 42, 0, 0);
 testBinarySearch([42, 52, 53], 42, 0, 0);
@@ -313,7 +313,7 @@ testBinarySearch([11, 12, 42, 51], 42, 2, 2);
 testBinarySearch([11, 42, 51, 52], 42, 1, 1);
 testBinarySearch([42, 51, 52, 53], 42, 0, 0);
 
-// No exact match.
+// No exact match (42 > 41).
 testBinarySearch([41], 42, 0, 0);
 testBinarySearch([41, 51], 42, 0, 1);
 testBinarySearch([41, 52, 53], 42, 0, 1);
@@ -325,7 +325,7 @@ testBinarySearch([11, 12, 41, 51], 42, 2, 3);
 testBinarySearch([11, 41, 51, 52], 42, 1, 2);
 testBinarySearch([41, 51, 52, 53], 42, 0, 1);
 
-// No exact match.
+// No exact match (42 < 43).
 testBinarySearch([43], 42, 0, 0);
 testBinarySearch([43, 51], 42, 0, 0);
 testBinarySearch([43, 52, 53], 42, 0, 0);

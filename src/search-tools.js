@@ -381,10 +381,7 @@ class SearchEngineElement {
                 this.unhighlightAll();
                 this.isHighlighting = true;
             }
-            if (this.currentResultElement) {
-                this.currentResultElement.remove();
-                this.currentResultElement = null;
-            }
+            this.hideCurrentResult();
         }
     }
 
@@ -429,6 +426,16 @@ class SearchEngineElement {
      */
     findNext() {
         this._renderResult(this.logic.findNext());
+    }
+
+    /**
+     * Remove the marker of the current search result from the view.
+     */
+    hideCurrentResult() {
+        if (this.currentResultElement) {
+            this.currentResultElement.remove();
+            this.currentResultElement = null;
+        }
     }
 
     /**
@@ -624,10 +631,7 @@ class SearchEngineElement {
      */
     _renderResult(result) {
         this.currentResult = result;
-        if (this.currentResultElement) {
-            this.currentResultElement.remove();
-            this.currentResultElement = null;
-        }
+        this.hideCurrentResult();
         if (!result) {
             // result === null, so no result. Do nothing for now.
             console.log('No results for ' + this.currentSearchTermSerialized);

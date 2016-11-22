@@ -343,6 +343,7 @@ var viewFileInfo = (function() {
                     showFindStatus(true);
                 } else {
                     searchEngine.unhighlightAll();
+                    searchEngine.hideCurrentResult();
                 }
             };
             function showFindStatus(isUserGesture) {

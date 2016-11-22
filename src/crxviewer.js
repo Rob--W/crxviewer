@@ -504,8 +504,8 @@ var viewFileInfo = (function() {
     handlers.image = {
         Writer: zip.Data64URIWriter,
         callback: function(entry, data_url) {
-            // TODO: Add tools to toolbar for images.
-            // var sourceToolbarElem = document.getElementById('source-toolbar');
+            var sourceToolbarElem = document.getElementById('source-toolbar');
+            sourceToolbarElem.appendChild(createDownloadLink(entry, data_url));
 
             var sourceCodeElem = document.getElementById('source-code');
             sourceCodeElem.innerHTML = '<img>';
@@ -536,8 +536,8 @@ var viewFileInfo = (function() {
                 });
             }
 
-            // TODO: Add tools to toolbar for zip files.
-            // var sourceToolbarElem = document.getElementById('source-toolbar');
+            var sourceToolbarElem = document.getElementById('source-toolbar');
+            sourceToolbarElem.appendChild(createDownloadLink(entry, blob_url));
 
             var sourceCodeElem = document.getElementById('source-code');
             sourceCodeElem.innerHTML = '<button>View the content of this file in a new CRX Viewer</button>';
@@ -608,7 +608,7 @@ var viewFileInfo = (function() {
         else sourceCodeElem.dataset.filename = identifier;
         sourceCodeElem.scrollTop = scrollingOffsets[identifier] || 0;
     }
-    function createDownloadLink(entry) {
+    function createDownloadLink(entry, url) {
         var mimeType = getMimeTypeForFilename(entry.filename);
         var filename = entry.filename.split('/').pop();
 
@@ -625,6 +625,12 @@ var viewFileInfo = (function() {
                 a.href = URL.createObjectURL(blob);
             });
         };
+        if (url) {
+            a.onclick = null;
+            a.download = filename;
+            a.textContent = 'Download file';
+            a.href = url;
+        }
         return a;
     }
     function showGoToLine(sourceCodeElem, preCurrent) {

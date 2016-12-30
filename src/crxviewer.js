@@ -351,6 +351,7 @@ var viewFileInfo = (function() {
                 var status = searchEngine.getQueryStatus();
                 if (!status.hasQuery) {
                     if (!isUserGesture && !statusElem.textContent.startsWith('???')) {
+                        statusElem.style.cursor = '';
                         statusElem.textContent = statusElem.title = '';
                         return;
                     }
@@ -359,12 +360,16 @@ var viewFileInfo = (function() {
                     // the text and see the detailed tips.
                     statusElem.textContent =
                         statusElem.textContent === '???' ? '???!' : '???';
+                    statusElem.style.cursor = 'help';
                     statusElem.title =
                         'Go to the search box in the upper-left corner ' +
                         'and start a search by typing:\n' +
-                        ' !(search term here)';
+                        ' !(search term here)\n' +
+                        'Then search results will be highlighted if the H option was selected,\n' +
+                        'and the triangle buttons can be used to jump to the next/previous result.';
                     return;
                 }
+                statusElem.style.cursor = '';
                 if (!status.resultTotal) {
                     statusElem.textContent = '0';
                     statusElem.title = 'No results found';

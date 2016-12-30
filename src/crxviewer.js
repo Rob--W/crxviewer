@@ -344,15 +344,20 @@ var viewFileInfo = (function() {
                 } else {
                     searchEngine.unhighlightAll();
                     searchEngine.hideCurrentResult();
+                    hideFindStatus();
                 }
             };
+            function hideFindStatus() {
+                var statusElem = heading.querySelector('.find-status');
+                statusElem.style.cursor = '';
+                statusElem.textContent = statusElem.title = '';
+            }
             function showFindStatus(isUserGesture) {
                 var statusElem = heading.querySelector('.find-status');
                 var status = searchEngine.getQueryStatus();
                 if (!status.hasQuery) {
                     if (!isUserGesture && !statusElem.textContent.startsWith('???')) {
-                        statusElem.style.cursor = '';
-                        statusElem.textContent = statusElem.title = '';
+                        hideFindStatus();
                         return;
                     }
                     // If the user keeps clicking, switch between the two.

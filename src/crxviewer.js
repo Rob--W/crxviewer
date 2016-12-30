@@ -315,8 +315,8 @@ var viewFileInfo = (function() {
             heading.appendChild(toggleBeautify);
 
             heading.insertAdjacentHTML('beforeend',
-                '<button class="find-prev" title="Find previous">&#9650;</button>' +
-                '<button class="find-next" title="Find next">&#9660;</button>' +
+                '<button class="find-prev" title="Find previous\n (continues from last result; double-click on a specific line to continue searching backwards from the start of the line)">&#9650;</button>' +
+                '<button class="find-next" title="Find next\n (continues from last result; double-click on a specific line to continues searching from the start of the line)">&#9660;</button>' +
                 '<button class="find-all" title="Highlight all occurrences of the search term"><span class="find-all-indicator">H</span></button>' +
                 '<span class="find-status"></span>' +
                 '');

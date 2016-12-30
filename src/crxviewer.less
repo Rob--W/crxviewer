@@ -327,6 +327,10 @@ body {
     }
 }
 .file-specific-download-link {
+    // Fixed-width font so that file-specific download links have a fixed width
+    // ("Show download", "Creating link" and "Download file" have the same
+    //  number of characters).
+    font-family: monospace;
     &:not([href]) {
         cursor: pointer;
         border-bottom: 1px dotted;

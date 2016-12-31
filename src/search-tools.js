@@ -772,7 +772,9 @@ class SearchEngineElement {
     }
 }
 
-// Disable work-around in non-Firefox browsers to avoid overhead.
-if (!CSS.supports('-moz-appearance', 'none')) {
+// Disable work-around in unaffected browsers to avoid overhead.
+// -moz-text-align-last was dropped from Firefox 53 (bugzil.la/1276808),
+// which is the same version where bugzil.la/1319424 was fixed).
+if (!CSS.supports('-moz-text-align-last', 'justify')) {
     SearchEngineElement.prototype._work_around_Firefox_bug_1319424 = () => {};
 }

@@ -2,6 +2,7 @@
  * (c) 2013 Rob Wu <rob@robwu.nl>
  */
 /* globals chrome, cws_match_pattern, ows_match_pattern, amo_match_patterns,
+   amo_file_version_match_pattern,
    cws_pattern, ows_pattern, amo_pattern, amo_file_version_pattern,
    URL, document, alert, localStorage */
 /* globals encodeQueryString */
@@ -15,7 +16,7 @@ browser.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     showPageActionIfNeeded(tab);
 });
 browser.tabs.query({
-    url: [cws_match_pattern, ows_match_pattern].concat(amo_match_patterns),
+    url: [cws_match_pattern, ows_match_pattern, amo_file_version_match_pattern].concat(amo_match_patterns),
 }).then(function(tabs) {
     tabs.forEach(showPageActionIfNeeded);
 });
@@ -42,6 +43,7 @@ if (chrome.declarativeWebRequest) {
 chrome.runtime.onInstalled.addListener(function() {
     chrome.tabs.query({url: cws_match_pattern}, queryCallback);
     chrome.tabs.query({url: ows_match_pattern}, queryCallback);
+    chrome.tabs.query({url: amo_file_version_match_pattern}, queryCallback);
     chrome.tabs.query({url: amo_match_patterns}, queryCallback);
     function queryCallback(tabs) {
         tabs.forEach(showPageActionIfNeeded);

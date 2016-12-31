@@ -3,7 +3,7 @@
  */
 
 /* globals location, getPlatformInfo, navigator */
-/* exported cws_match_pattern, ows_match_pattern, amo_match_patterns */
+/* exported cws_match_pattern, ows_match_pattern, amo_match_patterns, amo_file_version_match_pattern */
 /* exported cws_pattern, ows_pattern, amo_pattern, amo_file_version_pattern */
 /* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, is_not_crx_url, getParam */
 /* exported encodeQueryString */
@@ -26,8 +26,8 @@ var amo_file_version_pattern = /^https?:\/\/addons\.mozilla\.org\/(?:[^?#\/]*\/)
 var amo_match_patterns = [
     '*://addons.mozilla.org/*addon/*',
     '*://addons.mozilla.org/*review/*',
-    '*://addons.mozilla.org/*firefox/files/browse/*',
 ];
+var amo_file_version_match_pattern = '*://addons.mozilla.org/*firefox/files/browse/*';
 
 // string extensionID if valid URL
 // null otherwise

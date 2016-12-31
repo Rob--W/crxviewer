@@ -2,13 +2,15 @@
  * (c) 2013 Rob Wu <rob@robwu.nl>
  */
 /* jshint browser:true, devel:true */
-/* globals chrome, cws_match_pattern, ows_match_pattern, amo_match_patterns,  get_crx_url */
+/* globals chrome, cws_match_pattern, ows_match_pattern, amo_match_patterns, amo_file_version_match_pattern, get_crx_url */
 /* globals encodeQueryString */
 
 'use strict';
 (function() {
     var MENU_ID_LINK = 'nl.robwu.contextmenu.crxlink';
     var MENU_ID_PAGE = 'nl.robwu.contextmenu.crxpage';
+    var MENU_ID_AMO_APPROVED_LINK = 'nl.robwu.contextmenu.amoapprovedlink';
+    var MENU_ID_AMO_APPROVED_PAGE = 'nl.robwu.contextmenu.amoapprovedpage';
     chrome.storage.onChanged.addListener(function(changes) {
         if (!changes.showContextMenu) return;
         if (changes.showContextMenu.newValue) show();
@@ -34,7 +36,8 @@
     }
     
     function contextMenusOnClicked(info, tab) {
-        var url = info.menuItemId == MENU_ID_PAGE ? info.pageUrl : info.linkUrl;
+        var url = info.menuItemId == MENU_ID_PAGE ||
+           info.menuItemId == MENU_ID_AMO_APPROVED_PAGE ? info.pageUrl : info.linkUrl;
         url = get_crx_url(url);
         var params = encodeQueryString({crx: url});
 
@@ -62,8 +65,20 @@
                 '*://*/*.XPI*',
                 '*://*/*.xpi*',
                 cws_match_pattern,
-                ows_match_pattern
-            ].concat(amo_match_patterns)
+                ows_match_pattern,
+                amo_file_version_match_pattern,
+            ]
+        });
+        // AMO lists multiple versions, specifically state that this
+        // is the latest approved version to avoid ambiguity.
+        chrome.contextMenus.create({
+            id: MENU_ID_AMO_APPROVED_LINK,
+            title: 'View linked extension source (latest approved version)',
+            contexts: ['link'],
+//#if FIREFOX
+            onclick: contextMenusOnClicked,
+//#endif
+            targetUrlPatterns: amo_match_patterns,
         });
 //#if FIREFOX
         if (/Firefox\/4\d\./.test(navigator.userAgent)) {
@@ -81,8 +96,20 @@
 //#endif
             documentUrlPatterns: [
                 cws_match_pattern,
-                ows_match_pattern
-            ].concat(amo_match_patterns)
+                ows_match_pattern,
+                amo_file_version_match_pattern,
+            ]
+        });
+        // AMO lists multiple versions, specifically state that this
+        // is the latest approved version to avoid ambiguity.
+        chrome.contextMenus.create({
+            id: MENU_ID_AMO_APPROVED_PAGE,
+            title: 'View extension source (latest approved version)',
+            contexts: ['all'],
+//#if FIREFOX
+            onclick: contextMenusOnClicked,
+//#endif
+            documentUrlPatterns: amo_match_patterns,
         });
     }
     function hide() {

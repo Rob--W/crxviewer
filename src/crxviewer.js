@@ -519,7 +519,21 @@ var viewFileInfo = (function() {
 
             var sourceCodeElem = document.getElementById('source-code');
             sourceCodeElem.innerHTML = '<img>';
-            sourceCodeElem.firstChild.src = data_url;
+            var img = sourceCodeElem.firstChild;
+            img.onload = function() {
+                renderImageInfo('Width: ' + this.naturalWidth + ' Height: ' + this.naturalHeight);
+            };
+            img.onerror = function() {
+                renderImageInfo('Failed to load image');
+            };
+            img.src = data_url;
+
+            function renderImageInfo(text) {
+                if (sourceCodeElem.firstChild === img) {
+                    // The image is still being displayed.
+                    sourceToolbarElem.appendChild(document.createTextNode(' ' + text));
+                }
+            }
         }
     };
     handlers['application/java-archive'] =

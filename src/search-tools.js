@@ -233,9 +233,12 @@ class SearchEngineLogic {
             return index;
         }
 
-        for (let result of this.currentQuery) {
-            this.currentResults.push(result);
-            if (accept(result)) {
+        let yieldedResult;
+        // Note that a for..of loop cannot be used because exiting early will
+        // close the generator.
+        while (!(yieldedResult = this.currentQuery.next()).done) {
+            this.currentResults.push(yieldedResult.value);
+            if (accept(yieldedResult.value)) {
                 return this.currentResults.length - 1;
             }
         }

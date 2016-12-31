@@ -1148,10 +1148,8 @@ function initialize() {
             // Prefer given URL because its slug contains an extra human-readable short name.
             webstore_url = crx_url;
         }
-        if (webstore_url) {
-            // This is a no-op if the URL is not recognized.
-            crx_url = get_crx_url(webstore_url);
-        }
+        // This is a no-op if the URL is not recognized.
+        crx_url = get_crx_url(webstore_url || crx_url);
     }
     if (webstore_url) {
         var webstore_link = document.getElementById('webstore-link');

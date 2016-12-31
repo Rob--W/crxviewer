@@ -4,7 +4,7 @@
 
 /* globals location, getPlatformInfo, navigator */
 /* exported cws_match_pattern, ows_match_pattern, amo_match_patterns */
-/* exported cws_pattern, ows_pattern, amo_pattern */
+/* exported cws_pattern, ows_pattern, amo_pattern, amo_file_version_pattern */
 /* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, is_not_crx_url, getParam */
 /* exported encodeQueryString */
 'use strict';
@@ -22,7 +22,12 @@ var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 // Firefox addon gallery
 var amo_pattern = /^https?:\/\/addons\.mozilla\.org\/.*?(?:addon|review)\/([^/<>"'?#]+)/;
 var amo_download_pattern = /^https?:\/\/addons\.mozilla\.org\/[^?#]*\/downloads\/latest\/([^/?#]+)/;
-var amo_match_patterns = ['*://addons.mozilla.org/*addon/*', '*://addons.mozilla.org/*review/*'];
+var amo_file_version_pattern = /^https?:\/\/addons\.mozilla\.org\/(?:[^?#\/]*\/)?firefox\/files\/browse\/(\d+)(\/[^?#\/]+\.xpi)?/;
+var amo_match_patterns = [
+    '*://addons.mozilla.org/*addon/*',
+    '*://addons.mozilla.org/*review/*',
+    '*://addons.mozilla.org/*firefox/files/browse/*',
+];
 
 // string extensionID if valid URL
 // null otherwise
@@ -75,6 +80,10 @@ function get_crx_url(extensionID_or_url) {
     match = amo_pattern.exec(extensionID_or_url);
     if (match) {
         return get_xpi_url(match[1]);
+    }
+    match = amo_file_version_pattern.exec(extensionID_or_url);
+    if (match) {
+        return 'https://addons.mozilla.org/firefox/downloads/file/' + match[1] + (match[2] || '/addon.xpi');
     }
     // Chrome Web Store
     match = get_extensionID(extensionID_or_url);
@@ -166,7 +175,10 @@ function is_crx_url(url) {
 function is_not_crx_url(url) {
     if (is_crx_url(url) || cws_download_pattern.test(url))
         return false;
-    return amo_pattern.test(url) || amo_download_pattern.test(url) || /\.xpi([#?]|$)/.test(url);
+    return amo_pattern.test(url) ||
+        amo_download_pattern.test(url) ||
+        amo_file_version_pattern.test(url) ||
+        /\.xpi([#?]|$)/.test(url);
 }
 
 // |name| should not contain special RegExp characters, except possibly maybe a '[]' at the end.

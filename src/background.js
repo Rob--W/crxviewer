@@ -2,7 +2,8 @@
  * (c) 2013 Rob Wu <rob@robwu.nl>
  */
 /* globals chrome, cws_match_pattern, ows_match_pattern, amo_match_patterns,
-   cws_pattern, ows_pattern, amo_pattern, URL, document, alert, localStorage */
+   cws_pattern, ows_pattern, amo_pattern, amo_file_version_pattern,
+   URL, document, alert, localStorage */
 /* globals encodeQueryString */
 /* exported tryTriggerDownload  */
 
@@ -137,7 +138,8 @@ function showPageActionIfNeeded(details_or_tab) {
     }
     var tabId = details_or_tab.tabId || details_or_tab.id;
     var url = details_or_tab.url;
-    if (cws_pattern.test(url) || ows_pattern.test(url) || amo_pattern.test(url)) {
+    if (cws_pattern.test(url) || ows_pattern.test(url) || amo_pattern.test(url) ||
+        amo_file_version_pattern.test(url)) {
         showPageAction(tabId, url);
     } else {
         chrome.pageAction.hide(tabId);

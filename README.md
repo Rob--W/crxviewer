@@ -26,6 +26,7 @@ The "View source" option opens a new tab with a simple viewer, with the followin
   - Download-as-zip and download-as-crx at the upper-right corner.
   - List of file names, and the option to filter files with a regular expression.
   - Find files containing a string, or with content matching a regular expression.
+  - Quickly jump between search results, or from/to a specific line.
   - Automatic beautification (formatting) of code
   - Syntax highlighting
   - Image preview

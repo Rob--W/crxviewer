@@ -735,6 +735,31 @@ var TextSearchEngine = (function() {
         };
     }
 
+    /**
+     * Validates the search term and returns a regular expression if the query
+     * is a regular expression. This is the case when |searchTerm| starts with
+     * "regexp:" or "iregexp:" (the latter is a case-insensitive search).
+     *
+     * @param {string} searchTerm
+     * @returns {null|RegExp} null iff it is not a regular expression query.
+     * @throws {Error} If the query is a regular expression, but the pattern is invalid.
+     */
+    TextSearchEngine.parsePatternAsRegExp = function(searchTerm) {
+        // Keep this search term parsing logic in sync with search-worker.js.
+        var parsed = /^(i?)regexp:(.*)$/.exec(searchTerm);
+        if (!parsed) {
+            return null;
+        }
+        var pattern = parsed[2];
+        var flags = parsed[1]; // 'i' or ''.
+        try {
+            return new RegExp(pattern, flags);
+        } catch (e) {
+            // Chrome includes the regexp in the error message, omit this.
+            throw new Error((e.message+'').replace(': /' + pattern + '/' + flags));
+        }
+    };
+
     TextSearchEngine.prototype.setResultCallback = function(resultCallback) {
         this.resultCallback = resultCallback;
     };
@@ -752,9 +777,10 @@ var TextSearchEngine = (function() {
     TextSearchEngine.prototype.getCurrentSearchTerm = function() {
         // Keep this search term parsing logic in sync with search-worker.js.
         var searchTerm = this._currentSearchTerm;
-        if (searchTerm.lastIndexOf('regexp:', 0) === 0) {
-            // Assuming a valid RegExp
-            searchTerm = new RegExp(searchTerm.slice(7), 'i');
+        // Assuming that the query is a valid regexp, if it is a regexp.
+        var regexpTerm = TextSearchEngine.parsePatternAsRegExp(searchTerm);
+        if (regexpTerm) {
+            searchTerm = regexpTerm;
         } else if (searchTerm) {
             searchTerm = searchTerm.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
             searchTerm = new RegExp(searchTerm, 'i');
@@ -774,7 +800,6 @@ var TextSearchEngine = (function() {
             console.warn('Ignored search request because the result handler was not set.');
             return;
         }
-        searchTerm = searchTerm.toLocaleLowerCase();
         if (this._currentSearchTerm === searchTerm) {
             return; // No change in result.
         }
@@ -997,17 +1022,14 @@ var checkAndApplyFilter = (function() {
         
         // Validate the grep pattern here to make sure that we don't apply the filter if the
         // pattern is invalid.
-        if (grepTerm.lastIndexOf('regexp:', 0) === 0) {
-            var grepTermPattern = grepTerm.slice(7);
-            try {
-                new RegExp(grepTermPattern, 'i');
-                feedback.textContent = '';
-                fileFilterElem.classList.remove('invalid');
-            } catch (e) {
-                fileFilterElem.classList.add('invalid');
-                feedback.textContent = 'Search: ' + (e.message+'').replace(': /' + grepTermPattern + '/', '');
-                return;
-            }
+        try {
+            TextSearchEngine.parsePatternAsRegExp(grepTerm);
+            feedback.textContent = '';
+            fileFilterElem.classList.remove('invalid');
+        } catch (e) {
+            fileFilterElem.classList.add('invalid');
+            feedback.textContent = 'Search: ' + e.message;
+            return;
         }
         applyFilter(pattern);
 

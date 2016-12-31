@@ -12,6 +12,7 @@ var allFilenames = [];
 var fileEntries = null;
 // File name to string
 var dataMap = {};
+var dataMapLowerCase = {};
 
 var currentSearchTerm = '';
 var lowPrioFilenames = [];
@@ -96,7 +97,7 @@ function getFileData(filename) {
         return null; // Already opening...
     }
     entry.getData(new EfficientTextWriter(), function(data) {
-        dataMap[filename] = data.toLocaleLowerCase();
+        dataMap[filename] = data;
         if (pendingSearch) {
             pendingSearch.resume();
         }
@@ -108,11 +109,13 @@ function SearchTask(filenames, searchTerm) {
     this.filenames = filenames;
     // Keep this search term parsing logic in sync with
     // TextSearchEngine.prototype.getCurrentSearchTerm.
-    this.searchTerm = searchTerm;
-    if (searchTerm.lastIndexOf('regexp:', 0) === 0) {
+    var searchTermAsRegExp = /^(i?)regexp:(.*)$/.exec(searchTerm);
+    if (searchTermAsRegExp) {
+        this.searchTerm = searchTerm;
         // Callers should have validated that the regexp is valid.
-        this.searchTermRegExp = new RegExp(searchTerm.slice(7), 'i');
+        this.searchTermRegExp = new RegExp(searchTermAsRegExp[2], searchTermAsRegExp[1]);
     } else {
+        this.searchTerm = searchTerm.toLocaleLowerCase();
         this.searchTermRegExp = null;
     }
     this.paused = true;
@@ -152,6 +155,11 @@ SearchTask.prototype.next = function() {
         if (this.searchTermRegExp) {
             found = this.searchTermRegExp.test(data);
         } else {
+            // The result is cached instead of calculated on the fly to avoid pressure on GC because
+            // it is expected that the query is frequently repeated.
+            data = dataMapLowerCase[dataIndex] ||
+                (dataMapLowerCase[dataIndex] = data.toLocaleLowerCase());
+            // Note: this.searchTerm is already normalized (to lower case).
             found = data.indexOf(this.searchTerm) !== -1;
         }
         if (found) {

@@ -107,15 +107,24 @@ function getFileData(filename) {
 
 function SearchTask(filenames, searchTerm) {
     this.filenames = filenames;
+    // The exact input search query. This will be used by the calling thread to
+    // determine whether the search result still matches the search query.
+    this.searchTerm = searchTerm;
     // Keep this search term parsing logic in sync with
     // TextSearchEngine.prototype.getCurrentSearchTerm.
+    // "iregexp:" is case-insensitive, "regexp:" is case-sensitive.
     var searchTermAsRegExp = /^(i?)regexp:(.*)$/.exec(searchTerm);
     if (searchTermAsRegExp) {
-        this.searchTerm = searchTerm;
         // Callers should have validated that the regexp is valid.
         this.searchTermRegExp = new RegExp(searchTermAsRegExp[2], searchTermAsRegExp[1]);
     } else {
-        this.searchTerm = searchTerm.toLocaleLowerCase();
+        // "case:" is case-sensitive; otherwise the query is case-insensitive.
+        this.searchTermCaseSensitive = searchTerm.lastIndexOf('case:', 0) === 0;
+        if (this.searchTermCaseSensitive) {
+            this.searchTermNormalized = searchTerm.slice(5);
+        } else {
+            this.searchTermNormalized = searchTerm.toLocaleLowerCase();
+        }
         this.searchTermRegExp = null;
     }
     this.paused = true;
@@ -155,12 +164,13 @@ SearchTask.prototype.next = function() {
         if (this.searchTermRegExp) {
             found = this.searchTermRegExp.test(data);
         } else {
-            // The result is cached instead of calculated on the fly to avoid pressure on GC because
-            // it is expected that the query is frequently repeated.
-            data = dataMapLowerCase[dataIndex] ||
-                (dataMapLowerCase[dataIndex] = data.toLocaleLowerCase());
-            // Note: this.searchTerm is already normalized (to lower case).
-            found = data.indexOf(this.searchTerm) !== -1;
+            if (!this.searchTermCaseSensitive) {
+                // The result is cached instead of calculated on the fly to avoid pressure on GC
+                // because it is expected that the query is frequently repeated.
+                data = dataMapLowerCase[filename] ||
+                    (dataMapLowerCase[filename] = data.toLocaleLowerCase());
+            }
+            found = data.indexOf(this.searchTermNormalized) !== -1;
         }
         if (found) {
             this.found.push(filename);

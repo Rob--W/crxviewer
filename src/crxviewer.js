@@ -797,7 +797,11 @@ var TextSearchEngine = (function() {
             searchTerm = regexpTerm;
         } else if (searchTerm) {
             searchTerm = searchTerm.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
-            searchTerm = new RegExp(searchTerm, 'i');
+            if (searchTerm.lastIndexOf('case:', 0) === 0) {
+                searchTerm = new RegExp(searchTerm.slice(5), '');
+            } else {
+                searchTerm = new RegExp(searchTerm, 'i');
+            }
         } else {
             searchTerm = null;
         }

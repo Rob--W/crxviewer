@@ -3,6 +3,8 @@
 @resizerWidth: 8px;
 @fileSizeWidth: 4rem;
 @fileSpecificToolbarHeight: 2rem;
+@footerHeight: 3rem;
+@footerFontsize: 0.9rem;
 
 * {
     box-sizing: border-box;
@@ -118,12 +120,10 @@ body {
     }
 }
 
-#advanced-open, #right-panel, #left-panel {
-    height: -webkit-calc(100% - 2rem);
-    height: calc(100% - 2rem);
-}
 #advanced-open {
     display: none;
+    height: -webkit-calc(100% - ((@fileSpecificToolbarHeight + @footerHeight)));
+    height: calc(100% - ((@fileSpecificToolbarHeight + @footerHeight)));
     text-align: center;
     padding: 2rem 1rem 0;
     overflow: auto;
@@ -182,6 +182,10 @@ body {
         outline: auto red
     }
 }
+#right-panel, #left-panel {
+    height: -webkit-calc(100% - @fileSpecificToolbarHeight);
+    height: calc(100% - @fileSpecificToolbarHeight);
+}
 #right-panel {
     padding-left: (2 * @resizerWidth + @rightPanelWidth);
 }
@@ -207,6 +211,13 @@ body {
             background-color: #AAA;
         }
     }
+}
+footer {
+    height: @footerHeight;
+    border-top: 1px dotted #ccf;
+    font-size: @footerFontsize;
+    padding: (((@footerHeight - @footerFontsize) / 2)) 0;
+    text-align: center;
 }
 #initial-status {
     white-space: pre-wrap;

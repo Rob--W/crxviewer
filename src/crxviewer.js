@@ -12,6 +12,7 @@
            beautify,
            Prism,
            SearchEngineElement,
+           Uint8ArrayWriter, ModernCrypto,
            CryptoJS
            */
 
@@ -281,6 +282,7 @@ var viewFileInfo = (function() {
             heading.className = 'file-specific-toolbar';
 
             heading.appendChild(createDownloadLink(entry));
+            heading.appendChild(createContentVerifier(entry));
 
             var goToLineButton = document.createElement('button');
             goToLineButton.textContent = 'Go to line';
@@ -516,6 +518,7 @@ var viewFileInfo = (function() {
         callback: function(entry, data_url) {
             var sourceToolbarElem = document.getElementById('source-toolbar');
             sourceToolbarElem.appendChild(createDownloadLink(entry, data_url));
+            sourceToolbarElem.appendChild(createContentVerifier(entry));
 
             var sourceCodeElem = document.getElementById('source-code');
             sourceCodeElem.innerHTML = '<img>';
@@ -562,6 +565,7 @@ var viewFileInfo = (function() {
 
             var sourceToolbarElem = document.getElementById('source-toolbar');
             sourceToolbarElem.appendChild(createDownloadLink(entry, blob_url));
+            sourceToolbarElem.appendChild(createContentVerifier(entry));
 
             var sourceCodeElem = document.getElementById('source-code');
             sourceCodeElem.innerHTML = '<button>View the content of this file in a new CRX Viewer</button>';
@@ -657,6 +661,83 @@ var viewFileInfo = (function() {
         }
         return a;
     }
+    function createContentVerifier(entry) {
+        var wrapper = document.createElement('div');
+        wrapper.className = 'content-verifier-wrapper';
+        var output = document.createElement('div');
+        output.className = 'content-verifier-output';
+        var button = document.createElement('button');
+        var displayedHashes = [
+            'md5',
+            'sha1',
+            'sha256',
+            'sha384',
+            'sha512',
+        ];
+        button.onclick = function() {
+            button.onclick = toggleOutputVisibility;
+
+            var infoTable = createInfoTable();
+
+            infoTable.addRow('File name', entry.filename);
+            // The zip file could report an incorrect value, so we will update this later.
+            infoTable.addRow('File size', formatByteSize(entry.uncompressedSize) + ' bytes');
+
+            displayedHashes.forEach(function(algo, i) {
+                infoTable.addRow(algo, '');
+            });
+
+            entry.getData(new Uint8ArrayWriter(), function(uint8array) {
+                infoTable.updateRow('File size', formatByteSize(uint8array.length) + ' bytes');
+                displayedHashes.forEach(function(algo, i) {
+                    // ModernCrypto.md5, ModernCrypto.sha1, etc.
+                    ModernCrypto[algo](uint8array, function(hash) {
+                        infoTable.updateRow(algo, hash);
+                    });
+                });
+            });
+
+            output.appendChild(infoTable);
+            output.insertAdjacentHTML('beforeend',
+                '<small>Need more tools? <a href="https://github.com/Rob--W/crxviewer/issues">Create a feature request!</a></small>');
+            toggleOutputVisibility();
+        };
+        function toggleOutputVisibility() {
+            output.hidden = !output.hidden;
+            if (output.hidden) {
+                button.textContent = 'Show analysis';
+                button.title = 'View more information about this file.';
+            } else {
+                button.textContent = 'Hide analysis';
+                button.title = '';
+            }
+        }
+        // Hide the output and update the button label.
+        toggleOutputVisibility();
+        wrapper.appendChild(button);
+        wrapper.appendChild(output);
+        return wrapper;
+    }
+
+    function createInfoTable() {
+        var infoTable = document.createElement('table');
+
+        function addRow(description, initialValue) {
+            var row = infoTable.insertRow(-1);
+            row.className = 'info-table-row';
+            row.dataset.description = description.replace(/"/g, '');
+            row.insertCell(0).textContent = description;
+            row.insertCell(1).textContent = initialValue || '';
+        }
+        function updateRow(description, value) {
+            var row = infoTable.querySelector('tr[data-description="' + description.replace(/"/g, '') + '"]');
+            row.cells[1].textContent = value;
+        }
+        infoTable.addRow = addRow;
+        infoTable.updateRow = updateRow;
+        return infoTable;
+    }
+
     function showGoToLine(sourceCodeElem, preCurrent) {
         var ol = preCurrent.querySelector('ol');
         if (!ol) {

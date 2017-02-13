@@ -30,6 +30,7 @@ The "View source" option opens a new tab with a simple viewer, with the followin
   - Automatic beautification (formatting) of code
   - Syntax highlighting
   - Image preview
+  - Show hashes (md5, sha1, sha256, sha384, sha512) of the file content.
   - View content of embedded zip files.
   - Download Chrome Web Store extensions for a different platform (e.g. Chrome OS or NaCl).
   - View the contents of any URL or zip file.

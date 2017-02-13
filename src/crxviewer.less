@@ -312,6 +312,7 @@ footer {
 #source-toolbar {
     height: @fileSpecificToolbarHeight;
     line-height: @fileSpecificToolbarHeight;
+    position: relative;
 }
 #source-code {
     max-height: calc(100% - @fileSpecificToolbarHeight);
@@ -351,6 +352,31 @@ footer {
             border-bottom-style: solid;
         }
     }
+}
+
+.content-verifier-wrapper {
+    display: inline-block;
+
+    .content-verifier-output {
+        // positioned relative to the toolbar.
+        position: absolute;
+        left: 0;
+        // Allow some space for the source container scrollbar to be visible, if any.
+        right: 30px;
+        max-height: calc(100vh - ((@topBarHeight + @fileSpecificToolbarHeight)));
+        overflow: auto;
+
+        background: white;
+        padding: 1rem;
+        border: 1px solid #ccf;
+
+        line-height: 1.5rem;
+    }
+}
+
+.info-table-row > :first-child {
+    font-weight: bold;
+    white-space: pre;
 }
 
 img:hover {

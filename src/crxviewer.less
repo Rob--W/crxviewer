@@ -3,6 +3,7 @@
 @resizerWidth: 8px;
 @fileSizeWidth: 4rem;
 @fileSpecificToolbarHeight: 2rem;
+@topBarHeight: 2rem;
 @footerHeight: 3rem;
 @footerFontsize: 0.9rem;
 
@@ -28,7 +29,7 @@ body {
     display: -webkit-flex;
     display: flex;
     width: 100%;
-    height: 2rem;
+    height: @topBarHeight;
     border-bottom: 2px solid #DDD;
     padding: @barPadding;
     position: relative;
@@ -122,8 +123,8 @@ body {
 
 #advanced-open {
     display: none;
-    height: -webkit-calc(100% - ((@fileSpecificToolbarHeight + @footerHeight)));
-    height: calc(100% - ((@fileSpecificToolbarHeight + @footerHeight)));
+    height: -webkit-calc(100% - ((@topBarHeight + @footerHeight)));
+    height: calc(100% - ((@topBarHeight + @footerHeight)));
     text-align: center;
     padding: 2rem 1rem 0;
     overflow: auto;
@@ -183,8 +184,8 @@ body {
     }
 }
 #right-panel, #left-panel {
-    height: -webkit-calc(100% - @fileSpecificToolbarHeight);
-    height: calc(100% - @fileSpecificToolbarHeight);
+    height: -webkit-calc(100% - @topBarHeight);
+    height: calc(100% - @topBarHeight);
 }
 #right-panel {
     padding-left: (2 * @resizerWidth + @rightPanelWidth);

@@ -31,11 +31,11 @@ body {
     height: 2rem;
     border-bottom: 2px solid #DDD;
     padding: @barPadding;
+    position: relative;
 
     // On small screens the togglers may overflow to the next line.
     // Make sure that they are visible if the user interacts with the top bar.
     &:hover {
-        position: relative;
         z-index: 10;
     }
 

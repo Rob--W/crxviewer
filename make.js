@@ -23,6 +23,12 @@ var ALLOWED_FILES = [
     '.png',
 ];
 
+function getVersionString() {
+    cd(ROOT_DIR);
+    var gitHash = exec('git log --format=%H -n1', {silent: true}).stdout.trim();
+    return gitHash || '(unknown version)';
+}
+
 function getBuildConfig(options) {
     var dest_dir = options.build_dir;
     var setup = {
@@ -31,6 +37,7 @@ function getBuildConfig(options) {
             FIREFOX: false,
             OPERA: false,
             WEB: false,
+            VERSION: getVersionString(),
         },
         mkdirs: [
             dest_dir + 'icons',
@@ -174,6 +181,7 @@ target.web = function() {
             FIREFOX: false,
             OPERA: false,
             WEB: true,
+            VERSION: getVersionString(),
         },
         copy: [
             [SRC_DIR + 'search-worker.js', dest_dir],

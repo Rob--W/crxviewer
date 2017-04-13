@@ -1146,7 +1146,7 @@ var checkAndApplyFilter = (function() {
     (function() {
         // Bind to checkbox filter
 //#if CHROME || OPERA
-        var storageArea = chrome.storage.sync || chrome.storage.local;
+        var storageArea = chrome.storage.sync;
 //#endif
 
         var FILTER_STORAGE_PREFIX = 'filter-';

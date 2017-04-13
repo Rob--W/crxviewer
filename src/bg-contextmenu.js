@@ -29,7 +29,7 @@
     });
 //#endif
     function checkContextMenuPref() {
-        var storageArea = chrome.storage.sync || chrome.storage.local;
+        var storageArea = chrome.storage.sync;
         storageArea.get({showContextMenu:true}, function(items) {
             if (items.showContextMenu) show();
         });

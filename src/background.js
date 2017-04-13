@@ -63,7 +63,7 @@ chrome.runtime.onInstalled.addListener(function() {
         }
     });
     if (Object.keys(items).length) {
-        var storageArea = chrome.storage.sync || chrome.storage.local;
+        var storageArea = chrome.storage.sync;
         storageArea.set(items);
     }
 });

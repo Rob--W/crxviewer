@@ -9,6 +9,7 @@
     },
     "background": {
         "scripts": [
+            "storage-sync-polyfill.js",
             "incognito-events.js",
             "chrome-platform-info.js",
             "cws_pattern.js",

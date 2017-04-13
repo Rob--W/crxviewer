@@ -1145,7 +1145,7 @@ var checkAndApplyFilter = (function() {
     }
     (function() {
         // Bind to checkbox filter
-//#if CHROME || OPERA
+//#if CHROME || OPERA || FIREFOX
         var storageArea = chrome.storage.sync;
 //#endif
 
@@ -1176,7 +1176,7 @@ var checkAndApplyFilter = (function() {
             var storageKey = FILTER_STORAGE_PREFIX + checkbox.dataset.filterType;
             checkbox.checked = localStorage.getItem(storageKey) !== '0';
             checkbox.onchange = function() {
-//#if CHROME || OPERA
+//#if CHROME || OPERA || FIREFOX
                 var items = {};
                 items[storageKey] = checkbox.checked;
                 storageArea.set(items);
@@ -1185,7 +1185,7 @@ var checkAndApplyFilter = (function() {
 //#endif
                 updateFileListView();
             };
-//#if CHROME || OPERA
+//#if CHROME || OPERA || FIREFOX
                 storageArea.get(storageKey, function(items) {
                     checkbox.checked = items[storageKey] !== false;
                     updateFileListView();

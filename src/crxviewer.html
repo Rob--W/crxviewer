@@ -125,6 +125,9 @@ The filename filter is optional, '!search term' can also be used directly to sea
     <option value="!regexp:(chrome|browser)\." label="Regexp file search">
     <option value="\.html$!http:" label="All HTML files containing http:.">
 </datalist>
+<!--#if CHROME || OPERA || FIREFOX-->
+<script src="storage-sync-polyfill.js"></script>
+<!--#endif-->
 <script src="lib/zip.js/zip.js"></script>
 <script src="lib/zip.js/mime-types.js"></script>
 <script src="lib/efficienttextwriter.js"></script>

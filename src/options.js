@@ -37,7 +37,7 @@ if (chrome.declarativeWebRequest) {
 }
 //#endif
 
-var storageArea = chrome.storage.sync || chrome.storage.local;
+var storageArea = chrome.storage.sync;
 document.getElementById('contextmenu').onchange = function() {
     storageArea.set({showContextMenu: this.checked});
 };

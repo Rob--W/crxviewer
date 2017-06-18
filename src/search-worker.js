@@ -4,6 +4,7 @@
 
 importScripts('lib/zip.js/zip.js', 'lib/zip.js/inflate.js', 'lib/efficienttextwriter.js');
 zip.useWebWorkers = false; // No nested workers please.
+
 // The file names in the zip file, sorted by file size (smallest first).
 var allFilenames = [];
 
@@ -12,10 +13,6 @@ var fileEntries = null;
 // File name to string
 var dataMap = {};
 var dataMapLowerCase = {};
-
-// Same as above maps, except beautified.
-var dataMapB = {};
-var dataMapLowerCaseB = {};
 
 var currentSearchTerm = '';
 var lowPrioFilenames = [];
@@ -108,59 +105,6 @@ function getFileData(filename) {
     return null;
 }
 
-var r_escaped_strings = new RegExp(
-    '\\\\(?:' +
-        // \x00 - \xFF
-        'x([0-9a-fA-F]{2})' +
-    '|' +
-        // \u0000 - \u0001
-        'u([0-9a-fA-F]{4})' +
-    '|' +
-        // \u{0} - \u{10ffff}
-        'u\\{(1?[0-9a-fA-F]{1,5})\\}' +
-    ')',
-    'g');
-
-function getBeautified(filename, data, isLowerCase) {
-    var outputDataMap = isLowerCase ? dataMapLowerCaseB : dataMapB;
-    if (!outputDataMap[filename]) {
-        // Transform escaped characters to their actual value, because js_beautify with the
-        // unescape_strings option also normalizes strings in this way.
-        // This method may accidentally cause files that should not be matched to match
-        // (e.g. a file containing "C:\x86.png"), but this is acceptable, because the alternative
-        // is to not match files that should have matched.
-        outputDataMap[filename] = data.replace(
-            r_escaped_strings,
-            // These are hot functions, hence the use of two separate, near-identical functions.
-            isLowerCase ? getBeautified_replacer_lowercase : getBeautified_replacer);
-    }
-    return outputDataMap[filename];
-}
-function getBeautified_replacer(full_match, hex_code, unicode_code, unicode_point_code) {
-    var code = parseInt(hex_code || unicode_code || unicode_point_code, 16);
-    if (code <= 0xFFFF) {
-        return String.fromCharCode(code);
-    } else {
-        return fromCodePointOr(code, full_match);
-    }
-}
-// This is the same as getBeautified_replacer, except the result is also converted to lower case.
-function getBeautified_replacer_lowercase(full_match, hex_code, unicode_code, unicode_point_code) {
-    var code = parseInt(hex_code || unicode_code || unicode_point_code, 16);
-    if (code <= 0xFFFF) {
-        return String.fromCharCode(code).toLowerCase();
-    } else {
-        return fromCodePointOr(code, full_match).toLowerCase();
-    }
-}
-function fromCodePointOr(codePoint, fallback) {
-    try {
-        return String.fromCodePoint(codePoint);
-    } catch (e) {
-        return fallback;
-    }
-}
-
 function SearchTask(filenames, searchTerm) {
     this.filenames = filenames;
     // The exact input search query. This will be used by the calling thread to
@@ -218,8 +162,7 @@ SearchTask.prototype.next = function() {
 
         var found;
         if (this.searchTermRegExp) {
-            found = this.searchTermRegExp.test(data) ||
-                this.searchTermRegExp.test(getBeautified(filename, data, false));
+            found = this.searchTermRegExp.test(data);
         } else {
             if (!this.searchTermCaseSensitive) {
                 // The result is cached instead of calculated on the fly to avoid pressure on GC
@@ -227,9 +170,7 @@ SearchTask.prototype.next = function() {
                 data = dataMapLowerCase[filename] ||
                     (dataMapLowerCase[filename] = data.toLocaleLowerCase());
             }
-            found = data.indexOf(this.searchTermNormalized) !== -1 ||
-                getBeautified(filename, data, !this.searchTermCaseSensitive)
-                    .indexOf(this.searchTermNormalized) !== -1;
+            found = data.indexOf(this.searchTermNormalized) !== -1;
         }
         if (found) {
             this.found.push(filename);

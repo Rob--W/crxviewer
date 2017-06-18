@@ -25,6 +25,14 @@ importScripts(
 );
 
 self.onmessage = function(event) {
+    var messagePort = event.ports && event.ports[0];
+    if (messagePort) {
+        messagePort.addEventListener('message', self.onmessage);
+        messagePort.start();
+        // Just like the end of this file: Hi, I'm alive!
+        messagePort.postMessage({});
+        return;
+    }
     var data = event.data;
     var messageID = data.messageID;
     var source = data.source;
@@ -41,7 +49,8 @@ self.onmessage = function(event) {
         result = source;
     }
 
-    postMessage({
+    // event.target: Either the WorkerGlobalScope, or a MessagePort.
+    event.target.postMessage({
         messageID: messageID,
         result: result
     });

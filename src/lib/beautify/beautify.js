@@ -1,21 +1,43 @@
+/* exported beautify */
+'use strict';
+
 /**
  * (c) 2013 Rob Wu <rob@robwu.nl>
  */
 var beautify = (function(){
-    // Detect URL of current script.
-    // Note: Does not work if loaded asynchronously.
-    var workerURL = document.scripts[document.scripts.length-1];
-    if (workerURL) {
-        workerURL = workerURL.src.replace(/[^\/]+.js([\?#].*?)?$/i, '');
+    var worker;
+    if (typeof document == 'object') {
+        // Detect URL of current script.
+        // Note: Does not work if loaded asynchronously.
+        var workerURL;
+        if (document.scripts && document.scripts.length) {
+            workerURL = document.scripts[document.scripts.length - 1].src
+                .replace(/[^\/]+.js([\?#].*?)?$/i, '');
+        }
+        workerURL = (workerURL || './') + 'worker-beautify.js';
+        worker = new Worker(workerURL);
+    } else {
+        // Inside a Web Worker. Delegate the task to the worker that exists in
+        // the parent (main) thread.
+        // The parent thread should call beautify.maybeInterceptMessageEvent for
+        // a message event from this worker.
+        // We don't use a dedicated worker because Chromium does not support
+        // nested workers, and I also use this library in the main thread, so
+        // a dedicated worker already exists in the main thread.
+        var messageChannel = new MessageChannel();
+        self.postMessage('PORT_BEAUTY', [messageChannel.port1]);
+        worker = messageChannel.port2;
     }
-    workerURL = (workerURL || './') + 'worker-beautify.js';
-        
-    var worker = new Worker(workerURL);
+    // This boolean is here in case the worker fails to load.
+    // I generally expect the worker to have finished initializing before the
+    // caller want to do anything useful with it.
     var isWorkerAvailable = false;
-    worker.addEventListener('message', function listener() {
-        worker.removeEventListener('message', listener);
+    // Using worker.onmessage instead of addEventListener to make sure that
+    // if "worker" is a MessagePort, that .start is then implicitly called here.
+    worker.onmessage = function() {
+        worker.onmessage = null;
         isWorkerAvailable = true;
-    });
+    };
 
     var _messageID = 0;
     function beautify(options, callback) {
@@ -71,6 +93,13 @@ var beautify = (function(){
             return 'json';
         }
         return ''; // Unknown
+    };
+    beautify.maybeInterceptMessageEvent = function(event) {
+        if (event.data === 'PORT_BEAUTY' && event.ports && event.ports.length) {
+            worker.postMessage('', event.ports);
+            return true;
+        }
+        return false;
     };
     return beautify;
 })();

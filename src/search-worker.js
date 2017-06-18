@@ -1,8 +1,13 @@
 /* jshint worker:true */
-/* globals EfficientTextWriter, setTimeout, zip */
+/* globals EfficientTextWriter, setTimeout, zip, beautify */
 'use strict';
 
-importScripts('lib/zip.js/zip.js', 'lib/zip.js/inflate.js', 'lib/efficienttextwriter.js');
+importScripts(
+    'lib/zip.js/zip.js',
+    'lib/zip.js/inflate.js',
+    'lib/efficienttextwriter.js',
+    'lib/beautify/beautify.js'
+);
 zip.useWebWorkers = false; // No nested workers please.
 
 // The file names in the zip file, sorted by file size (smallest first).
@@ -10,7 +15,7 @@ var allFilenames = [];
 
 // File name to entry
 var fileEntries = null;
-// File name to string
+// File name to string[] representing the file content and optionally beautified file content.
 var dataMap = {};
 var dataMapLowerCase = {};
 
@@ -86,9 +91,12 @@ function loadFromZip(zipBlob) {
     });
 }
 
+function isValidFileData(data) {
+    return Array.isArray(data);
+}
 function getFileData(filename) {
     var data = dataMap[filename];
-    if (typeof data === 'string') {
+    if (isValidFileData(data)) {
         return data;
     }
     var entry = fileEntries[filename];
@@ -97,12 +105,25 @@ function getFileData(filename) {
         return null; // Already opening...
     }
     entry.getData(new EfficientTextWriter(), function(data) {
-        dataMap[filename] = data;
-        if (pendingSearch) {
-            pendingSearch.resume();
-        }
+        beautify({
+            text: data,
+            type: beautify.getType(filename),
+        }, function(beautifiedData) {
+            if (data === beautifiedData) {
+                dataMap[filename] = [data];
+            } else {
+                dataMap[filename] = [data, beautifiedData];
+            }
+            if (pendingSearch) {
+                pendingSearch.resume();
+            }
+        });
     });
     return null;
+}
+
+function normalizeTextForSearch(text) {
+    return text.toLocaleLowerCase();
 }
 
 function SearchTask(filenames, searchTerm) {
@@ -123,7 +144,7 @@ function SearchTask(filenames, searchTerm) {
         if (this.searchTermCaseSensitive) {
             this.searchTermNormalized = searchTerm.slice(5);
         } else {
-            this.searchTermNormalized = searchTerm.toLocaleLowerCase();
+            this.searchTermNormalized = normalizeTextForSearch(searchTerm);
         }
         this.searchTermRegExp = null;
     }
@@ -149,30 +170,24 @@ SearchTask.prototype.next = function() {
         for (data = null, dataIndex = 0; dataIndex < this.filenames.length; ++dataIndex) {
             filename = this.filenames[dataIndex];
             data = getFileData(filename);
-            if (typeof data === 'string') {
+            if (isValidFileData(data)) {
                 this.filenames.splice(dataIndex, 1);
                 break;
             }
         }
-        if (typeof data !== 'string') {
+        if (!isValidFileData(data)) {
             this.paused = true;
             // Callers will call resume() if needed when data becomes available.
             break;
         }
 
-        var found;
-        if (this.searchTermRegExp) {
-            found = this.searchTermRegExp.test(data);
-        } else {
-            if (!this.searchTermCaseSensitive) {
-                // The result is cached instead of calculated on the fly to avoid pressure on GC
-                // because it is expected that the query is frequently repeated.
-                data = dataMapLowerCase[filename] ||
-                    (dataMapLowerCase[filename] = data.toLocaleLowerCase());
-            }
-            found = data.indexOf(this.searchTermNormalized) !== -1;
+        if (!this.searchTermRegExp && !this.searchTermCaseSensitive) {
+            // The result is cached instead of calculated on the fly to avoid pressure on GC
+            // because it is expected that the query is frequently repeated.
+            data = dataMapLowerCase[filename] ||
+                (dataMapLowerCase[filename] = data.map(normalizeTextForSearch));
         }
-        if (found) {
+        if (data.some(this.matchesSearchTerm, this)) {
             this.found.push(filename);
         } else {
             this.notfound.push(filename);
@@ -196,6 +211,12 @@ SearchTask.prototype.next = function() {
     setTimeout(function() {
         task.next();
     }, 0);
+};
+SearchTask.prototype.matchesSearchTerm = function(text) {
+    if (this.searchTermRegExp) {
+        return this.searchTermRegExp.test(text);
+    }
+    return text.indexOf(this.searchTermNormalized) !== -1;
 };
 SearchTask.prototype.resume = function() {
     if (this.paused) {

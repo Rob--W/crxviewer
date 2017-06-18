@@ -958,6 +958,9 @@ var TextSearchEngine = (function() {
     function initializeWorker(textSearchEngine) {
         var worker = new Worker('search-worker.js');
         worker.addEventListener('message', function(event) {
+            if (beautify.maybeInterceptMessageEvent(event)) {
+                return;
+            }
             var message = event.data;
             if (message.searchTerm !== textSearchEngine._currentSearchTerm) {
                 return;

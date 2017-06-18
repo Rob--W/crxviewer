@@ -329,7 +329,7 @@ class SearchEngineElement {
     destroy() {
         this.currentSearchTermSerialized = null;
         this.currentResult = null;
-        this.currentResultElement = null;
+        this.hideCurrentResult();
         this.unhighlightAll();
         this.disconnect();
         this.element = null;

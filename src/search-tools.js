@@ -306,6 +306,11 @@ class SearchEngineElement {
      * @param {string} text - The text to search through
      */
     constructor(text) {
+        // Strip NULL bytes because the browser doesn't render them. Including
+        // them would result in a mismatch between the column numbers and the
+        // actual rendered text, and consequently reduce the accuracy of the
+        // _getResultCoords method.
+        text = text.replace(/\x00/g, '');
         this.logic = new SearchEngineLogic(text);
         this.element = null;
         this.scrollableElement = null;

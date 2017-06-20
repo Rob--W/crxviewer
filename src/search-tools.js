@@ -414,6 +414,7 @@ class SearchEngineElement {
 
         if (this.svgRoot) {
             this._ensureSVGRoot();
+            this.showVisibleHighlights();
         }
     }
 

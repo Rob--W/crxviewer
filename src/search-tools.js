@@ -744,8 +744,8 @@ class SearchEngineElement {
      * @param {object} result
      * @return {object} An object with the following properties:
      *  - mainRect: bounding box around the whole result.
-     *  - startRect: bounding box around the first text node in the result.
-     *  - endRect: bounding box around the last text node in the result.
+     *  - startRect: bounding box before the first text node in the result.
+     *  - endRect: bounding box after the last text node in the result.
      */
     _getResultCoords(rootX, rootY, result) {
         let [firstTextNode, firstTextNodeCol] =
@@ -769,19 +769,14 @@ class SearchEngineElement {
         range.setStart(firstTextNode, firstTextNodeCol);
         range.setEnd(lastTextNode, lastTextNodeCol);
         let mainRect = getRangeRect();
-        let startRect, endRect;
 
-        if (result.lineStart === result.lineEnd) {
-            startRect = endRect = mainRect;
-        } else {
-            range.setStart(firstTextNode, firstTextNodeCol);
-            range.setEnd(firstTextNode, firstTextNode.length);
-            startRect = getRangeRect();
+        range.setStart(firstTextNode, firstTextNodeCol);
+        range.setEnd(firstTextNode, firstTextNodeCol);
+        let startRect = getRangeRect();
 
-            range.setStart(lastTextNode, 0);
-            range.setEnd(lastTextNode, lastTextNodeCol);
-            endRect = getRangeRect();
-        }
+        range.setStart(lastTextNode, lastTextNodeCol);
+        range.setEnd(lastTextNode, lastTextNodeCol);
+        let endRect = getRangeRect();
         return {mainRect, startRect, endRect};
     }
 

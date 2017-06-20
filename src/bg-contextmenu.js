@@ -105,7 +105,7 @@
         chrome.contextMenus.create({
             id: MENU_ID_AMO_APPROVED_PAGE,
             title: 'View extension source (latest approved version)',
-            contexts: ['all'],
+            contexts: ['page', 'frame', 'link'],
 //#if FIREFOX
             onclick: contextMenusOnClicked,
 //#endif

@@ -51,6 +51,13 @@ var beautify = (function(){
             callback(source);
             return;
         }
+        if (!type) {
+            // When there is no beautification type, the result will be
+            // identical. Immediately send back the result to avoid a round-trip
+            // to the worker.
+            callback(source);
+            return;
+        }
         var messageID = ++_messageID;
         worker.addEventListener('message', function listener(event) {
             var data = event.data;

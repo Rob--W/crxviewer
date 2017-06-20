@@ -333,7 +333,6 @@ class SearchEngineElement {
 
     destroy() {
         this.currentSearchTermSerialized = null;
-        this.currentResult = null;
         this._removeSVGRoot();
         this.hideCurrentResult();
         this.unhighlightAll();
@@ -390,7 +389,6 @@ class SearchEngineElement {
                 this.unhighlightAll();
                 this.isHighlighting = true;
             }
-            this.currentResult = null;
             this.hideCurrentResult();
         }
     }
@@ -442,6 +440,7 @@ class SearchEngineElement {
         if (this.svgRoot) {
             this.svgRoot.lastChild.textContent = '';
         }
+        this.currentResult = null;
     }
 
     /**
@@ -698,7 +697,7 @@ class SearchEngineElement {
                 resultRect.top - scrollableRect.top +
                 resultRect.height / 2 - scrollableRect.height / 2;
         }
-        this.hideCurrentResult();
+        this.svgRoot.lastChild.textContent = '';
         this.svgRoot.lastChild.appendChild(svgPath);
     }
 

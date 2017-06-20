@@ -2,7 +2,7 @@
 // and DOM features, without requiring transpilation or breaking compatibility
 // of the viewer with non-bleeding-edge browsers.
 /* jshint esversion: 6 */
-/* globals console, document, requestAnimationFrame, setTimeout, CSS */
+/* globals console, document, requestAnimationFrame, setTimeout */
 /* exported SearchEngineElement, SearchEngineLogic */
 'use strict';
 
@@ -313,11 +313,11 @@ class SearchEngineElement {
 
         this.currentSearchTermSerialized = null;
         this.currentResult = null;
-        this.currentResultElement = null;
+        // Container for rendering highlights.
+        this.svgRoot = null;
+        this.svgRootWrapper = null;
         // Set of already-rendered highlights.
         this.highlightedResults = new Set();
-        // List of pairs [line, result element] (unordered!)
-        this.shownResults = [];
         this.isHighlighting = false;
 
         this._ondblclick_element = this._ondblclick_element.bind(this);
@@ -329,6 +329,7 @@ class SearchEngineElement {
     destroy() {
         this.currentSearchTermSerialized = null;
         this.currentResult = null;
+        this._removeSVGRoot();
         this.hideCurrentResult();
         this.unhighlightAll();
         this.disconnect();
@@ -406,12 +407,8 @@ class SearchEngineElement {
         this.element = element;
         this.scrollableElement = scrollableElement;
 
-        if (this.currentResultElement) {
-            this._moveRenderedResult(
-                this.currentResult.lineStart, this.currentResultElement);
-        }
-        for (let [lineStart, resultElement] of this.shownResults) {
-            this._moveRenderedResult(lineStart, resultElement);
+        if (this.svgRoot) {
+            this._ensureSVGRoot();
         }
     }
 
@@ -435,9 +432,8 @@ class SearchEngineElement {
      * Remove the marker of the current search result from the view.
      */
     hideCurrentResult() {
-        if (this.currentResultElement) {
-            this.currentResultElement.remove();
-            this.currentResultElement = null;
+        if (this.svgRoot) {
+            this.svgRoot.lastChild.innerHTML = '';
         }
     }
 
@@ -446,10 +442,9 @@ class SearchEngineElement {
      */
     unhighlightAll() {
         this.highlightedResults.clear();
-        for (let [, resultElement] of this.shownResults) {
-            resultElement.remove();
+        if (this.svgRoot) {
+            this.svgRoot.firstChild.innerHTML = '';
         }
-        this.shownResults.length = 0;
         this.isHighlighting = false;
     }
 
@@ -479,6 +474,7 @@ class SearchEngineElement {
      */
     showVisibleHighlights() {
         if (!this.isHighlighting) {
+            this._renderCurrentResultIfNeeded();
             return;
         }
         let scrollableRect = this.scrollableElement.getBoundingClientRect();
@@ -495,6 +491,82 @@ class SearchEngineElement {
         }, true);
 
         this._renderBetweenLines(topLine, bottomLine);
+        this._renderCurrentResultIfNeeded();
+    }
+
+    _renderCurrentResultIfNeeded() {
+        if (!this.currentResult || !this.svgRoot || this.svgRoot.lastChild.childElementCount) {
+            return;
+        }
+        // Previously a result was shown, but it is no longer visible, likely because
+        // _ensureSVGRoot has reset the displayed highlights. Show again.
+        // There is a SVG element, a current result, but not rendered. Render it now.
+        this._renderResult(this.currentResult);
+    }
+
+    /**
+     * Creates `this.svgRoot` if it did not exists, or if the dimensions have
+     * changed (e.g. due to resize).
+     * The DOM may be updated as a result.
+     */
+    _ensureSVGRoot() {
+        let {width, height} = this.element.getBoundingClientRect();
+        let wantsNewSVGRoot = !this.svgRoot ||
+            // If the width changes, then the highlights have to be recalculated
+            // in case of changed word-wrapping behavior.
+            Math.floor(width) !==
+            Math.floor(this.svgRoot.getAttribute('width'));
+        if (!this.svgRootWrapper) {
+            this.svgRootWrapper = document.createElement('div');
+            this.svgRootWrapper.className = 'search-result-container-wrapper';
+        }
+        if (wantsNewSVGRoot) {
+            this.highlightedResults.clear();
+            this.svgRootWrapper.textContent = '';
+            this.svgRoot = this._createSVGRoot(width, height);
+            this.svgRootWrapper.appendChild(this.svgRoot);
+        }
+        // This is true if either the element was just created,
+        // or if setElement was called.
+        if (this.svgRootWrapper.nextSibling !== this.element) {
+            this.element.parentNode.insertBefore(
+                this.svgRootWrapper, this.element);
+        }
+    }
+
+    _removeSVGRoot() {
+        if (this.svgRoot) {
+            this.svgRootWrapper.remove();
+            this.svgRootWrapper = null;
+            this.svgRoot = null;
+        }
+    }
+
+    /**
+     * Create a <svg> element for use in `this.svgRoot`, which has two children:
+     * - `this.svgRoot.firstChild` will contain highlighted results.
+     * - `this.svgRoot.lastChild` will contain one specific search result.
+     */
+    _createSVGRoot(width, height) {
+        const NS_SVG = 'http://www.w3.org/2000/svg';
+
+        let svg = document.createElementNS(NS_SVG, 'svg');
+        svg.setAttribute('class', 'search-result-container');
+        svg.setAttribute('width', width);
+        svg.setAttribute('height', height);
+        svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+
+        let highlightContainer = document.createElementNS(NS_SVG, 'g');
+        highlightContainer.setAttribute('class', 'search-result-highlight');
+        svg.appendChild(highlightContainer);
+
+        // Always render the matched result above highlights, because there can
+        // be multiple highlighted results, whereas only one match is shown at
+        // a time.
+        let resultContainer = document.createElementNS(NS_SVG, 'g');
+        resultContainer.setAttribute('class', 'search-result-match');
+        svg.appendChild(resultContainer);
+        return svg;
     }
 
     /**
@@ -505,6 +577,9 @@ class SearchEngineElement {
      *    `lineStart`, and no more than the number of '\n's in `this.text`.
      */
     _renderBetweenLines(lineStart, lineEnd) {
+        // Initializes svgRoot and empties highlightedResults if needed
+        this._ensureSVGRoot();
+
         let allResults = this.logic.findAll();
         let results = [];
         for (let result of allResults) {
@@ -520,57 +595,15 @@ class SearchEngineElement {
             }
         }
 
-        this._renderHighlightedResults(results);
-    }
+        let fragment = document.createDocumentFragment();
 
-    /**
-     * Create highlights for all given results, and insert each highlight in the
-     * document.
-     *
-     * @param {Object[]} results - The results to render.
-     */
-    _renderHighlightedResults(results) {
-        // Normally (in _renderResult), the result is rendered by appending an
-        // invisible prefix (for positioning), followed by the actual text.
-        // When we highlight all results, we combine results that appear on the
-        // same line(s), because otherwise the above logic can lead to quadratic
-        // memory usage (in terms of the text size) when the text is one long
-        // line and the search matches one result (because every character would
-        // then have its own wrapper and prefix).
-        let bufferedResults = [];
-        // The line where the first item in the buffer starts.
-        let firstLine = 0;
-        // The line where the last item in the buffer ended.
-        let lastLine = 0;
-        // The column where the last item in the buffer ended.
-        let lastColumn = 0;
-
-        const flushBufferedResults = () => {
-            if (bufferedResults.length) {
-                let resultElement = this._insertResults(
-                    firstLine, bufferedResults, 'search-result-highlight');
-                this.shownResults.push([firstLine, resultElement]);
-                bufferedResults.length = 0;
-            }
-        };
-
+        let svgRect = this.svgRoot.getBoundingClientRect();
         for (let result of results) {
-            if (lastLine !== result.lineStart) {
-                flushBufferedResults();
-                firstLine = result.lineStart;
-                lastColumn = 0;
-            }
-            bufferedResults.push(
-                this.logic.getText(
-                    result.lineStart, lastColumn,
-                    result.lineStart, result.columnStart),
-                this.logic.getText(
-                    result.lineStart, result.columnStart,
-                    result.lineEnd, result.columnEnd));
-            lastLine = result.lineEnd;
-            lastColumn = result.columnEnd;
+            fragment.appendChild(
+                this._createSVGPath(
+                    this._getResultCoords(svgRect.left, svgRect.top, result)));
         }
-        flushBufferedResults();
+        this.svgRoot.firstChild.appendChild(fragment);
     }
 
     /**
@@ -634,31 +667,19 @@ class SearchEngineElement {
      */
     _renderResult(result) {
         this.currentResult = result;
-        this.hideCurrentResult();
         if (!result) {
+            this.hideCurrentResult();
             // result === null, so no result. Do nothing for now.
             console.log('No results for ' + this.currentSearchTermSerialized);
             return;
         }
-        let resultElement = this._insertResults(result.lineStart, [
-            this.logic.getText(
-                result.lineStart, 0,
-                result.lineStart, result.columnStart),
-            this.logic.getText(
-                result.lineStart, result.columnStart,
-                result.lineEnd, result.columnEnd),
-        ], 'search-result-match');
-        // The visual indicator of a search result is more important than that
-        // of highlight-all.
-        resultElement.classList.add('search-result-important');
-        this.currentResultElement = resultElement;
+        this._ensureSVGRoot();
+        let svgRect = this.svgRoot.getBoundingClientRect();
+        let coords = this._getResultCoords(svgRect.left, svgRect.top, result);
+        let svgPath = this._createSVGPath(coords);
 
         let scrollableRect = this.scrollableElement.getBoundingClientRect();
-        // Note: `resultElement.firstChild` contains the actual text, whereas
-        // `resultElement` is a zero-height element used for positioning.
-        // So we need `resultElement.firstChild` to determine the dimensions of
-        // the rendered result.
-        let resultRect = resultElement.firstChild.getBoundingClientRect();
+        let resultRect = coords.mainRect.rectRelativeToViewport;
         if (resultRect.height >= scrollableRect.height) {
             // Show start of result if it does not fit.
             this.scrollableElement.scrollTop +=
@@ -670,114 +691,162 @@ class SearchEngineElement {
                 resultRect.top - scrollableRect.top +
                 resultRect.height / 2 - scrollableRect.height / 2;
         }
+        this.hideCurrentResult();
+        this.svgRoot.lastChild.appendChild(svgPath);
     }
 
     /**
-     * Insert the given search results (texts) at the given line.
+     * Retrieve the text node at the given line that contains the column.
+     * This is because a line can be broken into multiple text nodes.
      *
-     * @param {number} lineStart - The first line of resultTexts.
-     * @param {string[]} resultTexts - A list of even length. The odd indices
-     *    contain text that should not be highlighted; the even indices contain
-     *    text that should be highlighted. The text should be directly adjacent
-     *    to each other: If all text is concatenated and inserted in the line
-     *    given by `lineStart`, then the text should align perfectly with the
-     *    actual text on that line.
-     * @param {string} highlightClassName - The class name to use for the
-     *    element which contains the matched result.
-     * @return {HTMLElement} The element that was inserted at line `lineStart`.
+     * @param {number} line - Line, 0-based.
+     * @param {column} column - Column, 0-based.
+     * @return {[Text, number]} The text node satisfying the query, and the
+     *   position inside the text node where the column starts.
      */
-    _insertResults(lineStart, resultTexts, highlightClassName) {
-        // Assuming:
-        // - Every line in `this.element` is wrapped in a separate element.
-        // - The vertical spacing between adjacent elements and lines within
-        //   the elements are identical.
-        // - All text in `this.element` has one uniform text style, at the very
-        //   least white-space:pre-wrap and word-break:break-all.
-        //
-        // The trick that we use to implement highlighting is to add an overlay
-        // with transparent text, and a visual marker around the matched text.
-        // Because the overlay and the actual text have the same style, the
-        // visual marker will align well with the actual text.
-
-        // Contains the results. Will be positioned over the actual text.
-        let wrapperElement = document.createElement('div');
-        wrapperElement.className = 'search-result-wrapper';
-
-        for (let i = 0; i < resultTexts.length; i += 2) {
-            if (resultTexts[i]) {
-                let prefixElement = document.createElement('span');
-                prefixElement.className = 'search-result-prefix';
-                prefixElement.textContent = resultTexts[i];
-                wrapperElement.appendChild(prefixElement);
+    _getTextNodeAt(line, column) {
+        let lineElement = this.element.children[line];
+        let node = null;
+        // 4 = NodeFilter.SHOW_TEXT
+        let walker = document.createTreeWalker(lineElement, 4);
+        let offset = column;
+        while (walker.nextNode()) {
+            node = walker.currentNode;
+            if (offset - node.length > 0) {
+                offset -= node.length;
+            } else {
+                return [node, offset];
             }
-
-            let highlightedElement = document.createElement('span');
-            highlightedElement.className = highlightClassName;
-            highlightedElement.textContent = resultTexts[i + 1];
-
-            wrapperElement.appendChild(highlightedElement);
         }
-
-        let lineElement = this.element.children[lineStart];
-        if (!lineElement.firstChild) {
-            // When the list item is empty, it initially has a height.
-            // When we insert our block-style element, the height changes to
-            // match that block-style element (of height 0, per stylesheet).
-            // To prevent this from happening, insert a <wbr> element.
-            // Note: We don't clean up this <wbr> element, because I expect that
-            // it does not matter for rendering whether it is present or not.
-            lineElement.appendChild(document.createElement('wbr'));
+        // No node containing the column. Return the end of the last node.
+        // This is often a legitimate situation when columnEnd is used, because
+        // it indicates the position after the end of the result string.
+        // if we are at the end of a string, then it is string.length + 1.
+        // This can also happen if the node content does not match the actual
+        // text as known by the search engine (e.g. when the browser decides to
+        // unexpectedly strip some characters).
+        if (node) {
+            return [node, node.length];
         }
-        // Auxilary element to help with positioning.
-        let anchorElement = lineElement.firstElementChild;
-        if (anchorElement &&
-            anchorElement.classList.contains('search-result-anchor')) {
-            anchorElement.appendChild(wrapperElement);
-        } else {
-            // Note: This node is added and not removed again, because doing so
-            // would require a restyle to work around a bug in Firefox.
-            // See _work_around_Firefox_bug_1319424 for more info.
-            anchorElement = document.createElement('div');
-            anchorElement.className = 'search-result-anchor';
-            anchorElement.appendChild(wrapperElement);
-            lineElement.insertBefore(anchorElement, lineElement.firstChild);
-            this._work_around_Firefox_bug_1319424(lineElement);
-        }
-        return wrapperElement;
+        // No node at all. Maybe the line is just empty.
+        node = document.createTextNode('');
+        lineElement.appendChild(node);
+        return [node, 0];
     }
 
     /**
-     * @param {number} lineStart - The line where the element should be
-     *     inserted.
-     * @param {HTMLElement} element - The return value of `_insertResults`.
+     * Calculates the coordinates of the result, relative to (rootX, rootY).
+     * (rootX, rootY) is relative to the upper-left corner of the browser
+     * viewport.
+     *
+     * @param {number} rootX - The x-coordinate of `this.svgRoot`.
+     * @param {number} rootY - The y-coordinate of `this.svgRoot`.
+     * @param {object} result
+     * @return {object} An object with the following properties:
+     *  - mainRect: bounding box around the whole result.
+     *  - startRect: bounding box around the first text node in the result.
+     *  - endRect: bounding box around the last text node in the result.
      */
-    _moveRenderedResult(lineStart, element) {
-        let lineElement = this.element.children[lineStart];
-        let anchorElement = element.parentNode;
-        if (lineElement !== anchorElement.parentNode) {
-            lineElement.insertBefore(anchorElement, lineElement.firstChild);
+    _getResultCoords(rootX, rootY, result) {
+        let [firstTextNode, firstTextNodeCol] =
+            this._getTextNodeAt(result.lineStart, result.columnStart);
+        let [lastTextNode, lastTextNodeCol] =
+            this._getTextNodeAt(result.lineEnd, result.columnEnd);
+        let range = document.createRange();
+        const getRangeRect = () => {
+            let rect = range.getBoundingClientRect();
+            return {
+                rectRelativeToViewport: rect,
+                left: rect.left - rootX,
+                right: rect.right - rootX,
+                top: rect.top - rootY,
+                bottom: rect.bottom - rootY,
+                width: rect.width,
+                height: rect.height,
+            };
+        };
+
+        range.setStart(firstTextNode, firstTextNodeCol);
+        range.setEnd(lastTextNode, lastTextNodeCol);
+        let mainRect = getRangeRect();
+        let startRect, endRect;
+
+        if (result.lineStart === result.lineEnd) {
+            startRect = endRect = mainRect;
+        } else {
+            range.setStart(firstTextNode, firstTextNodeCol);
+            range.setEnd(firstTextNode, firstTextNode.length);
+            startRect = getRangeRect();
+
+            range.setStart(lastTextNode, 0);
+            range.setEnd(lastTextNode, lastTextNodeCol);
+            endRect = getRangeRect();
         }
+        return {mainRect, startRect, endRect};
     }
 
-    _work_around_Firefox_bug_1319424(lineElement) {
-        // The content of `lineElement` is expected to be word-wrapped. But due
-        // to a bug in Firefox, "word-break:break-all" is not correctly applied
-        // under certain circumstances, such as when a new <div> is inserted in
-        // `lineElement`. For details, see https://bugzil.la/1319424
+    /**
+     * Generates the a path that draws an outline around the result in the DOM.
+     *
+     * @param {object} coords - The return value of _getResultCoords.
+     * @return {SVGPathElement} A SVG path relative to the upper-left corner of
+     *   `this.svgRoot`.
+     */
+    _createSVGPath({mainRect, startRect, endRect}) {
+        // Now we determine the path around the selection.
         //
-        // To work around the issue, I force a restyle.
-        lineElement.style.letterSpacing = '0';
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                lineElement.style.letterSpacing = '';
-            });
-        });
-    }
-}
+        //   -- -- AA
+        //   BB CC DD
+        //   EE -- --
+        //
+        // What we know:
+        // - mainRect = bounding box around all text nodes
+        // - startRect = bounding box around AA
+        // - endRect = bounding box around EE
+        //
+        // We will use mainRect where possible (because it is possible that
+        // startRect or endRect are not exactly at the edge of the bounding box
+        // due to other nodes sticking out.
+        let d = [
+            // Upper-left of AA.
+            'M',
+            startRect.left,
+            mainRect.top,
+            // Upper-right of AA (main rect).
+            'L',
+            mainRect.right,
+            mainRect.top,
+            // Bottom-right of DD.
+            'L',
+            mainRect.right,
+            endRect.top,
+            // Upper-right of EE.
+            'L',
+            endRect.right,
+            endRect.top,
+            // Bottom-right of EE.
+            'L',
+            endRect.right,
+            endRect.bottom,
+            // Bottom-left of EE (main rect).
+            'L',
+            mainRect.left,
+            mainRect.bottom,
+            // Upper-left of BB.
+            'L',
+            mainRect.left,
+            startRect.bottom,
+            // Bottom-left of AA.
+            'L',
+            startRect.left,
+            startRect.bottom,
+            // Upper-left of AA.
+            'Z',
+        ].join(' ');
 
-// Disable work-around in unaffected browsers to avoid overhead.
-// -moz-text-align-last was dropped from Firefox 53 (bugzil.la/1276808),
-// which is the same version where bugzil.la/1319424 was fixed).
-if (!CSS.supports('-moz-text-align-last', 'justify')) {
-    SearchEngineElement.prototype._work_around_Firefox_bug_1319424 = () => {};
+        const NS_SVG = 'http://www.w3.org/2000/svg';
+        let path = document.createElementNS(NS_SVG, 'path');
+        path.setAttribute('d', d);
+        return path;
+    }
 }

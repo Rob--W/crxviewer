@@ -707,8 +707,10 @@ class SearchEngineElement {
      *
      * @param {number} line - Line, 0-based.
      * @param {column} column - Column, 0-based.
-     * @return {[Text, number]} The text node satisfying the query, and the
-     *   position inside the text node where the column starts.
+     * @return {[HTMLElement, Text, number]}
+     *   The line element for the given line,
+     *   The text node satisfying the query (if any, otherwise null).
+     *   The position inside the text node where the column starts.
      */
     _getTextNodeAt(line, column) {
         let lineElement = this.element.children[line];
@@ -721,7 +723,7 @@ class SearchEngineElement {
             if (offset - node.length > 0) {
                 offset -= node.length;
             } else {
-                return [node, offset];
+                return [lineElement, node, offset];
             }
         }
         // No node containing the column. Return the end of the last node.
@@ -732,12 +734,39 @@ class SearchEngineElement {
         // text as known by the search engine (e.g. when the browser decides to
         // unexpectedly strip some characters).
         if (node) {
-            return [node, node.length];
+            return [lineElement, node, node.length];
         }
         // No node at all. Maybe the line is just empty.
-        node = document.createTextNode('');
-        lineElement.appendChild(node);
-        return [node, 0];
+        return [lineElement, null, 0];
+    }
+
+    /**
+     * Calculates a rectangle for the character at the given position.
+     * The parameters should be the same as the value returned by _getTextNodeAt.
+     *
+     * @returns {DOMRect|object} A rectangle that describes the position of
+     *   the character at the given offset in the text node.
+     *   (or, if there is no text, the left position of the line).
+     */
+    _getNarrowRect(lineElement, textNode, offset) {
+        if (textNode) {
+            // Most common case: text node found.
+            // TODO: Re-use Range instead of creating it over and over again?
+            let range = document.createRange();
+            range.setStart(textNode, offset);
+            range.setEnd(textNode, offset);
+            return range.getBoundingClientRect();
+        }
+        // No text node found, the line element is empty.
+        let rect = lineElement.getBoundingClientRect();
+        return {
+            top: rect.top,
+            left: rect.left,
+            right: rect.left,
+            bottom: rect.bottom,
+            width: 0,
+            height: rect.height
+        };
     }
 
     /**
@@ -754,13 +783,69 @@ class SearchEngineElement {
      *  - endRect: bounding box after the last text node in the result.
      */
     _getResultCoords(rootX, rootY, result) {
-        let [firstTextNode, firstTextNodeCol] =
+        let [firstElem, firstNode, firstOffset] =
             this._getTextNodeAt(result.lineStart, result.columnStart);
-        let [lastTextNode, lastTextNodeCol] =
+        let [lastElem, lastNode, lastOffset] =
             this._getTextNodeAt(result.lineEnd, result.columnEnd);
-        let range = document.createRange();
-        const getRangeRect = () => {
-            let rect = range.getBoundingClientRect();
+        let startRect = this._getNarrowRect(firstElem, firstNode, firstOffset);
+        let endRect = this._getNarrowRect(lastElem, lastNode, lastOffset);
+
+        let mainRect = {
+            left: 0,
+            right: 0,
+            top: startRect.top,
+            bottom: endRect.bottom,
+            get width() {
+                return this.right - this.left;
+            },
+            get height() {
+                return this.bottom - this.top;
+            },
+        };
+
+        mainRect.left = Math.min(startRect.left, endRect.left);
+        mainRect.right = Math.max(startRect.right, startRect.right);
+        if (startRect.top !== endRect.top) {
+            // Result spans multiple lines. Use the Range API to find the
+            // bounding box around all contained text nodes.
+
+            // If the lines themselves are empty, find the nearest non-empty
+            // line. We cannot select the line element itself, because then the
+            // Range API would select the full width of the line instead of just
+            // the width of the text nodes.
+            let lineStart = result.lineStart;
+            let lineEnd = result.lineEnd;
+            if (!firstNode) {
+                while (!firstNode && ++lineStart <= lineEnd) {
+                    firstNode = this.element.children[lineStart].firstChild;
+                }
+                firstOffset = 0;
+            }
+            if (firstNode && !lastNode) {
+                while (!lastNode && lineStart <= --lineEnd) {
+                    lastNode = this.element.children[lineEnd].lastChild;
+                }
+                lastNode = lastNode || firstNode.parentNode.lastChild;
+                // In case lastNode is a text node, then we have to take the
+                // length of its nodeValue. Otherwise it is probably an
+                // Element, and we can just choose 0.
+                lastOffset = lastNode && lastNode.length || 0;
+            }
+            if (firstNode && lastNode) {
+                // Skipped empty lines and found some non-empty lines.
+                let range = document.createRange();
+                range.setStart(firstNode, firstOffset);
+                range.setEnd(lastNode, lastOffset);
+                let rect = range.getBoundingClientRect();
+                // Only proceed if the bounding rect is non-empty.
+                if (rect.height) {
+                    mainRect.left = Math.min(mainRect.left, rect.left);
+                    mainRect.right = Math.max(mainRect.right, rect.right);
+                }
+            }
+        }
+
+        const transformRect = (rect) => {
             return {
                 rectRelativeToViewport: rect,
                 left: rect.left - rootX,
@@ -771,18 +856,9 @@ class SearchEngineElement {
                 height: rect.height,
             };
         };
-
-        range.setStart(firstTextNode, firstTextNodeCol);
-        range.setEnd(lastTextNode, lastTextNodeCol);
-        let mainRect = getRangeRect();
-
-        range.setStart(firstTextNode, firstTextNodeCol);
-        range.setEnd(firstTextNode, firstTextNodeCol);
-        let startRect = getRangeRect();
-
-        range.setStart(lastTextNode, lastTextNodeCol);
-        range.setEnd(lastTextNode, lastTextNodeCol);
-        let endRect = getRangeRect();
+        mainRect = transformRect(mainRect);
+        startRect = transformRect(startRect);
+        endRect = transformRect(endRect);
         return {mainRect, startRect, endRect};
     }
 

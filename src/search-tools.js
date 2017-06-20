@@ -440,7 +440,7 @@ class SearchEngineElement {
      */
     hideCurrentResult() {
         if (this.svgRoot) {
-            this.svgRoot.lastChild.innerHTML = '';
+            this.svgRoot.lastChild.textContent = '';
         }
     }
 
@@ -450,7 +450,7 @@ class SearchEngineElement {
     unhighlightAll() {
         this.highlightedResults.clear();
         if (this.svgRoot) {
-            this.svgRoot.firstChild.innerHTML = '';
+            this.svgRoot.firstChild.textContent = '';
         }
         this.isHighlighting = false;
     }

@@ -1471,6 +1471,8 @@ function openEmbeddedZipFile(crx_url, inside, blob_url) {
                     zipReader.close();
                 });
             });
+        }, function(error) {
+            progressDiv.textContent = 'Cannot open ' + human_readable_name + ' as a zip file: ' + error;
         });
     }
 }
@@ -1555,7 +1557,9 @@ function loadNonCrxUrlInViewer(url, human_readable_name, onHasBlob, onHasNoBlob)
             onHasNoBlob('Network error for ' + url);
         };
         x.onload = function() {
-            if (x.response && x.response.size) {
+            if (x.status >= 400) {
+                onHasNoBlob('Failed to load ' + url + '. Server responded with ' + x.status + ' ' + x.statusText);
+            } else if (x.response && x.response.size) {
                 onHasBlob(x.response);
             } else {
                 onHasNoBlob('No response received for ' + url);
@@ -1659,6 +1663,9 @@ function handleBlob(zipname, blob, publicKey, raw_crx_data) {
     zip.createReader(new zip.BlobReader(blob), function(zipReader) {
         renderPanelResizer();
         zipReader.getEntries(handleZipEntries);
+    }, function(error) {
+        progressDiv.textContent = 'Cannot open ' + (zipname || ' this file') + ' as a zip file: ' + error;
+        appendFileChooser();
     });
 }
 

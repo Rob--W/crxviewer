@@ -390,6 +390,7 @@ class SearchEngineElement {
                 this.unhighlightAll();
                 this.isHighlighting = true;
             }
+            this.currentResult = null;
             this.hideCurrentResult();
         }
     }

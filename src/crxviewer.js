@@ -1018,6 +1018,7 @@ function renderPanelResizer() {
     toggler.addEventListener('click', function(e) {
         e.stopPropagation();
         leftPanel.classList.toggle(TOGGLED_CLASS);
+        dispatchPanelSizeChange();
     });
     rightPanel.classList.add('toggleable');
 
@@ -1043,8 +1044,17 @@ function renderPanelResizer() {
             else
                 return;
         }
-        leftPanel.style.width = newWidth + 'px';
+        var newWidthPx = newWidth + 'px';
+        if (leftPanel.style.width === newWidthPx) return;
+        leftPanel.style.width = newWidthPx;
         rightPanel.style.paddingLeft = (newWidth + rightPanelPadding) + 'px';
+        dispatchPanelSizeChange();
+    }
+    function dispatchPanelSizeChange() {
+        // Generate an artificial resize event so that the resize handler in
+        // search-tools.js will be triggered and fix the rendering of search
+        // results if needed.
+        window.dispatchEvent(new CustomEvent('resize'));
     }
 }
 

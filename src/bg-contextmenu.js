@@ -115,6 +115,14 @@
         });
     }
     function hide() {
-        chrome.contextMenus.removeAll();
+        function darkhole() {
+            // jshint -W030
+            chrome.runtime.lastError;  // Suppress any errors.
+            // jshint +W030
+        }
+        chrome.contextMenus.remove(MENU_ID_LINK, darkhole);
+        chrome.contextMenus.remove(MENU_ID_PAGE, darkhole);
+        chrome.contextMenus.remove(MENU_ID_AMO_APPROVED_LINK, darkhole);
+        chrome.contextMenus.remove(MENU_ID_AMO_APPROVED_PAGE, darkhole);
     }
 })();

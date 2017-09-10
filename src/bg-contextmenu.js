@@ -23,10 +23,12 @@
     chrome.contextMenus.removeAll(function() {
         checkContextMenuPref();
     });
-    // Work-around for bugzil.la/1287359
-    addEventListener('unload', function() {
-        chrome.contextMenus.removeAll();
-    });
+    if (/Firefox\/4\d\./.test(navigator.userAgent)) {
+        // Work-around for bugzil.la/1287359
+        addEventListener('unload', function() {
+            chrome.contextMenus.removeAll();
+        });
+    }
 //#endif
     function checkContextMenuPref() {
         var storageArea = chrome.storage.sync;

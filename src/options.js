@@ -53,6 +53,20 @@ if (/Firefox\/4\d\./.test(navigator.userAgent)) {
        'This bug has been fixed in Firefox 50.</em>');
     // ^ If not done by someone else I will submit a patch, hence that statement must be true.
 }
+
+document.getElementById('pageaction').onchange = function() {
+    storageArea.set({showPageAction: this.checked});
+};
+storageArea.get({showPageAction:true}, function(items) {
+    document.getElementById('pageaction').checked = items.showPageAction;
+});
+
+chrome.storage.onChanged.addListener(function(items) {
+    if (items.showPageAction) {
+        document.getElementById('pageaction').checked = items.showPageAction.newValue;
+    }
+});
+
 //#endif
 
 if (location.hash !== '#optionsV2') {

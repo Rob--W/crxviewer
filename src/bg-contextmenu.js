@@ -11,6 +11,9 @@
     var MENU_ID_PAGE = 'nl.robwu.contextmenu.crxpage';
     var MENU_ID_AMO_APPROVED_LINK = 'nl.robwu.contextmenu.amoapprovedlink';
     var MENU_ID_AMO_APPROVED_PAGE = 'nl.robwu.contextmenu.amoapprovedpage';
+//#if FIREFOX
+    var MENU_ID_PAGE_ACTION = 'nl.robwu.contextmenu.pageaction';
+//#endif
     chrome.storage.onChanged.addListener(function(changes) {
         if (!changes.showContextMenu) return;
         if (changes.showContextMenu.newValue) show();
@@ -35,6 +38,18 @@
         storageArea.get({showContextMenu:true}, function(items) {
             if (items.showContextMenu) show();
         });
+//#if FIREFOX
+        chrome.contextMenus.create({
+            id: MENU_ID_PAGE_ACTION,
+            title: 'Hide this button',
+            contexts: ['page_action'],
+            onclick: function() {
+                storageArea.set({showPageAction: false});
+                // background.js will now pick up the storage change
+                // and disable page actions.
+            },
+        });
+//#endif
     }
     
     function contextMenusOnClicked(info, tab) {

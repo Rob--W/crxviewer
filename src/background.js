@@ -12,14 +12,36 @@
 
 //#if FIREFOX
 /* globals browser */
-browser.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+function tabsOnUpdatedCheckPageAction(tabId, changeInfo, tab) {
     showPageActionIfNeeded(tab);
+}
+function togglePageAction(isEnabled) {
+    browser.tabs.onUpdated.removeListener(tabsOnUpdatedCheckPageAction);
+    if (isEnabled) {
+        browser.tabs.onUpdated.addListener(tabsOnUpdatedCheckPageAction);
+    }
+    browser.tabs.query({
+        url: [cws_match_pattern, ows_match_pattern, amo_file_version_match_pattern].concat(amo_match_patterns),
+    }).then(function(tabs) {
+        if (isEnabled) {
+            tabs.forEach(showPageActionIfNeeded);
+        } else {
+            tabs.forEach(function(tab) {
+                browser.pageAction.hide(tab.id);
+            });
+        }
+    });
+}
+
+//// Note: This feature may be unnecessary once bugzil.la/1395387 lands.
+chrome.storage.onChanged.addListener(function(changes) {
+    if (!changes.showPageAction) return;
+    togglePageAction(changes.showPageAction.newValue);
 });
-browser.tabs.query({
-    url: [cws_match_pattern, ows_match_pattern, amo_file_version_match_pattern].concat(amo_match_patterns),
-}).then(function(tabs) {
-    tabs.forEach(showPageActionIfNeeded);
+chrome.storage.sync.get({showPageAction: true}, function(items) {
+    togglePageAction(items.showPageAction);
 });
+
 //#else
 if (chrome.declarativeWebRequest) {
     chrome.runtime.onInstalled.addListener(setupDeclarativeWebRequest);

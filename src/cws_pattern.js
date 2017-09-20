@@ -151,6 +151,16 @@ function get_webstore_url(url) {
     }
 }
 
+// Get the name of the store for the url, returns: cws, ows, amo, undefined
+function get_webstore_name(url) {
+    var cws = cws_pattern.exec(url) || cws_download_pattern.exec(url);
+    if (cws) return 'cws';
+    var ows = ows_pattern.exec(url);
+    if (ows) return 'ows';
+    var amo = amo_pattern.exec(url) || amo_download_pattern.exec(url);
+    if (amo) return 'amo';
+}
+
 // Return the suggested name of the zip file.
 function get_zip_name(url, /*optional*/filename) {
     if (!filename) {

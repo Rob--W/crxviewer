@@ -20,10 +20,17 @@
         height: 10px;
         width: 100%;
     }
+    #download.downloading .idle,
+    #download:not(.downloading) .busy {
+        display: none;
+    }
 </style>
 </head>
 <body>
-<button id="download" title="Download extension in zip format">Download as zip</button>
+<button id="download" title="Download extension in zip format">
+    <span class="idle">Download as zip</span>
+    <span class="busy">Downloading...</span>
+</button>
 <button id="view-source" title="View source of extension in a new tab">View source</button>
 <!--#if OPERA-->
 <button id="install-as-nex" title="install the extension">Install</button>

@@ -63,6 +63,7 @@ chrome.storage.sync.get({
 
 chrome.pageAction.onClicked.addListener(function(tab) {
     if (gActionClickAction === 'popup') return;
+    if (gActionClickAction === 'download') return;
     var crx_url = get_crx_url(tab.url);
     var filename = get_zip_name(crx_url);
     if (!crx_url) {
@@ -77,16 +78,17 @@ chrome.pageAction.onClicked.addListener(function(tab) {
         });
         return;
     }
-    if (gActionClickAction === 'download') {
-        console.error('not implemented yet');
-        return;
-    }
     console.error('Unexpected gActionClickAction: ' + gActionClickAction);
 });
 
 function setActionClickAction(actionClickAction) {
-    if (actionClickAction) {
+    if (actionClickAction && gActionClickAction !== actionClickAction) {
         gActionClickAction = actionClickAction;
+        chrome.tabs.query({
+            active: true,
+        }, function(tabs) {
+            tabs.forEach(showPageActionIfNeeded);
+        });
     }
 }
 
@@ -194,10 +196,21 @@ function dwr_onMessage(details) {
 }
 //#endif
 function showPageAction(tabId, url) {
-    var params = url ? encodeQueryString({crx: url}) : '';
+    var popup;
+    if (gActionClickAction === 'view-source') {
+        // Let pageAction.onClicked handle this.
+        popup = '';
+    } else if (gActionClickAction === 'popup' ||
+        gActionClickAction === 'download') {
+        var params = {};
+        if (url) params.crx = url;
+        if (gActionClickAction === 'download') params.doDownload = 1;
+        popup = 'popup.html?' + encodeQueryString(params);
+    }
+
     chrome.pageAction.setPopup({
         tabId: tabId,
-        popup: gActionClickAction === 'popup' ? 'popup.html?' + params : '',
+        popup: popup,
     });
     chrome.pageAction.show(tabId);
 }

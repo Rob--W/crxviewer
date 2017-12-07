@@ -38,6 +38,9 @@ function ready() {
 //#if OPERA
     document.getElementById('install-as-nex').onclick = doInstall;
 //#endif
+    if (getParam('doDownload')) {
+        doDownload();
+    }
 }
 var hasDownloadedOnce = false;
 function doDownload() {
@@ -49,10 +52,12 @@ function doDownload() {
         tryTriggerDownload(blob, filename);
     }, function(errorMessage) {
         hasDownloadedOnce = false;
+        document.getElementById('download').classList.toggle('downloading', hasDownloadedOnce);
         console.error(errorMessage);
         alert('Error in CRX Viewer:\n\n' + errorMessage);
     }, onXHRprogress.bind(null, document.getElementById('download')));
     hasDownloadedOnce = true;
+    document.getElementById('download').classList.toggle('downloading', hasDownloadedOnce);
 }
 function doViewSource() {
     chrome.tabs.create({

@@ -83,9 +83,7 @@
         chrome.contextMenus.create({
             id: MENU_ID_ACTION_MENU_DOWNLOAD,
             parentId: MENU_ID_ACTION_MENU,
-            // TODO: Support this and enable the option.
-            title: 'Download as zip (not supported yet)',
-            enabled: false,
+            title: 'Download as zip',
             type: 'radio',
             contexts: ['page_action'],
 //#if FIREFOX

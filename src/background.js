@@ -64,6 +64,11 @@ chrome.storage.sync.get({
 chrome.pageAction.onClicked.addListener(function(tab) {
     if (gActionClickAction === 'popup') return;
     if (gActionClickAction === 'download') return;
+    if (!isPageActionNeededForUrl(tab.url)) {
+        console.log('The page action should not have been activated for this tab.');
+        chrome.pageAction.hide(tab.id);
+        return;
+    }
     var crx_url = get_crx_url(tab.url);
     var filename = get_zip_name(crx_url);
     if (!crx_url) {
@@ -224,12 +229,15 @@ function showPageActionIfNeeded(details_or_tab) {
     }
     var tabId = details_or_tab.tabId || details_or_tab.id;
     var url = details_or_tab.url;
-    if (cws_pattern.test(url) || ows_pattern.test(url) || amo_pattern.test(url) ||
-        amo_file_version_pattern.test(url)) {
+    if (isPageActionNeededForUrl(url)) {
         showPageAction(tabId, url);
     } else {
         chrome.pageAction.hide(tabId);
     }
+}
+function isPageActionNeededForUrl(url) {
+    return cws_pattern.test(url) || ows_pattern.test(url) || amo_pattern.test(url) ||
+        amo_file_version_pattern.test(url);
 }
 
 // Called by popup.js

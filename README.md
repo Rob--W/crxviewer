@@ -21,6 +21,9 @@ become available:
   - Download extension as zip file
   - View source
 
+The default action (showing the above options) can be changed via the "Primary action on click"
+menu that appears when you right-click on the extension button.
+
 The "View source" option opens a new tab with a simple viewer, with the following features:
 
   - Download-as-zip and download-as-crx at the upper-right corner.

@@ -14,7 +14,16 @@
 //#if FIREFOX
     var MENU_ID_PAGE_ACTION = 'nl.robwu.contextmenu.pageaction';
 //#endif
+    var MENU_ID_ACTION_MENU = 'nl.robwu.contextmenu.actionmenu.';
+    var MENU_ID_ACTION_MENU_POPUP = MENU_ID_ACTION_MENU + 'popup';
+    var MENU_ID_ACTION_MENU_VIEW_SOURCE = MENU_ID_ACTION_MENU + 'view-source';
+    var MENU_ID_ACTION_MENU_DOWNLOAD = MENU_ID_ACTION_MENU + 'download';
+
     chrome.storage.onChanged.addListener(function(changes) {
+        if (changes.actionClickAction) {
+            setActionClickAction(changes.actionClickAction.newValue);
+            return;
+        }
         if (!changes.showContextMenu) return;
         if (changes.showContextMenu.newValue) show();
         else hide();
@@ -35,8 +44,12 @@
 //#endif
     function checkContextMenuPref() {
         var storageArea = chrome.storage.sync;
-        storageArea.get({showContextMenu:true}, function(items) {
+        storageArea.get({
+            showContextMenu: true,
+            actionClickAction: 'popup',
+        }, function(items) {
             if (items.showContextMenu) show();
+            setActionClickAction(items.actionClickAction);
         });
 //#if FIREFOX
         chrome.contextMenus.create({
@@ -50,9 +63,60 @@
             },
         });
 //#endif
+        chrome.contextMenus.create({
+            id: MENU_ID_ACTION_MENU,
+            title: 'Primary action on click',
+            contexts: ['page_action'],
+        });
+        chrome.contextMenus.create({
+            id: MENU_ID_ACTION_MENU_POPUP,
+            parentId: MENU_ID_ACTION_MENU,
+            title: 'Show popup (default)',
+            type: 'radio',
+            checked: true,
+            contexts: ['page_action'],
+//#if FIREFOX
+            onclick: contextMenusOnClicked,
+//#endif
+        });
+        // Note: Keep the same order as in popup.html for consistency.
+        chrome.contextMenus.create({
+            id: MENU_ID_ACTION_MENU_DOWNLOAD,
+            parentId: MENU_ID_ACTION_MENU,
+            // TODO: Support this and enable the option.
+            title: 'Download as zip (not supported yet)',
+            enabled: false,
+            type: 'radio',
+            contexts: ['page_action'],
+//#if FIREFOX
+            onclick: contextMenusOnClicked,
+//#endif
+        });
+        chrome.contextMenus.create({
+            id: MENU_ID_ACTION_MENU_VIEW_SOURCE,
+            parentId: MENU_ID_ACTION_MENU,
+            title: 'View source',
+            type: 'radio',
+            contexts: ['page_action'],
+//#if FIREFOX
+            onclick: contextMenusOnClicked,
+//#endif
+        });
+    }
+
+    function setActionClickAction(actionClickAction) {
+        if (!actionClickAction) return;
+        chrome.contextMenus.update(MENU_ID_ACTION_MENU + actionClickAction, {
+            checked: true,
+        });
     }
     
     function contextMenusOnClicked(info, tab) {
+        if (info.menuItemId.startsWith(MENU_ID_ACTION_MENU)) {
+            var choice = info.menuItemId.slice(MENU_ID_ACTION_MENU.length);
+            chrome.storage.sync.set({actionClickAction: choice});
+            return;
+        }
         var url = info.menuItemId == MENU_ID_PAGE ||
            info.menuItemId == MENU_ID_AMO_APPROVED_PAGE ? info.pageUrl : info.linkUrl;
         url = get_crx_url(url);

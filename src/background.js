@@ -4,14 +4,19 @@
 /* globals chrome, cws_match_pattern, ows_match_pattern, amo_match_patterns,
    amo_file_version_match_pattern,
    cws_pattern, ows_pattern, amo_pattern, amo_file_version_pattern,
+   get_crx_url, get_zip_name, console,
    URL, document, alert, localStorage */
 /* globals encodeQueryString */
 /* exported tryTriggerDownload  */
 
 'use strict';
 
+// See bg-contextmenu for potential values, at MENU_ID_ACTION_MENU.
+var gActionClickAction = 'popup';
+
 //#if FIREFOX
 /* globals browser */
+//// Note: This feature may be unnecessary once bugzil.la/1395387 lands.
 function tabsOnUpdatedCheckPageAction(tabId, changeInfo, tab) {
     showPageActionIfNeeded(tab);
 }
@@ -32,17 +37,60 @@ function togglePageAction(isEnabled) {
         }
     });
 }
+//#endif
 
-//// Note: This feature may be unnecessary once bugzil.la/1395387 lands.
 chrome.storage.onChanged.addListener(function(changes) {
-    if (!changes.showPageAction) return;
-    togglePageAction(changes.showPageAction.newValue);
+    function callOnChange(key, callback) {
+        var valueInfo = key in changes && changes[key];
+        if (valueInfo) callback(valueInfo.newValue);
+    }
+//#if FIREFOX
+    callOnChange('showPageAction', togglePageAction);
+//#endif
+    callOnChange('actionClickAction', setActionClickAction);
 });
-chrome.storage.sync.get({showPageAction: true}, function(items) {
+chrome.storage.sync.get({
+//#if FIREFOX
+    showPageAction: true,
+//#endif
+    actionClickAction: gActionClickAction,
+}, function(items) {
+//#if FIREFOX
     togglePageAction(items.showPageAction);
+//#endif
+    setActionClickAction(items.actionClickAction);
 });
 
-//#else
+chrome.pageAction.onClicked.addListener(function(tab) {
+    if (gActionClickAction === 'popup') return;
+    var crx_url = get_crx_url(tab.url);
+    var filename = get_zip_name(crx_url);
+    if (!crx_url) {
+        console.warn('Cannot find extension URL');
+        return;
+    }
+    if (gActionClickAction === 'view-source') {
+        chrome.tabs.create({
+            url: chrome.extension.getURL('crxviewer.html') +
+            '?' + encodeQueryString({crx: crx_url, zipname: filename}),
+            active: true
+        });
+        return;
+    }
+    if (gActionClickAction === 'download') {
+        console.error('not implemented yet');
+        return;
+    }
+    console.error('Unexpected gActionClickAction: ' + gActionClickAction);
+});
+
+function setActionClickAction(actionClickAction) {
+    if (actionClickAction) {
+        gActionClickAction = actionClickAction;
+    }
+}
+
+//#if !FIREFOX
 if (chrome.declarativeWebRequest) {
     chrome.runtime.onInstalled.addListener(setupDeclarativeWebRequest);
     chrome.declarativeWebRequest.onMessage.addListener(dwr_onMessage);
@@ -149,7 +197,7 @@ function showPageAction(tabId, url) {
     var params = url ? encodeQueryString({crx: url}) : '';
     chrome.pageAction.setPopup({
         tabId: tabId,
-        popup: 'popup.html?' + params
+        popup: gActionClickAction === 'popup' ? 'popup.html?' + params : '',
     });
     chrome.pageAction.show(tabId);
 }

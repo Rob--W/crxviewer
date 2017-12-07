@@ -1746,3 +1746,17 @@ function publicKeyToExtensionId(base64encodedKey) {
     }
     return extensionId;
 }
+//#if FIREFOX
+document.addEventListener('click', function(event) {
+    if (event.button !== 0) return;
+    var a = event.target.closest('a');
+    if (!a || a.protocol !== 'blob:') return;
+    // Work-around for https://bugzil.la/1420419
+    if (!/Firefox\/5\d\./.test(navigator.userAgent)) return; // Fixed in Firefox 59
+    event.preventDefault();
+    chrome.downloads.download({
+        url: a.href,
+        filename: a.download,
+    });
+});
+//#endif

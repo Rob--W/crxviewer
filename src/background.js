@@ -192,6 +192,7 @@ function cdw_getRequestMatcherForExtensionAsAttachment() {
     });
 }
 function dwr_onMessage(details) {
+    if (details.tabId === -1) return;
     showPageAction(details.tabId, details.url);
 }
 //#endif

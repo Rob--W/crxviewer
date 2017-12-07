@@ -1,7 +1,7 @@
 {
     "name": "Extension source viewer",
     "description": "View source code of Firefox addons and Chrome extensions (crx/nex/xpi) from addons.mozilla.org, the Chrome Webstore and elsewhere.",
-    "version": "1.6.2",
+    "version": "1.6.3",
     "manifest_version": 2,
     "applications": {
         "gecko": {

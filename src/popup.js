@@ -60,12 +60,18 @@ function doDownload() {
     document.getElementById('download').classList.toggle('downloading', hasDownloadedOnce);
 }
 function doViewSource() {
-    chrome.tabs.create({
-        url: chrome.extension.getURL('crxviewer.html') +
-            '?' + encodeQueryString({crx: crx_url, zipname: filename}),
-        active: true
-    }, function() {
-        window.close();
+    chrome.tabs.query({
+        active: true,
+        lastFocusedWindow: true,
+    }, function(tabs) {
+        chrome.tabs.create({
+            url: chrome.extension.getURL('crxviewer.html') +
+                '?' + encodeQueryString({crx: crx_url, zipname: filename}),
+            active: true,
+            index: tabs && tabs.length ? tabs[0].index + 1 : undefined,
+        }, function() {
+            window.close();
+        });
     });
 }
 function onXHRprogress(progressContainer, xhrProgressEvent) {

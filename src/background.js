@@ -79,7 +79,8 @@ chrome.pageAction.onClicked.addListener(function(tab) {
         chrome.tabs.create({
             url: chrome.extension.getURL('crxviewer.html') +
             '?' + encodeQueryString({crx: crx_url, zipname: filename}),
-            active: true
+            active: true,
+            index: tab.index + 1,
         });
         return;
     }

@@ -11,10 +11,12 @@ var builder = require('./external/builder');
 var ROOT_DIR = __dirname + '/';
 var BUILD_DIR = ROOT_DIR + 'dist/';
 var SRC_DIR = ROOT_DIR + 'src/';
+var XUL_SRC_DIR = ROOT_DIR + 'xul/';
 var CHROME_BUILD_DIR = BUILD_DIR + 'chrome/';
 var OPERA_BUILD_DIR = BUILD_DIR + 'opera/';
 var FIREFOX_BUILD_DIR = BUILD_DIR + 'firefox/';
 var WEB_BUILD_DIR = BUILD_DIR + 'web/';
+var XUL_BUILD_DIR = BUILD_DIR + 'xul/';
 var ALLOWED_FILES = [
     'manifest.json',
     '.css',
@@ -37,6 +39,7 @@ function getBuildConfig(options) {
             FIREFOX: false,
             OPERA: false,
             WEB: false,
+            XUL: false,
             VERSION: getVersionString(),
         },
         mkdirs: [
@@ -111,6 +114,7 @@ target.all = function() {
     target.opera();
     target.firefox();
     target.web();
+    target.xul();
 };
 
 target.chrome = function() {
@@ -180,6 +184,7 @@ target.web = function() {
             CHROME: false,
             FIREFOX: false,
             OPERA: false,
+            XUL: false,
             WEB: true,
             VERSION: getVersionString(),
         },
@@ -198,4 +203,46 @@ target.web = function() {
     };
     build(setup, WEB_BUILD_DIR);
     lintDir(WEB_BUILD_DIR);
+};
+
+target.xul = function() {
+    echo();
+    echo('Building XUL extension...');
+    var dest_dir = XUL_BUILD_DIR;
+    var setup = {
+        defines: {
+            CHROME: false,
+            FIREFOX: false,
+            OPERA: false,
+            WEB: false,
+            XUL: true,
+            VERSION: getVersionString(),
+        },
+        copy: [
+            [SRC_DIR + 'search-worker.js', dest_dir],
+            [SRC_DIR + 'search-tools.js', dest_dir],
+            [SRC_DIR + 'lib', dest_dir],
+            [SRC_DIR + 'chrome-platform-info.js', dest_dir],
+        ],
+        preprocess: [
+            [SRC_DIR + 'crxviewer.html', dest_dir],
+            [SRC_DIR + 'crxviewer.js', dest_dir],
+            [SRC_DIR + 'cws_pattern.js', dest_dir],
+            [SRC_DIR + 'lib/crx-to-zip.js', dest_dir + 'lib'],
+        ]
+    };
+    build(setup, XUL_BUILD_DIR);
+    cd(XUL_BUILD_DIR);
+    mkdir('content');
+    mv('*.*', 'lib', 'content');
+    cp('-r', XUL_SRC_DIR + '/*', XUL_BUILD_DIR);
+    rm('-f', '../crxviewer_xul.zip');
+    exec('7z a ../crxviewer_xul.zip * -tzip');
+    ALLOWED_FILES.push(
+      'chrome.manifest',
+      'install.rdf',
+      'options.xul',
+      'MatchPattern.jsm',
+    );
+    lintDir(XUL_BUILD_DIR);
 };

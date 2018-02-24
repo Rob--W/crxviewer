@@ -176,6 +176,11 @@ ESrcExplorer.prototype = {
       let srcURI = Services.io.newURI(mrw.gContextMenu.linkURL, null, null);
       if (mrw.gBrowser.ESrcExplorer.targetUrlMatchPattern.matches(srcURI)) {
         citem.setAttribute("data-url", mrw.gContextMenu.linkURL);
+        citem.setAttribute("label", "Explore linked extension source");
+        citem.hidden = false;
+      } else if (mrw.gBrowser.ESrcExplorer.targetUrlMatchPatternAMO.matches(srcURI)) {
+        citem.setAttribute("data-url", mrw.gContextMenu.linkURL);
+        citem.setAttribute("label", "Explore linked extension source (latest approved version)");
         citem.hidden = false;
       }
     }
@@ -187,14 +192,13 @@ ESrcExplorer.prototype = {
       '*://*/*.nex*', '*://*/*.NEX*',
       '*://*/*.xpi*', '*://*/*.XPI*',
       cws_match_pattern, ows_match_pattern,
-      amo_match_patterns[0], amo_match_patterns[1], 
       amo_file_version_match_pattern, apmo_match_pattern,
     ]);
+    this.targetUrlMatchPatternAMO = new MatchPattern(amo_match_patterns);
     let cmenu = this.browserWindow.document.getElementById("contentAreaContextMenu");
     let citem = this.browserWindow.document.createElement("menuitem");
     citem.setAttribute("id", "esrc-explorer-item");
     citem.setAttribute("class", "menuitem-iconic");
-    citem.setAttribute("label", "Explore linked extension source");
     citem.setAttribute("onclick", "gBrowser.ESrcExplorer.onClickContext(event);"); 
     cmenu.appendChild(citem);
     cmenu.addEventListener("popupshowing", this.popupShowing, false);
@@ -206,6 +210,7 @@ ESrcExplorer.prototype = {
     let citem = this.browserWindow.document.getElementById("esrc-explorer-item");
     cmenu.removeChild(citem);
     this.targetUrlMatchPattern = null;
+    this.targetUrlMatchPatternAMO = null;
   },
 };
 
@@ -244,7 +249,7 @@ function browserWindowShutdown(aWindow) {
   delete aWindow.gBrowser.ESrcExplorer;
 }
 
-var esrcexplorerObserver = {
+let esrcexplorerObserver = {
   observe: function(aSubject, aTopic, aData) {
     if (aData == "Run") {
       let mrw = Services.wm.getMostRecentWindow("navigator:browser");

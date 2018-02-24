@@ -187,7 +187,8 @@ ESrcExplorer.prototype = {
       '*://*/*.nex*', '*://*/*.NEX*',
       '*://*/*.xpi*', '*://*/*.XPI*',
       cws_match_pattern, ows_match_pattern,
-      amo_match_patterns, apmo_match_pattern,
+      amo_match_patterns[0], amo_match_patterns[1], 
+      amo_file_version_match_pattern, apmo_match_pattern,
     ]);
     let cmenu = this.browserWindow.document.getElementById("contentAreaContextMenu");
     let citem = this.browserWindow.document.createElement("menuitem");

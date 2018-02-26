@@ -1,6 +1,8 @@
 /**
- * (c) 2014 Rob Wu <rob@robwu.nl>
- */
+ * (c) 2013 Rob Wu <rob@robwu.nl>
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* globals location, getPlatformInfo, navigator */
 /* exported cws_match_pattern, ows_match_pattern, amo_match_patterns, amo_file_version_match_pattern */

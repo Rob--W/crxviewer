@@ -53,5 +53,8 @@ The Firefox addon is implemented as a WebExtension, which is recent technology. 
 [firefox-stuff/compatibility.md](firefox-stuff/compatibility.md) for compatibility notes.
 
 ## Copyright
-(c) 2013 - 2016 Rob Wu <rob@robwu.nl> (https://robwu.nl/)
+(c) 2013 - 2018 Rob Wu <rob@robwu.nl> (https://robwu.nl/)
 
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at http://mozilla.org/MPL/2.0/.

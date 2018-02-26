@@ -1,6 +1,8 @@
 /**
- * (c) 2013 - 2014 Rob Wu <rob@robwu.nl>
- */
+ * (c) 2013 Rob Wu <rob@robwu.nl>
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* jshint browser:true, devel:true */
 /* globals chrome, get_crx_url, get_zip_name, is_crx_url, getParam, openCRXasZip */

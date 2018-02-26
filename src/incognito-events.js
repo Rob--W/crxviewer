@@ -1,6 +1,10 @@
 /**
  * (c) 2013 Rob Wu <rob@robwu.nl>
- *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+/*
  * Shim to provide chrome.runtime.onInstalled and onStartup events to split incognito extensions.
  * Note that the incognito extension has to be activated before this check can be performed.
  * If it's a background page, it'll always be loaded.

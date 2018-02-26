@@ -1189,12 +1189,18 @@ var checkAndApplyFilter = (function() {
             }
 //#endif
             var storageKey = FILTER_STORAGE_PREFIX + checkbox.dataset.filterType;
+//#if !XUL
             checkbox.checked = localStorage.getItem(storageKey) !== '0';
+//#else
+            checkbox.checked = simpleStorage.getItem(storageKey) !== '0';
+//#endif
             checkbox.onchange = function() {
 //#if CHROME || OPERA || FIREFOX
                 var items = {};
                 items[storageKey] = checkbox.checked;
                 storageArea.set(items);
+//#elif XUL
+                simpleStorage.setItem(storageKey, checkbox.checked ? '1' : '0');
 //#else
                 localStorage.setItem(storageKey, checkbox.checked ? '1' : '0');
 //#endif
@@ -1205,6 +1211,9 @@ var checkAndApplyFilter = (function() {
                     checkbox.checked = items[storageKey] !== false;
                     updateFileListView();
                 });
+//#elif XUL
+                simpleStorage.setItem(storageKey, checkbox.checked ? '1' : '0');
+                updateFileListView();
 //#else
                 localStorage.setItem(storageKey, checkbox.checked ? '1' : '0');
                 updateFileListView();
@@ -1414,7 +1423,11 @@ function showAdvancedOpener() {
     urlInput.value = getParam('crx') || '';
 
     // Render default webstore options.
+//#if !XUL
     var platformInfo = getPlatformInfo();
+//#else
+    var platformInfo = getPlatformInfoFallback();
+//#endif
     setCwsOption('os', platformInfo.os);
     setCwsOption('arch', platformInfo.arch);
     setCwsOption('nacl_arch', platformInfo.nacl_arch);

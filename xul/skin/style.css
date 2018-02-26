@@ -1,0 +1,18 @@
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+@-moz-document url("chrome://browser/content/browser.xul"),
+               url("chrome://navigator/content/navigator.xul") {
+  #esrc-explorer-button,
+  #esrc-explorer-item .menu-iconic-icon {
+    list-style-image: url("chrome://esrc-explorer/skin/urlbar-icon.png");
+    -moz-image-region: rect(0px 16px 16px 0px);
+  }
+
+  #esrc-explorer-button:hover {
+    -moz-image-region: rect(0px 32px 16px 16px);
+  }
+}
+@-moz-document url("chrome://navigator/content/navigator.xul") {
+  #esrc-explorer-button {
+    margin-right: 2px;
+  }
+}

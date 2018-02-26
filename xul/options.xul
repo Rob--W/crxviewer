@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <setting type="bool" pref="extensions.esrc-explorer.showButton" title="Show the explore button in the address bar:">
+  Applies to extension installation pages
+  </setting>
+  <setting type="bool" pref="extensions.esrc-explorer.showContext" title="Add the explore item to the context menu:">
+  In menus that are linked to extensions
+  </setting>
+  <setting type="control" title="Select a XPI / CRX / NEX / ZIP file to explore:">
+    <button label="Explore…" oncommand="Services.obs.notifyObservers(window, 'esrcexplorerEvent', 'Run');"/>
+  </setting>
+</vbox>

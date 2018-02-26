@@ -95,7 +95,11 @@ function get_crx_url(extensionID_or_url) {
         return extensionID_or_url;
     }
 
+//#if !XUL
     var platformInfo = getPlatformInfo();
+//#else
+    var platformInfo = getPlatformInfoFallback();
+//#endif
 
     // Omitting this value is allowed, but add it just in case.
     // Source: http://cs.chromium.org/file:omaha_query_params.cc%20GetProdIdString
@@ -188,7 +192,7 @@ function is_not_crx_url(url) {
 // returned.
 function getParam(name, querystring) { // Assume name contains no RegEx-specific char
     var haystack = querystring || location.search || location.hash;
-//#if FIREFOX || WEB
+//#if FIREFOX || WEB || XUL
     // Work-around for bugzil.la/719905 - see encodeQueryString below.
     haystack = haystack.replace(/%u003A/g, '%3A');
 //#endif
@@ -221,7 +225,7 @@ function encodeQueryString(params) {
     return parts.join('&');
     function encodeQueryStringPart(key, value) {
         value = encodeURIComponent(value);
-//#if FIREFOX
+//#if FIREFOX || XUL
         // Work-around for bugzil.la/719905 - colons in URL break loading the URL.
         value = value.replace(/%3A/g, '%u003A');
 //#endif

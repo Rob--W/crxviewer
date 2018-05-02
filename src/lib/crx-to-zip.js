@@ -31,13 +31,16 @@ var CRXtoZIP = (function() {
         if (view[4] !== 2 || view[5] || view[6] || view[7])
             return errCallback('Unexpected crx format version number.'), void 0;
 
-        var publicKeyLength = calcLength(view[ 8], view[ 9], view[10], view[11]);
-        var signatureLength = calcLength(view[12], view[13], view[14], view[15]);
-        // 16 = Magic number (4), CRX format version (4), lengths (2x4)
-        var zipStartOffset = 16 + publicKeyLength + signatureLength;
+        var zipStartOffset, publicKeyBase64;
+        if (view[4] === 2) {
+            var publicKeyLength = calcLength(view[ 8], view[ 9], view[10], view[11]);
+            var signatureLength = calcLength(view[12], view[13], view[14], view[15]);
+            // 16 = Magic number (4), CRX format version (4), lengths (2x4)
+            zipStartOffset = 16 + publicKeyLength + signatureLength;
 
-        // Public key
-        var publicKeyBase64 = getAsBase64(view, 16, 16 + publicKeyLength);
+            // Public key
+            publicKeyBase64 = getAsBase64(view, 16, 16 + publicKeyLength);
+        }
 
         // Create a new view for the existing buffer, and wrap it in a Blob object.
         var zipFragment = new Blob([

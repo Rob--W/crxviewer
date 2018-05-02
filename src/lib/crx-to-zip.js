@@ -28,7 +28,8 @@ var CRXtoZIP = (function() {
             return errCallback('Invalid header: Does not start with Cr24.'), void 0;
 
         // 02 00 00 00
-        if (view[4] !== 2 || view[5] || view[6] || view[7])
+        // 03 00 00 00 CRX3
+        if (view[4] !== 2 && view[4] !== 3 || view[5] || view[6] || view[7])
             return errCallback('Unexpected crx format version number.'), void 0;
 
         var zipStartOffset, publicKeyBase64;
@@ -40,6 +41,14 @@ var CRXtoZIP = (function() {
 
             // Public key
             publicKeyBase64 = getAsBase64(view, 16, 16 + publicKeyLength);
+        } else { // view[4] === 3
+            // CRX3 - https://cs.chromium.org/chromium/src/components/crx_file/crx3.proto
+            var crx3HeaderLength = calcLength(view[ 8], view[ 9], view[10], view[11]);
+            // 12 = Magic number (4), CRX format version (4), header length (4)
+            zipStartOffset = 12 + crx3HeaderLength;
+
+            // Public key
+            publicKeyBase64 = getPublicKeyFromProtoBuf(view, 12, zipStartOffset);
         }
 
         // Create a new view for the existing buffer, and wrap it in a Blob object.
@@ -64,6 +73,59 @@ var CRXtoZIP = (function() {
             binaryString += String.fromCharCode(bytesView[i]);
         }
         return btoa(binaryString);
+    }
+    function getPublicKeyFromProtoBuf(bytesView, startOffset, endOffset) {
+        // Protobuf definition: https://cs.chromium.org/chromium/src/components/crx_file/crx3.proto
+        // Wire format: https://developers.google.com/protocol-buffers/docs/encoding
+        // The top-level CrxFileHeader message only contains length-delimited fields (type 2).
+        // To find the public key:
+        // 1. Look for CrxFileHeader.sha256_with_rsa (field number 2).
+        // 2. Look for AsymmetricKeyProof.public_key (field number 1).
+
+        function getvarint() {
+            var val = bytesView[startOffset] & 0x7F;
+            if (bytesView[startOffset++] < 0x80) return val;
+            val |= (bytesView[startOffset] & 0x7F) << 7;
+            if (bytesView[startOffset++] < 0x80) return val;
+            val |= (bytesView[startOffset] & 0x7F) << 14;
+            if (bytesView[startOffset++] < 0x80) return val;
+            val |= (bytesView[startOffset] & 0x7F) << 21;
+            if (bytesView[startOffset++] < 0x80) return val;
+            val |= (bytesView[startOffset] & 0xF) << 28;
+            if (bytesView[startOffset++] & 0x80) console.warn('proto: not a uint32');
+            return val;
+        }
+
+        while (startOffset >= 0 && startOffset < endOffset) {
+            var key = getvarint();
+            var length = getvarint();
+            if (key !== 0x12) {
+                // Likely 0x1a (sha256_with_ecdsa) or 0x82f104 (signed_header_data).
+                startOffset += length;
+                continue;
+            }
+            // Found 0x12 (sha256_with_rsa); Look for 0xA (public_key).
+            var keyproofkey = getvarint();
+            var keyprooflength = getvarint();
+            var keyproofend = startOffset + length;
+            // AsymmetricKeyProof could contain 0xA (public_key) or 0x12 (signature).
+            if (keyproofkey === 0x12) {
+                startOffset += keyprooflength;
+                if (startOffset >= keyproofend) {
+                    // signature without public_key...? The protocol definition allows it...
+                    continue;
+                }
+                keyproofkey = getvarint();
+                keyprooflength = getvarint();
+            }
+            if (keyproofkey !== 0xA) {
+                startOffset += keyprooflength;
+                console.warn('proto: Unexpected key in AsymmetricKeyProof: ' + keyproofkey);
+                continue;
+            }
+            // Found 0xA (public_key).
+            return getAsBase64(bytesView, startOffset, startOffset + keyprooflength);
+        }
     }
     return CRXtoZIP;
 })();

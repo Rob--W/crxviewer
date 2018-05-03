@@ -61,10 +61,10 @@ var CRXtoZIP = (function() {
     }
     function calcLength(a, b, c, d) {
         var length = 0;
-        length += a;
+        length += a <<  0;
         length += b <<  8;
         length += c << 16;
-        length += d << 24;
+        length += d << 24 >>> 0;
         return length;
     }
     function getAsBase64(bytesView, startOffset, endOffset) {

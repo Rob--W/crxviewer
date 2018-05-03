@@ -91,12 +91,12 @@ var CRXtoZIP = (function() {
             if (bytesView[startOffset++] < 0x80) return val;
             val |= (bytesView[startOffset] & 0x7F) << 21;
             if (bytesView[startOffset++] < 0x80) return val;
-            val |= (bytesView[startOffset] & 0xF) << 28;
+            val = (val | (bytesView[startOffset] & 0xF) << 28) >>> 0;
             if (bytesView[startOffset++] & 0x80) console.warn('proto: not a uint32');
             return val;
         }
 
-        while (startOffset >= 0 && startOffset < endOffset) {
+        while (startOffset < endOffset) {
             var key = getvarint();
             var length = getvarint();
             if (key !== 0x12) {

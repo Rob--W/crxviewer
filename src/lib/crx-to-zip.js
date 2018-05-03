@@ -83,6 +83,10 @@ var CRXtoZIP = (function() {
         // 2. Look for AsymmetricKeyProof.public_key (field number 1).
 
         function getvarint() {
+            // Note: We don't do bound checks (startOffset < endOffset) here,
+            // because even if we read past the end of bytesView, then we get
+            // the undefined value, which is converted to 0 when we do a
+            // bitwise operation in JavaScript.
             var val = bytesView[startOffset] & 0x7F;
             if (bytesView[startOffset++] < 0x80) return val;
             val |= (bytesView[startOffset] & 0x7F) << 7;
@@ -122,6 +126,10 @@ var CRXtoZIP = (function() {
                 startOffset += keyprooflength;
                 console.warn('proto: Unexpected key in AsymmetricKeyProof: ' + keyproofkey);
                 continue;
+            }
+            if (startOffset + keyprooflength > endOffset) {
+                console.warn('proto: size of public_key field is too large');
+                break;
             }
             // Found 0xA (public_key).
             return getAsBase64(bytesView, startOffset, startOffset + keyprooflength);

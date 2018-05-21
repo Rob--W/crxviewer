@@ -1556,16 +1556,6 @@ function loadNonCrxUrlInViewer(url, human_readable_name, onHasBlob, onHasNoBlob)
         x.open('GET', requestUrl);
         x.responseType = 'blob';
         x.onerror = function() {
-//#if FIREFOX
-            if (requestUrl === url && url.startsWith('https://addons.mozilla.org/')) {
-                requestUrl = 'https://cors-anywhere.herokuapp.com/' + url;
-                console.warn('Falling back to CORS Anywhere to work around bugzil.la/1450649');
-                x.open('GET', requestUrl);
-                x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                x.send();
-                return;
-            }
-//#endif
             onHasNoBlob('Network error for ' + url);
         };
         x.onload = function() {

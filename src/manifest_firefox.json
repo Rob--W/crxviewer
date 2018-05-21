@@ -38,6 +38,8 @@
         "storage",
         "contextMenus",
         "downloads",
+        "webRequest",
+        "webRequestBlocking",
         "*://*/*"
     ],
     "web_accessible_resources": [

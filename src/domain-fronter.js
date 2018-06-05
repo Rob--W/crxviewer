@@ -103,6 +103,12 @@
                     return;
                 }
                 hostHeader.value = this.originalDomain + portSuffix;
+                let cacheHeader = requestHeaders.find(({name}) => /^cache-control$/i.test(name));
+                if (!cacheHeader) {
+                    cacheHeader = {name: 'Cache-Control'};
+                    requestHeaders.push(cacheHeader);
+                }
+                cacheHeader.value = 'no-cache';
             }
             return {requestHeaders};
         }
@@ -145,5 +151,17 @@
         this.addEventListener('loadend', () => {
             domainFronter.unregister();
         }, {once: true});
+
+        // Work-around for https://bugzil.la/1300234
+        let {send} = this;
+        let registeredPromise = browser.runtime.getBrowserInfo();
+        registeredPromise.then(() => {
+            this.send = send;
+        });
+        this.send = function(data) {
+            registeredPromise.then(() => {
+                this.send(data);
+            });
+        };
     };
 })();

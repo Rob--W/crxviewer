@@ -19,11 +19,6 @@ importScripts(
     'jsbeautifier/beautify.js',
     'jsbeautifier/beautify-css.js',
     'jsbeautifier/beautify-html.js',
-    'jsbeautifier/unpackers/javascriptobfuscator_unpacker.js',
-    'jsbeautifier/unpackers/urlencode_unpacker.js',
-    'jsbeautifier/unpackers/p_a_c_k_e_r_unpacker.js',
-    'jsbeautifier/unpackers/myobfuscate_unpacker.js',
-    'jsbeautifier/unpackers/unpacker_filter.js',
     'beautify-json.js'
 );
 
@@ -65,8 +60,6 @@ function beautify(type, source, options) {
     case 'html':
         return html_beautify(source, options);
     case 'js':
-        // Detect packer
-        source = unpacker_filter(source);
         return js_beautify(source, options);
     case 'json':
         return json_beautify(source);

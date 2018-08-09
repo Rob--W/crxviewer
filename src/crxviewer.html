@@ -68,7 +68,7 @@ The filename filter is optional, '!search term' can also be used directly to sea
         or select a local file &rarr;
         <input type="file">
     </form>
-    <form id="advanced-open-cws-extension">
+    <form id="advanced-open-cws-extension" class="site-specific-form">
         <h3>Generate or modify URL of Chrome Web Store item</h3>
         <div title="Extension ID. This is the 32-character word in a Chrome Web Store URL">
             <span class="labeltext">Extension ID</span>
@@ -103,6 +103,18 @@ The filename filter is optional, '!search term' can also be used directly to sea
         <div class="submit-if-valid" hidden>
             <input type="submit" value="View extension source in this viewer">
             <a href="">Link to listing in the Chrome web store</a>
+        </div>
+    </form>
+    <form id="advanced-open-amo-extension" class="site-specific-form">
+        <h3>Find XPI files of Firefox add-ons at AMO</h3>
+        <div title="Add-on slug (from the URL) or add-on ID (GUID or ID containing @)">
+            <span class="labeltext">Add-on slug or ID</span>
+            <input type="text" pattern="[^/]+" name="amoslugorid" placeholder="slug from AMO URL or ID add-on" required>
+            <input type="submit" value="Search on AMO">
+        </div>
+        <div>
+            <div class="amodescription"></div>
+            <ul class="amoxpilist"></ul>
         </div>
     </form>
 </div>

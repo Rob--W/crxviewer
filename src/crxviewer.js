@@ -9,6 +9,7 @@
            getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url, is_not_crx_url,
            get_extensionID, getPlatformInfo,
            cws_pattern, get_crx_url, is_crx_download_url,
+           get_amo_slug,
            zip,
            EfficientTextWriter,
            beautify,
@@ -1288,6 +1289,7 @@ function showAdvancedOpener() {
     var advancedOpenView = document.getElementById('advanced-open');
     var openForm = document.getElementById('advanced-open-form');
     var cwsOptions = document.getElementById('advanced-open-cws-extension');
+    var amoOptions = document.getElementById('advanced-open-amo-extension');
     var urlInput = openForm.querySelector('input[type=url]');
     var fileInput = openForm.querySelector('input[type=file]');
     function getCwsOption(name) {
@@ -1328,10 +1330,32 @@ function showAdvancedOpener() {
         url += '%26uc';
         return url;
     }
+    function reorderForms(firefoxFirst) {
+        var order = firefoxFirst ? [amoOptions, cwsOptions] : [cwsOptions, amoOptions];
+        if (order[0].previousElementSibling === order[1]) {
+            order[0].parentNode.insertBefore(order[0], order[1]);
+        }
+    }
     function maybeToggleWebStore() {
         var extensionId = get_extensionID(urlInput.value);
+        var amoslug = get_amo_slug(urlInput.value);
+        var maybeCrx = /\.crx([?#&]|$)|^(https?:\/\/)?(chrome|clients\d)\.google\.com/.test(urlInput.value) || !!extensionId;
+        var maybeXpi = /\.xpi([?#&]|$)|\.mozilla\./i.test(urlInput.value) || !!amoslug;
         if (!extensionId) {
-            cwsOptions.classList.add('disabled-cws');
+            cwsOptions.classList.add('disabled-site');
+            if (maybeXpi) {
+                if (amoslug) {
+                    amoOptions.querySelector('input[name="amoslugorid"]').value = amoslug;
+                }
+                amoOptions.classList.remove('disabled-site');
+            } else {
+                amoOptions.classList.add('disabled-site');
+            }
+//#if FIREFOX
+            reorderForms(maybeXpi || !maybeCrx);
+//#else
+//          reorderForms(maybeXpi);
+//#endif
             return;
         }
         function setOptionFromUrl(key) {
@@ -1341,7 +1365,9 @@ function showAdvancedOpener() {
                 setCwsOption(key, next);
             }
         }
-        cwsOptions.classList.remove('disabled-cws');
+        cwsOptions.classList.remove('disabled-site');
+        amoOptions.classList.add('disabled-site');
+        reorderForms(false);
         setCwsOption('xid', extensionId);
         setOptionFromUrl('os');
         setOptionFromUrl('arch');
@@ -1369,6 +1395,16 @@ function showAdvancedOpener() {
             cwsOptions.classList.remove('focused-form');
         }
     }
+    function closeViewAndOpenCrxUrl(crxUrl) {
+        var url = location.pathname + '?' + encodeQueryString({
+            crx: crxUrl,
+        });
+        advancedOpenView.classList.remove('visible');
+        // This open dialog only appears at the start of the page, and there is
+        // no data to lose, so we just replace the current URL.
+        history.replaceState(history.state, null, url);
+        initialize();
+    }
 
     openForm.onsubmit = function(e) {
         e.preventDefault();
@@ -1379,14 +1415,7 @@ function showAdvancedOpener() {
             }
             return;
         }
-        var url = location.pathname + '?' + encodeQueryString({
-            crx: urlInput.value,
-        });
-        advancedOpenView.classList.remove('visible');
-        // This open dialog only appears at the start of the page, and there is
-        // no data to lose, so we just replace the current URL.
-        history.replaceState(history.state, null, url);
-        initialize();
+        closeViewAndOpenCrxUrl(urlInput.value);
     };
     cwsOptions.onsubmit = function(e) {
         e.preventDefault();
@@ -1394,6 +1423,33 @@ function showAdvancedOpener() {
         // kicked in. This is not necessarily true in old browsers, but whatever.
         urlInput.value = toCwsUrl();
         openForm.onsubmit(e);
+    };
+    amoOptions.onsubmit = function(e) {
+        e.preventDefault();
+        var amodescription = amoOptions.querySelector('.amodescription');
+        var slugorid = amoOptions.querySelector('input[name="amoslugorid"]').value;
+        amodescription.textContent = 'Searching for add-ons with slug or ID: ' + slugorid;
+        getXpis(slugorid, function(description, results) {
+            amodescription.textContent = description;
+            var amoxpilist = amoOptions.querySelector('.amoxpilist');
+            amoxpilist.textContent = '';
+            results.forEach(function(result) {
+                var a = document.createElement('a');
+                a.textContent = 'Version ' + result.version + ' (' + result.platform + '), ' + result.createdDate.toLocaleString();
+                a.href = location.pathname + '?' + encodeQueryString({
+                    crx: result.url,
+                });
+                a.title = 'View source of ' + result.url;
+                a.onclick = function(event) {
+                    if (event.button !== 0) return;
+                    event.preventDefault();
+                    closeViewAndOpenCrxUrl(result.url);
+                };
+                amoxpilist.appendChild(document.createElement('li')).appendChild(a);
+            });
+        });
+//#if WEB
+//#endif
     };
     fileInput.onchange = function() {
         var file = fileInput.files[0];
@@ -1425,6 +1481,63 @@ function showAdvancedOpener() {
     maybeToggleWebStore();
 
     advancedOpenView.classList.add('visible');
+}
+
+// Calls callback(description, Array<{url:String, version:String, platform:String}>)
+// If called repeatedly: Will only call the callback of the last call.
+function getXpis(slugorid, callback) {
+    var apiUrl = 'https://addons.mozilla.org/api/v4/addons/addon/' + slugorid + '/versions/';
+//#if WEB
+    getXpis.fallbackToCORSAnywhere = true;
+//#endif
+    if (getXpis.fallbackToCORSAnywhere) {
+        apiUrl = 'https://cors-anywhere.herokuapp.com/' + apiUrl;
+    }
+    var x = new XMLHttpRequest();
+    x.open('GET', apiUrl);
+    x.onloadend = function() {
+        if (getXpis._pendingXhr === x) {
+            getXpis._pendingXhr = null;
+        }
+
+        if (!x.status && !getXpis.fallbackToCORSAnywhere) {
+            getXpis.fallbackToCORSAnywhere = true;
+            getXpis(slugorid, callback);
+            return;
+        }
+        if (x.status === 401 || x.status === 403) {
+            callback('The results are not publicly available for: ' + slugorid, []);
+            return;
+        }
+        if (x.status !== 200) {
+            callback('No results found for: ' + slugorid, []);
+            return;
+        }
+        var results = [];
+        try {
+            var response = JSON.parse(x.responseText);
+            response.results.forEach(function(res) {
+                res.files.forEach(function(file) {
+                    results.push({
+                        url: file.url.replace(/\.xpi\?.*$/, '.xpi'),
+                        version: res.version,
+                        platform: file.platform,
+                        createdDate: new Date(file.created),
+                    });
+                });
+            });
+        } catch (e) {
+            console.error('Failed to parse response', e);
+            callback('Unexpected response from add-ons server (' + e + ').', results);
+            return;
+        }
+        callback('Found ' + results.length + ' recent results.', results);
+    };
+    if (getXpis._pendingXhr) {
+        getXpis._pendingXhr.abort();
+    }
+    x.send();
+    getXpis._pendingXhr = x;
 }
 
 // |crx_url| is the canonical representation (absolute URL) of the zip file.

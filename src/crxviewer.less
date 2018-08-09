@@ -151,13 +151,13 @@ body {
         margin: 0.3rem 5%;
     }
 }
-#advanced-open-cws-extension {
+.site-specific-form {
     display: inline-block;
     text-align: left;
     padding: 1rem;
     transition: opacity 0.2s;
 
-    &.disabled-cws:not(:hover):not(.focused-form) {
+    &.disabled-site:not(:hover):not(.focused-form) {
         opacity: 0.3;
         input:invalid {
             outline: none;
@@ -186,6 +186,12 @@ body {
     }
     input:invalid {
         outline: auto red
+    }
+}
+.amoxpilist {
+    a {
+        display: block;
+        padding: 0.3em;
     }
 }
 #right-panel, #left-panel {

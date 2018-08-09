@@ -9,6 +9,7 @@
 /* exported cws_pattern, ows_pattern, amo_pattern, amo_file_version_pattern */
 /* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, is_not_crx_url, getParam */
 /* exported is_crx_download_url */
+/* exported get_amo_slug */
 /* exported encodeQueryString */
 'use strict';
 
@@ -148,9 +149,9 @@ function get_webstore_url(url) {
     if (ows) {
         return 'https://addons.opera.com/extensions/details/' + ows[1];
     }
-    var amo = amo_pattern.exec(url) || amo_download_pattern.exec(url);
+    var amo = get_amo_slug(url);
     if (amo) {
-        return 'https://addons.mozilla.org/firefox/addon/' + amo[1];
+        return 'https://addons.mozilla.org/firefox/addon/' + amo;
     }
 }
 
@@ -168,6 +169,13 @@ function get_zip_name(url, /*optional*/filename) {
         }
     }
     return filename.replace(/\.(crx|jar|nex|xpi|zip)$/i, '') + '.zip';
+}
+
+function get_amo_slug(url) {
+    var match = amo_pattern.exec(url) || amo_download_pattern.exec(url);
+    if (match) {
+        return match[1];
+    }
 }
 
 function is_crx_url(url) {

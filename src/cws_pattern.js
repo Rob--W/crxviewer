@@ -236,7 +236,9 @@ function encodeQueryString(params) {
         value = encodeURIComponent(value);
 //#if FIREFOX
         // Work-around for bugzil.la/719905 - colons in URL break loading the URL.
-        value = value.replace(/%3A/g, '%u003A');
+        if (/Firefox\/[34]\d/.test(navigator.userAgent)) {
+            value = value.replace(/%3A/g, '%u003A');
+        }
 //#endif
         return key + '=' + value;
     }

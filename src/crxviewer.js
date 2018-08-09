@@ -61,6 +61,7 @@ function handleZipEntries(entries) {
 
         var filename = entry.filename;
         var listItem = listItemBase.cloneNode(true);
+        listItem.zipEntry = entry;
 
         // "path/to/file" -> ["path/to/", "file"]
         var filenameIndex = filename.lastIndexOf('/');
@@ -118,6 +119,8 @@ function handleZipEntries(entries) {
         var counter = label.querySelector('.gcount');
         counter.textContent = genericTypeCounts[genericType];
     });
+
+    renderInitialViewFromUrlParams();
 }
 function getGenericType(filename) {
     // Chromium / generic / WebExtensions
@@ -187,13 +190,20 @@ var viewFileInfo = (function() {
     // To increase performance, intermediate results are cached
     // _cachedResult = extracted content
     // _cachedCallback = If existent, a function which renders the (cached) result.
+    // Additional members:
+    // _initialViewParams = If set, will be used the first time that the entry is rendered.
     function viewFileInfo(entry) {
-        if (_currentEntry === entry) return;
+        function onReturnEarly() {
+            // Clear parameters when the user switches elsewhere,
+            // or when the parameters are used.
+            delete entry._initialViewParams;
+        }
+        if (_currentEntry === entry) return onReturnEarly();
         _currentEntry = entry;
         if (entry._cachedCallback) {
             // If cachedCallback returns false, then nothing was rendered.
             if (entry._cachedCallback() !== false);
-                return;
+                return onReturnEarly();
         }
 
         var mimeType = getMimeTypeForFilename(entry.filename);
@@ -215,7 +225,7 @@ var viewFileInfo = (function() {
 
         if (!handler) {
             if (!confirm('No handler for ' + mimeType + ' :(\nWant to open as plain text?'))
-                return;
+                return onReturnEarly();
             mimeType = 'text/plain';
             handler = handlers.text;
         }
@@ -224,7 +234,7 @@ var viewFileInfo = (function() {
         if (entry._cachedResult) {
             willSwitchSourceView();
             callback(entry, entry._cachedResult);
-            return;
+            return onReturnEarly();
         }
 
         var Writer = handler.Writer;
@@ -240,7 +250,7 @@ var viewFileInfo = (function() {
             entry._cachedResult = result;
             if (_currentEntry !== entry) {
                 console.log('Finished reading file, but another file was opened!');
-                return;
+                return onReturnEarly();
             }
             willSwitchSourceView();
             callback(entry, result, function finalCallback(callbackResult) {
@@ -251,6 +261,7 @@ var viewFileInfo = (function() {
                     saveScroll();
                     if (callbackResult) {
                         willSwitchSourceView();
+                        onReturnEarly();
                         callbackResult();
                     }
                     restoreScroll(entry.filename);
@@ -453,6 +464,23 @@ var viewFileInfo = (function() {
                     searchEngine.showVisibleHighlights();
                     showFindStatus(false);
                 });
+                var initialViewParams = entry._initialViewParams;
+                if (initialViewParams) {
+                    delete entry._initialViewParams; // = "onReturnEarly".
+                    if (initialViewParams.qh) {
+                        searchEngine.highlightAll();
+                        showFindStatus(false);
+                    }
+                    if (initialViewParams.qi) {
+                        // Skip (qi - 1) results.
+                        for (var i = initialViewParams.qi; i > 1; --i) {
+                            searchEngine.logic.findNext();
+                        }
+                        // Now perform the qi-th search and update the UI.
+                        searchEngine.findNext();
+                        showFindStatus(false);
+                    }
+                }
             };
             if (beautify.getType(entry.filename)) {
                 toggleBeautify.title = 'Click on this button to toggle between beautified code and non-beautified (original) code.';
@@ -470,6 +498,10 @@ var viewFileInfo = (function() {
                     selectPre(wantRawSourceGlobalDefault ? preRaw : preBeauty);
                     doRenderSourceCodeViewer();
                 };
+
+                if (entry._initialViewParams) {
+                    wantRawSourceGlobalDefault = !entry._initialViewParams.qb;
+                }
 
                 // Use the last selected option for new views.
                 // Note: This state only changes when the user clicks on the
@@ -635,9 +667,16 @@ var viewFileInfo = (function() {
     }
     function restoreScroll(identifier) {
         var sourceCodeElem = document.getElementById('source-code');
-        if (!identifier) identifier = sourceCodeElem.dataset.filename;
+        var currentFilename = sourceCodeElem.dataset.filename;
+        if (!identifier) identifier = currentFilename;
         else sourceCodeElem.dataset.filename = identifier;
-        sourceCodeElem.scrollTop = scrollingOffsets[identifier] || 0;
+        var scrollTop = scrollingOffsets[identifier];
+        if (scrollTop === undefined && !currentFilename) {
+            // This is the first run, don't restore the scroll offset.
+            return;
+        }
+        // Switched view, reset to previous offset (or default to 0).
+        sourceCodeElem.scrollTop = scrollTop || 0;
     }
     function createDownloadLink(entry, url) {
         var mimeType = getMimeTypeForFilename(entry.filename);
@@ -992,6 +1031,67 @@ var TextSearchEngine = (function() {
 
     return TextSearchEngine;
 })();
+
+function renderInitialViewFromUrlParams() {
+    // Filename!pattern
+    var q = getParam('q') || '';
+    // Whether to beautify (anything but &qb=0).
+    var qb = getParam('qb') !== '0';
+    // Highlight all (&qh or &qh=1).
+    var qh = getParam('qh'); qh = qh === null || qh === '1';
+    // The nth search result to select (0 = none, 1 = first, etc.).
+    var qi = parseInt(getParam('qi')) || 0;
+
+    if (!q) return;
+    var fileFilterElem = document.getElementById('file-filter');
+    if (fileFilterElem.value && fileFilterElem.value !== q) {
+        // Page restored from cache (refresh?), query parameter does not match
+        // input, so do not change the view.
+        console.warn('File filter input is not empty. Ignoring query from URL.');
+        return;
+    }
+
+    fileFilterElem.value = q;
+
+    // Hide all files in the UI that do not match the query.
+    checkAndApplyFilter();
+    if (fileFilterElem.classList.contains('invalid')) {
+        // The query is invalid. Don't bother with searching.
+        return;
+    }
+
+    var selectedItem;
+    var fileList = document.getElementById('file-list');
+    // checkAndApplyFilter above ensures that all unfiltered items match the file pattern.
+    var unfilteredItems = fileList.querySelectorAll('li:not(.file-filtered)');
+    if (unfilteredItems.length === 1) {
+        selectedItem = unfilteredItems[0];
+    } else if (unfilteredItems.length > 1) {
+        // More than one item matches. Select the shortest matching filename,
+        // because we assume that the "permalink" includes the file name,
+        // so that we don't actually have to search through all files.
+        // TODO: Wait for the first positive search result?
+        var smallestNameLength = Infinity;
+        [].forEach.call(unfilteredItems, function(listItem) {
+            var len = listItem.dataset.filename.length;
+            if (smallestNameLength > len) {
+                smallestNameLength = len;
+                selectedItem = listItem;
+            }
+        });
+    }
+    if (!selectedItem) {
+        console.warn('Ignoring query from URL because there is no matching file.');
+        return;
+    }
+    selectedItem.classList.add('file-selected');
+    selectedItem.zipEntry._initialViewParams = {
+        qb: qb,
+        qh: qh,
+        qi: qi,
+    };
+    viewFileInfo(selectedItem.zipEntry);
+}
 
 function escapeHTML(string, useAsAttribute) {
     string = string

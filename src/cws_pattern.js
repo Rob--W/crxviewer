@@ -8,6 +8,7 @@
 /* exported cws_match_pattern, ows_match_pattern, amo_match_patterns, amo_file_version_match_pattern */
 /* exported cws_pattern, ows_pattern, amo_pattern, amo_file_version_pattern */
 /* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, is_not_crx_url, getParam */
+/* exported is_crx_download_url */
 /* exported encodeQueryString */
 'use strict';
 
@@ -181,6 +182,10 @@ function is_not_crx_url(url) {
         amo_download_pattern.test(url) ||
         amo_file_version_pattern.test(url) ||
         /\.xpi([#?]|$)/.test(url);
+}
+
+function is_crx_download_url(url) {
+    return cws_download_pattern.test(url) || amo_download_pattern.test(url);
 }
 
 // |name| should not contain special RegExp characters, except possibly maybe a '[]' at the end.

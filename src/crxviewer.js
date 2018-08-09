@@ -8,7 +8,7 @@
 /* globals chrome, URL,
            getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url, is_not_crx_url,
            get_extensionID, getPlatformInfo,
-           cws_pattern, get_crx_url, cws_download_pattern,
+           cws_pattern, get_crx_url, is_crx_download_url,
            zip,
            EfficientTextWriter,
            beautify,
@@ -1243,7 +1243,7 @@ function initialize() {
     // Only consider rewriting the URL if it is not a known webstore download, because
     // the get_crx_url method only takes the extension ID and generates the other
     // parameters based on the current platform.
-    if (!cws_download_pattern.test(crx_url)) {
+    if (!is_crx_download_url(crx_url)) {
         if (cws_pattern.test(crx_url)) {
             // Prefer given URL because its slug contains an extra human-readable short name.
             webstore_url = crx_url;

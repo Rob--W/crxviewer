@@ -802,6 +802,8 @@ var viewFileInfo = (function() {
                 return true;
             }
         };
+        // In case any parameter changes while updating.
+        a.onfocus = a.updatePermalink;
         return a;
     }
     function generatePseudoPermalink(entry) {

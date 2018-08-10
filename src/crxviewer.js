@@ -1862,6 +1862,10 @@ function loadNonCrxUrlInViewer(url, human_readable_name, onHasBlob, onHasNoBlob)
         requestUrl = 'https://cors-anywhere.herokuapp.com/' + url;
     }
 //#endif
+//#if OPERA
+    // Opera blocks access to extensions.opera.com. Let's bypass this restriction.
+    requestUrl = url.replace(/^https?:\/\/extensions\.opera\.com(?=\/)/i, '$&.');
+//#endif
     try {
         var x = new XMLHttpRequest();
         x.open('GET', requestUrl);

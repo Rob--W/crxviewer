@@ -1810,6 +1810,25 @@ function appendFileChooser() {
         if (file) openCRXinViewer('', file.name, file);
     };
     progressDiv.appendChild(fileChooser);
+
+    progressDiv.insertAdjacentHTML('beforeend',
+            '<br><br>' +
+            'Or <a class="open-different-url">click here to find and open</a> a different URL.'
+    );
+    var openDifferentAnchor = progressDiv.querySelector('.open-different-url');
+    openDifferentAnchor.href = 'crxviewer.html';
+    var crx_url = window.crx_url || getParam('crx');
+    if (crx_url) {
+        openDifferentAnchor.search = '?' + encodeQueryString({
+            noview: 'on',
+            crx: crx_url,
+        });
+    }
+    openDifferentAnchor.onclick = function(event) {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        showAdvancedOpener();
+    };
 }
 
 // crx_url: full URL to CRX file, may be an empty string.
@@ -1909,6 +1928,7 @@ function loadUrlInViewer(crx_url, onHasBlob) {
         // Otherwise the user may be confused if they see CRX-specific errors.
         loadNonCrxUrlInViewer(crx_url, crx_url, onHasBlob, function(err) {
             progressDiv.textContent = err;
+            appendFileChooser();
 //#if CHROME
             maybeShowPermissionRequest();
 //#endif

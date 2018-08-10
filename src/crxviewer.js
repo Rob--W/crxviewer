@@ -877,18 +877,8 @@ var viewFileInfo = (function() {
             }
             return;
         }
-        var scrollableRect = sourceCodeElem.getBoundingClientRect();
         var li = ol.children[line - 1];
-        var liRect = li.getBoundingClientRect();
-        if (liRect.height >= scrollableRect.height) {
-            // Show start of line if it does not fit.
-            sourceCodeElem.scrollTop += liRect.top - scrollableRect.top;
-        } else if (liRect.top < scrollableRect.top || liRect.bottom > scrollableRect.bottom) {
-            // Vertically center otherwise.
-            sourceCodeElem.scrollTop +=
-                liRect.top - scrollableRect.top +
-                liRect.height / 2 - scrollableRect.height / 2;
-        }
+        scrollElementIntoViewIfNeeded(sourceCodeElem, li);
         li.style.outline = '2px solid red';
         setTimeout(function() {
             li.style.outline = '';
@@ -1174,14 +1164,28 @@ function renderInitialViewFromUrlParams() {
         console.warn('Ignoring query from URL because there is no matching file.');
         return;
     }
-    // TODO: Put selectedItem into view.
     selectedItem.classList.add('file-selected');
+    scrollElementIntoViewIfNeeded(fileList.parentNode, selectedItem);
     selectedItem.zipEntry._initialViewParams = {
         qb: qb,
         qh: qh,
         qi: qi,
     };
     viewFileInfo(selectedItem.zipEntry);
+}
+
+function scrollElementIntoViewIfNeeded(scrollableElement, element) {
+    var scrollableRect = scrollableElement.getBoundingClientRect();
+    var elementRect = element.getBoundingClientRect();
+    if (elementRect.height >= scrollableRect.height) {
+        // Show start of line if it does not fit.
+        scrollableElement.scrollTop += elementRect.top - scrollableRect.top;
+    } else if (elementRect.top < scrollableRect.top || elementRect.bottom > scrollableRect.bottom) {
+        // Vertically center otherwise.
+        scrollableElement.scrollTop +=
+            elementRect.top - scrollableRect.top +
+            elementRect.height / 2 - scrollableRect.height / 2;
+    }
 }
 
 function escapeHTML(string, useAsAttribute) {

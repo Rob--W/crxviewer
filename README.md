@@ -37,6 +37,7 @@ The "View source" option opens a new tab with a simple viewer, with the followin
   - View content of embedded zip files.
   - Download Chrome Web Store extensions for a different platform (e.g. Chrome OS or NaCl).
   - View the contents of any URL or zip file.
+  - Permalink to file and search result within a zip or extension file.
 
 As mentioned before, this extension activates on the Chrome Web Store by default.
 It's also possible to view the source code of Chrome, Opera 15+ and Firefox extensions that are

@@ -468,6 +468,8 @@ var viewFileInfo = (function() {
                 if (initialViewParams) {
                     delete entry._initialViewParams; // = "onReturnEarly".
                     if (initialViewParams.qh) {
+                        heading.querySelector('.find-all > .find-all-indicator').classList.add('find-all-enabled');
+                        shouldHighlightAll = true;
                         searchEngine.highlightAll();
                         showFindStatus(false);
                     }

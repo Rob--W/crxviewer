@@ -111,7 +111,7 @@ Prism.rob.wrapSourceLines = function(safeHtml) {
     // add attributes containing '>' (grep attributes).
     var tag_regex = /<\/?[^><]*>/g;
     var processTag = function(tag) {
-        if (assert) assert(!tag.includes('\n'), 'No linebreaks');
+        if (assert) assert(tag.indexOf('\n') === -1, 'No linebreaks');
         if (assert) assert(/^<\/?([^"><]|"[^"]*")+>$/.test(tag), 'Safe HTML');
         if (tag.charCodeAt(1) === 47) { // '/'
             if (assert) assert(tag === tag_stack_tail[0], 'Closing tag');

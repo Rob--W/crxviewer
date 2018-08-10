@@ -441,6 +441,7 @@ var viewFileInfo = (function() {
                 if (!searchEngine) {
                     if (typeof SearchEngineElement === 'undefined') {
                         console.warn('search-tools.js failed to load. In-file search not available.');
+                        delete entry._initialViewParams; // = "onReturnEarly".
                         return;
                     }
                     if (pre === preRaw) {

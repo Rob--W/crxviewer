@@ -761,6 +761,11 @@ class SearchEngineElement {
             let range = document.createRange();
             range.setStart(textNode, offset);
             range.setEnd(textNode, offset);
+            // In Safari, gBCR returns an all-zeroes rectangle, so use gCR instead.
+            var rects = range.getClientRects();
+            if (rects.length === 1) {
+                return rects[0];
+            }
             return range.getBoundingClientRect();
         }
         // No text node found, the line element is empty.

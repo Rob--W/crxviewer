@@ -310,8 +310,10 @@ var viewFileInfo = (function() {
                 preCurrent = pre;
                 if (pre === preRaw) {
                     toggleBeautify.textContent = 'Show beautified code';
+                    toggleBeautify.classList.remove('was-beauty-enabled');
                 } else {
                     toggleBeautify.textContent = 'Show original code';
+                    toggleBeautify.classList.add('was-beauty-enabled');
                 }
                 if (pre._didInitializeSourceViewer) return;
                 pre._didInitializeSourceViewer = true;
@@ -446,6 +448,7 @@ var viewFileInfo = (function() {
                     } else { // pre === preBeauty
                         searchEngine = new SearchEngineElement(textBeauty);
                     }
+                    entry._searchEngineForPermalink = searchEngine;
                     enableFind(true);
                 }
                 searchEngine.disconnect();
@@ -485,6 +488,7 @@ var viewFileInfo = (function() {
                 }
             };
             if (beautify.getType(entry.filename)) {
+                toggleBeautify.className = 'toggle-beautifier';
                 toggleBeautify.title = 'Click on this button to toggle between beautified code and non-beautified (original) code.';
                 toggleBeautify.onclick = function() {
                     // Note: Toggling the state is based on the local preCurrent
@@ -495,6 +499,7 @@ var viewFileInfo = (function() {
                     if (searchEngine) {
                         searchEngine.destroy();
                         searchEngine = null;
+                        entry._searchEngineForPermalink = null;
                         enableFind(false);
                     }
                     selectPre(wantRawSourceGlobalDefault ? preRaw : preBeauty);
@@ -741,6 +746,8 @@ var viewFileInfo = (function() {
                 });
             });
 
+            infoTable.addRow('Link', '').appendChild(createPermaLinkAnchor(entry));
+
             output.appendChild(infoTable);
             output.insertAdjacentHTML('beforeend',
                 '<small>Need more tools? <a href="https://github.com/Rob--W/crxviewer/issues">Create a feature request!</a></small>');
@@ -754,6 +761,8 @@ var viewFileInfo = (function() {
             } else {
                 button.textContent = 'Hide analysis';
                 button.title = '';
+                var permalinkAnchor = output.querySelector('tr[data-description="Link"] a');
+                permalinkAnchor.hidden = !permalinkAnchor.updatePermalink();
             }
         }
         // Hide the output and update the button label.
@@ -772,6 +781,7 @@ var viewFileInfo = (function() {
             row.dataset.description = description.replace(/"/g, '');
             row.insertCell(0).textContent = description;
             row.insertCell(1).textContent = initialValue || '';
+            return row.cells[1];
         }
         function updateRow(description, value) {
             var row = infoTable.querySelector('tr[data-description="' + description.replace(/"/g, '') + '"]');
@@ -780,6 +790,60 @@ var viewFileInfo = (function() {
         infoTable.addRow = addRow;
         infoTable.updateRow = updateRow;
         return infoTable;
+    }
+
+    function createPermaLinkAnchor(entry) {
+        var a = document.createElement('a');
+        a.textContent = 'External link to current view';
+        a.updatePermalink = function() {
+            if (window.crx_url) {
+                // Can only generate permalinks for public URLs.
+                a.href = generatePseudoPermalink(entry);
+                return true;
+            }
+        };
+        return a;
+    }
+    function generatePseudoPermalink(entry) {
+        var params = {
+            crx: window.crx_url,
+        };
+        var inside = getParam('crx') === window.crx_url && getParam('inside[]');
+        if (inside && inside.length) {
+            params.inside = inside;
+        }
+
+        var fileFilterElem = document.getElementById('file-filter');
+        if (fileFilterElem.value) {
+            params.q = fileFilterElem.value;
+        }
+
+        // All params starting with "q" are used in renderInitialViewFromUrlParams.
+        params.qf = entry.filename;
+
+        var heading = document.querySelector('#source-toolbar .file-specific-toolbar');
+        if (heading.querySelector('.toggle-beautifier')) {
+            params.qb = heading.querySelector('.was-beautify-enabled') ? '1' : '0';
+        }
+
+        var searchEngine = entry._searchEngineForPermalink;
+        var status = searchEngine && searchEngine.getQueryStatus();
+        if (status && status.resultTotal) {
+            params.qh = searchEngine.isHighlighting ? '1' : '0';
+            if (status.resultIndex !== -1) {
+                // Our search result indices in qi are one-based.
+                params.qi = status.resultIndex + 1;
+            }
+        }
+
+//#if WEB
+//      var permalink = location.origin + location.pathname;
+//#else
+        var permalink = 'https://robwu.nl/crxviewer/';
+//#endif
+
+        permalink += '?' + encodeQueryString(params);
+        return permalink;
     }
 
     function showGoToLine(sourceCodeElem, preCurrent) {
@@ -1046,12 +1110,14 @@ function renderInitialViewFromUrlParams() {
     var q = getParam('q') || '';
     // Whether to beautify (anything but &qb=0).
     var qb = getParam('qb') !== '0';
-    // Highlight all (&qh or &qh=1).
-    var qh = getParam('qh'); qh = qh === null || qh === '1';
+    // The file to select.
+    var qf = getParam('qf') || '';
+    // Highlight all (&qh=1).
+    var qh = getParam('qh') === '1';
     // The nth search result to select (0 = none, 1 = first, etc.).
     var qi = parseInt(getParam('qi')) || 0;
 
-    if (!q) return;
+    if (!q && !qf) return;
     var fileFilterElem = document.getElementById('file-filter');
     if (fileFilterElem.value && fileFilterElem.value !== q) {
         // Page restored from cache (refresh?), query parameter does not match
@@ -1073,7 +1139,22 @@ function renderInitialViewFromUrlParams() {
     var fileList = document.getElementById('file-list');
     // checkAndApplyFilter above ensures that all unfiltered items match the file pattern.
     var unfilteredItems = fileList.querySelectorAll('li:not(.file-filtered)');
-    if (unfilteredItems.length === 1) {
+    if (qf) {
+        var listItems = fileList.querySelectorAll('li');
+        for (var i = 0; i < listItems.length; ++i) {
+            if (listItems[i].dataset.filename === qf) {
+                selectedItem = listItems[i];
+                break;
+            }
+        }
+        if (!selectedItem) {
+            console.warn('No entry found with name ' + qf);
+            return;
+        }
+        if ([].indexOf.call(unfilteredItems, selectedItem) === -1) {
+            console.warn('The selected item is invisible because it did not match the search filter.');
+        }
+    } else if (unfilteredItems.length === 1) {
         selectedItem = unfilteredItems[0];
     } else if (unfilteredItems.length > 1) {
         // More than one item matches. Select the shortest matching filename,
@@ -1093,6 +1174,7 @@ function renderInitialViewFromUrlParams() {
         console.warn('Ignoring query from URL because there is no matching file.');
         return;
     }
+    // TODO: Put selectedItem into view.
     selectedItem.classList.add('file-selected');
     selectedItem.zipEntry._initialViewParams = {
         qb: qb,

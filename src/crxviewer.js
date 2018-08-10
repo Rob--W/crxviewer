@@ -941,11 +941,11 @@ var TextSearchEngine = (function() {
             console.warn('Ignored search request because the result handler was not set.');
             return;
         }
-        if (this._currentSearchTerm === searchTerm) {
-            return; // No change in result.
-        }
 
         if (!searchTerm) {
+            if (this._currentSearchTerm === searchTerm) {
+                return; // No change in result, do not lazily initialize the worker.
+            }
             this._currentSearchTerm = '';
             this.worker.postMessage({
                 searchTerm: '',
@@ -960,20 +960,27 @@ var TextSearchEngine = (function() {
         this.resultCallback(null, null); // Should not call doPlaintextSearch again.
 
         // Re-use the last search results if possible.
-        if (this._recentSearchResults.searchTerm.indexOf(searchTerm) !== -1) {
+        if (this._recentSearchResults.searchTerm === searchTerm) {
+            lowPrioFilenames = mergeUnique(lowPrioFilenames, this._recentSearchResults.found);
+            lowPrioFilenames = mergeUnique(lowPrioFilenames, this._recentSearchResults.notfound);
+            this.resultCallback(this._recentSearchResults.found, true);
+            this.resultCallback(this._recentSearchResults.notfound, false);
+        } else if (this._recentSearchResults.searchTerm.indexOf(searchTerm) !== -1) {
             // E.g. "test" -> "tes". If the result contained "test" then it also includes "tes".
             lowPrioFilenames = mergeUnique(lowPrioFilenames, this._recentSearchResults.found);
             this.resultCallback(this._recentSearchResults.found, true);
+            this._recentSearchResults.notfound.length = 0;
         } else if (searchTerm.indexOf(this._recentSearchResults.searchTerm) !== -1) {
             // E.g. "tes" -> "test". If the result did not contain "tes" then it will not contain
             // "test" either.
             lowPrioFilenames = mergeUnique(lowPrioFilenames, this._recentSearchResults.notfound);
             this.resultCallback(this._recentSearchResults.notfound, false);
+            this._recentSearchResults.found.length = 0;
+        } else {
+            this._recentSearchResults.found.length = 0;
+            this._recentSearchResults.notfound.length = 0;
         }
         this._recentSearchResults.searchTerm = searchTerm;
-        this._recentSearchResults.found.length = 0;
-        this._recentSearchResults.notfound.length = 0;
-
         this._currentSearchTerm = searchTerm;
         this._currentSearchStart = Date.now();
         this.worker.postMessage({
@@ -1009,12 +1016,12 @@ var TextSearchEngine = (function() {
             }
             if (message.found.length) {
                 textSearchEngine._recentSearchResults.found =
-                    textSearchEngine._recentSearchResults.found.concat(message.found);
+                    mergeUnique(textSearchEngine._recentSearchResults.found, message.found);
                 textSearchEngine.resultCallback(message.found, true);
             }
             if (message.notfound.length) {
                 textSearchEngine._recentSearchResults.notfound =
-                    textSearchEngine._recentSearchResults.notfound.concat(message.notfound);
+                    mergeUnique(textSearchEngine._recentSearchResults.notfound, message.notfound);
                 textSearchEngine.resultCallback(message.notfound, false);
             }
             if (message.remaining === 0) {

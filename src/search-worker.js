@@ -42,9 +42,11 @@ self.onmessage = function(event) {
         loadFromZip(message.zipBlob);
         return;
     }
-    if (message.searchTerm === currentSearchTerm) {
-        return;
-    }
+    // Note: The main thread should only send a message if
+    // the results are expected to be modified, i.e.
+    // either message.searchTerm !== currentSearchTerm,
+    // or message.lowPrioFilenames differs from lowPrioFilenames.
+
     currentSearchTerm = message.searchTerm;
     lowPrioFilenames = message.lowPrioFilenames;
     if (!fileEntries || !currentSearchTerm) {
@@ -60,11 +62,14 @@ self.onmessage = function(event) {
 
 function prioritizedFilenames(filenames) {
     filenames = filenames.slice();
+    // Optimize for minimal overhead by removing low-priority file names.
+    // In the past, low-priority files were pushed to the end, but that
+    // results in unnecessary CPU and memory usage for situations where
+    // one searches for a pattern in specific files only.
     lowPrioFilenames.forEach(function(filename) {
         var i = filenames.indexOf(filename);
         if (i === -1) throw new Error("Unknown file: " + filename);
         filenames.splice(i, 1);
-        filenames.push(filename);
     });
     return filenames;
 }
@@ -163,8 +168,11 @@ function SearchTask(filenames, searchTerm) {
     pendingSearch = this;
 }
 SearchTask.prototype.next = function() {
-    if (!this.filenames.length || pendingSearch !== this) {
-        // Either done or search task changed.
+    if (pendingSearch !== this) { // Search task changed.
+        return;
+    }
+    if (!this.filenames.length) { // Done.
+        this.sendResults(true);
         return;
     }
     var startTime = Date.now();
@@ -233,8 +241,8 @@ SearchTask.prototype.resume = function() {
 SearchTask.prototype.cancel = function() {
     this.filenames.length = 0;
 };
-SearchTask.prototype.sendResults = function() {
-    if (!this.found.length && !this.notfound.length) return;
+SearchTask.prototype.sendResults = function(forceSend) {
+    if (!this.found.length && !this.notfound.length && !forceSend) return;
     self.postMessage({
         found: this.found,
         notfound: this.notfound,

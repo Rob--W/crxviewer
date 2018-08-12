@@ -310,10 +310,10 @@ var viewFileInfo = (function() {
                 preCurrent = pre;
                 if (pre === preRaw) {
                     toggleBeautify.textContent = 'Show beautified code';
-                    toggleBeautify.classList.remove('was-beauty-enabled');
+                    toggleBeautify.classList.remove('was-beautify-enabled');
                 } else {
                     toggleBeautify.textContent = 'Show original code';
-                    toggleBeautify.classList.add('was-beauty-enabled');
+                    toggleBeautify.classList.add('was-beautify-enabled');
                 }
                 if (pre._didInitializeSourceViewer) return;
                 pre._didInitializeSourceViewer = true;

@@ -1122,7 +1122,7 @@ function renderInitialViewFromUrlParams() {
     fileFilterElem.value = q;
 
     // Hide all files in the UI that do not match the query.
-    checkAndApplyFilter();
+    checkAndApplyFilter(true);
     if (fileFilterElem.classList.contains('invalid')) {
         // The query is invalid. Don't bother with searching.
         return;
@@ -1144,7 +1144,14 @@ function renderInitialViewFromUrlParams() {
             console.warn('No entry found with name ' + qf);
             return;
         }
-        if ([].indexOf.call(unfilteredItems, selectedItem) === -1) {
+        if (unfilteredItems.length === 1 && unfilteredItems[0] === selectedItem) {
+            // Optimization: Do not initialize the worker for TextSearchEngine when a file
+            // was explicitly selected and it is the only matching file.
+            // If the file does not match the grep pattern, then it will
+            // mistakenly be shown, but only initially. When the user modifies
+            // the search, the file will be hidden as expected, if needed.
+            checkAndApplyFilter.cancelDebouncedGrep();
+        } else if ([].indexOf.call(unfilteredItems, selectedItem) === -1) {
             console.warn('The selected item is invisible because it did not match the search filter.');
         }
     } else if (unfilteredItems.length === 1) {
@@ -1357,6 +1364,12 @@ var checkAndApplyFilter = (function() {
             grepSearch(grepTerm);
         }
     }
+    checkAndApplyFilter.cancelDebouncedGrep = function() {
+        if (debounceGrep) {
+            clearTimeout(debounceGrep);
+            debounceGrep = null;
+        }
+    };
     (function() {
         // Bind to checkbox filter
 //#if CHROME || OPERA || FIREFOX

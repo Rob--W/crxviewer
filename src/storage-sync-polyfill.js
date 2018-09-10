@@ -61,7 +61,7 @@
             if (!callback && methodName === 'get') {
                 throw new Error('storage.sync.get requires a callback');
             }
-            originalSyncMethod(items, function() {
+            originalSyncMethod.call(storageAreaSync, items, function() {
                 if (isNotSupportedForSure && chrome.runtime.lastError) {
                     storageAreaLocal[methodName](items, callback);
                 } else if (callback) {

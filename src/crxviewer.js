@@ -1882,8 +1882,8 @@ function loadNonCrxUrlInViewer(url, human_readable_name, onHasBlob, onHasNoBlob)
     }
 //#endif
 //#if OPERA
-    // Opera blocks access to extensions.opera.com. Let's bypass this restriction.
-    requestUrl = url.replace(/^https?:\/\/extensions\.opera\.com(?=\/)/i, '$&.');
+    // Opera blocks access to addons.opera.com. Let's bypass this restriction.
+    requestUrl = url.replace(/^https?:\/\/addons\.opera\.com(?=\/)/i, '$&.');
 //#endif
     try {
         var x = new XMLHttpRequest();

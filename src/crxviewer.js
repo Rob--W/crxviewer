@@ -232,8 +232,10 @@ var viewFileInfo = (function() {
         var callback = handler.callback;
 
         if (entry._cachedResult) {
+            saveScroll();
             willSwitchSourceView();
             callback(entry, entry._cachedResult);
+            restoreScroll(entry.filename);
             return onReturnEarly();
         }
 
@@ -252,6 +254,7 @@ var viewFileInfo = (function() {
                 console.log('Finished reading file, but another file was opened!');
                 return onReturnEarly();
             }
+            saveScroll();
             willSwitchSourceView();
             callback(entry, result, function finalCallback(callbackResult) {
                 if (callbackResult && typeof callbackResult !== 'function') {
@@ -269,7 +272,6 @@ var viewFileInfo = (function() {
                 };
                 // Final callback = thing has been rendered for the first time,
                 // or something like that.
-                saveScroll();
                 restoreScroll(entry.filename);
             });
         }, function(current, total) {

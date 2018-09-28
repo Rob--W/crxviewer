@@ -5,11 +5,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* globals location, getPlatformInfo, navigator */
-/* exported cws_match_pattern, ows_match_pattern, amo_match_patterns, amo_file_version_match_pattern */
+/* exported cws_match_pattern, ows_match_pattern, amo_match_patterns, amo_file_version_match_patterns */
 /* exported cws_pattern, ows_pattern, amo_pattern, amo_file_version_pattern */
 /* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, is_not_crx_url, getParam */
 /* exported is_crx_download_url */
-/* exported get_amo_slug */
+/* exported get_amo_domain, get_amo_slug */
 /* exported encodeQueryString */
 'use strict';
 
@@ -24,14 +24,23 @@ var ows_pattern = /^https?:\/\/addons.opera.com\/.*?extensions\/(?:details|downl
 var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 
 // Firefox addon gallery
-var amo_pattern = /^https?:\/\/addons\.mozilla\.org\/.*?(?:addon|review)\/([^/<>"'?#]+)/;
-var amo_download_pattern = /^https?:\/\/addons\.mozilla\.org\/[^?#]*\/downloads\/latest\/([^/?#]+)/;
-var amo_file_version_pattern = /^https?:\/\/addons\.mozilla\.org\/(?:[^?#\/]*\/)?firefox\/files\/browse\/(\d+)(\/[^?#\/]+\.xpi)?/;
+var amo_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\/.*?(?:addon|review)\/([^/<>"'?#]+)/;
+var amo_download_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\/[^?#]*\/downloads\/latest\/([^/?#]+)/;
+var amo_domain_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\//;
+var amo_file_version_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\/(?:[^?#\/]*\/)?firefox\/files\/browse\/(\d+)(\/[^?#\/]+\.xpi)?/;
 var amo_match_patterns = [
     '*://addons.mozilla.org/*addon/*',
     '*://addons.mozilla.org/*review/*',
+    '*://addons.allizom.org/*addon/*',
+    '*://addons.allizom.org/*review/*',
+    '*://addons-dev.allizom.org/*addon/*',
+    '*://addons-dev.allizom.org/*review/*',
 ];
-var amo_file_version_match_pattern = '*://addons.mozilla.org/*firefox/files/browse/*';
+var amo_file_version_match_patterns = [
+    '*://addons.mozilla.org/*firefox/files/browse/*',
+    '*://addons.allizom.org/*firefox/files/browse/*',
+    '*://addons-dev.allizom.org/*firefox/files/browse/*',
+];
 
 // string extensionID if valid URL
 // null otherwise
@@ -42,7 +51,7 @@ function get_extensionID(url) {
     return match && match[1];
 }
 
-function get_xpi_url(addonSlug) {
+function get_xpi_url(amoDomain, addonSlug) {
     // "https://addons.mozilla.org/firefox/downloads/latest/<slug>/" is suggested by TheOne:
     // https://discourse.mozilla-community.org/t/is-there-a-direct-download-link-for-the-latest-addon-version-on-amo/4788
     // This did not always work. I figured that some packages are platform-specific, so they need
@@ -61,7 +70,7 @@ function get_xpi_url(addonSlug) {
         platformId = 2;
     }
 
-    var url = 'https://addons.mozilla.org/firefox/downloads/latest/';
+    var url = 'https://' + amoDomain + '/firefox/downloads/latest/';
     url += addonSlug;
     url += '/platform:' + platformId;
     url += '/';
@@ -83,11 +92,11 @@ function get_crx_url(extensionID_or_url) {
     }
     match = amo_pattern.exec(extensionID_or_url);
     if (match) {
-        return get_xpi_url(match[1]);
+        return get_xpi_url(match[1], match[2]);
     }
     match = amo_file_version_pattern.exec(extensionID_or_url);
     if (match) {
-        return 'https://addons.mozilla.org/firefox/downloads/file/' + match[1] + (match[2] || '/addon.xpi');
+        return 'https://' + match[1] + '/firefox/downloads/file/' + match[2] + (match[3] || '/addon.xpi');
     }
     // Chrome Web Store
     match = get_extensionID(extensionID_or_url);
@@ -153,7 +162,7 @@ function get_webstore_url(url) {
     }
     var amo = get_amo_slug(url);
     if (amo) {
-        return 'https://addons.mozilla.org/firefox/addon/' + amo;
+        return 'https://' + get_amo_domain(url) + '/firefox/addon/' + amo;
     }
 }
 
@@ -173,10 +182,15 @@ function get_zip_name(url, /*optional*/filename) {
     return filename.replace(/\.(crx|jar|nex|xpi|zip)$/i, '') + '.zip';
 }
 
+function get_amo_domain(url) {
+    var match = amo_domain_pattern.exec(url);
+    return match ? match[1] : 'addons.mozilla.org';
+}
+
 function get_amo_slug(url) {
     var match = amo_pattern.exec(url) || amo_download_pattern.exec(url);
     if (match) {
-        return match[1];
+        return match[2];
     }
 }
 

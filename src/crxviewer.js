@@ -9,7 +9,7 @@
            getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url, is_not_crx_url,
            get_extensionID, getPlatformInfo,
            cws_pattern, get_crx_url, is_crx_download_url,
-           get_amo_slug,
+           get_amo_domain, get_amo_slug,
            zip,
            EfficientTextWriter,
            beautify,
@@ -1628,10 +1628,12 @@ function showAdvancedOpener() {
     };
     amoOptions.onsubmit = function(e) {
         e.preventDefault();
+        // Derive the AMO domain from the URL input if non-empty, otherwise try the crx URL param.
+        var amodomain = get_amo_domain(urlInput.value || getParam('crx'));
         var amodescription = amoOptions.querySelector('.amodescription');
         var slugorid = amoOptions.querySelector('input[name="amoslugorid"]').value;
         amodescription.textContent = 'Searching for add-ons with slug or ID: ' + slugorid;
-        getXpis(slugorid, function(description, results) {
+        getXpis(amodomain, slugorid, function(description, results) {
             amodescription.textContent = description;
             var amoxpilist = amoOptions.querySelector('.amoxpilist');
             amoxpilist.textContent = '';
@@ -1687,8 +1689,8 @@ function showAdvancedOpener() {
 
 // Calls callback(description, Array<{url:String, version:String, platform:String}>)
 // If called repeatedly: Will only call the callback of the last call.
-function getXpis(slugorid, callback) {
-    var apiUrl = 'https://addons.mozilla.org/api/v4/addons/addon/' + slugorid + '/versions/';
+function getXpis(amodomain, slugorid, callback) {
+    var apiUrl = 'https://' + amodomain + '/api/v4/addons/addon/' + slugorid + '/versions/';
 //#if WEB
     getXpis.fallbackToCORSAnywhere = true;
 //#endif
@@ -1704,7 +1706,7 @@ function getXpis(slugorid, callback) {
 
         if (!x.status && !getXpis.fallbackToCORSAnywhere) {
             getXpis.fallbackToCORSAnywhere = true;
-            getXpis(slugorid, callback);
+            getXpis(amodomain, slugorid, callback);
             return;
         }
         if (x.status === 401 || x.status === 403) {

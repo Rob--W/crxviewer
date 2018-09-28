@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* jshint browser:true, devel:true */
-/* globals chrome, cws_match_pattern, ows_match_pattern, amo_match_patterns, amo_file_version_match_pattern, get_crx_url */
+/* globals chrome, cws_match_pattern, ows_match_pattern, amo_match_patterns, amo_file_version_match_patterns, get_crx_url */
 /* globals encodeQueryString */
 
 'use strict';
@@ -148,8 +148,7 @@
                 '*://*/*.xpi*',
                 cws_match_pattern,
                 ows_match_pattern,
-                amo_file_version_match_pattern,
-            ]
+            ].concat(amo_file_version_match_patterns),
         });
         // AMO lists multiple versions, specifically state that this
         // is the latest approved version to avoid ambiguity.
@@ -179,8 +178,7 @@
             documentUrlPatterns: [
                 cws_match_pattern,
                 ows_match_pattern,
-                amo_file_version_match_pattern,
-            ]
+            ].concat(amo_file_version_match_patterns),
         });
         // AMO lists multiple versions, specifically state that this
         // is the latest approved version to avoid ambiguity.

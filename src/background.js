@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* globals chrome, cws_match_pattern, ows_match_pattern, amo_match_patterns,
-   amo_file_version_match_pattern,
+   amo_file_version_match_patterns,
    cws_pattern, ows_pattern, amo_pattern, amo_file_version_pattern,
    get_crx_url, get_zip_name, console,
    URL, document, alert, localStorage */
@@ -29,7 +29,7 @@ function togglePageAction(isEnabled) {
         browser.tabs.onUpdated.addListener(tabsOnUpdatedCheckPageAction);
     }
     browser.tabs.query({
-        url: [cws_match_pattern, ows_match_pattern, amo_file_version_match_pattern].concat(amo_match_patterns),
+        url: [cws_match_pattern, ows_match_pattern].concat(amo_match_patterns, amo_file_version_match_patterns),
     }).then(function(tabs) {
         if (isEnabled) {
             tabs.forEach(showPageActionIfNeeded);
@@ -115,6 +115,10 @@ if (chrome.declarativeWebRequest) {
             hostEquals: 'addons.opera.com'
         }, {
             hostEquals: 'addons.mozilla.org'
+        }, {
+            hostEquals: 'addons.allizom.org'
+        }, {
+            hostEquals: 'addons-dev.allizom.org'
         }]
     };
     chrome.webNavigation.onCommitted.addListener(showPageActionIfNeeded, webNavigationFilter);
@@ -122,13 +126,14 @@ if (chrome.declarativeWebRequest) {
 })();
 
 chrome.runtime.onInstalled.addListener(function() {
-    chrome.tabs.query({url: cws_match_pattern}, queryCallback);
-    chrome.tabs.query({url: ows_match_pattern}, queryCallback);
-    chrome.tabs.query({url: amo_file_version_match_pattern}, queryCallback);
-    chrome.tabs.query({url: amo_match_patterns}, queryCallback);
-    function queryCallback(tabs) {
+    chrome.tabs.query({
+        url: [
+            cws_match_pattern,
+            ows_match_pattern,
+        ].concat(amo_match_patterns, amo_file_version_match_patterns),
+    }, function(tabs) {
         tabs.forEach(showPageActionIfNeeded);
-    }
+    });
     // Migrate from old localStorage settings to chrome.storage
     var items = {};
     Object.keys(localStorage).forEach(function(key) {

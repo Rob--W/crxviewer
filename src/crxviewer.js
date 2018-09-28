@@ -1522,10 +1522,12 @@ function showAdvancedOpener() {
         var url = 'https://clients2.google.com/service/update2/crx?response=redirect';
         url += '&os=' + getCwsOption('os');
         url += '&arch=' + getCwsOption('arch');
+        url += '&os_arch=' + getCwsOption('arch');
         url += '&nacl_arch=' + getCwsOption('nacl_arch');
         url += '&prod=chromiumcrx';
         url += '&prodchannel=unknown';
         url += '&prodversion=' + getCwsOption('prodversion');
+        url += '&acceptformat=crx2,crx3';
         url += '&x=id%3D' + getCwsOption('xid');
         url += '%26uc';
         return url;

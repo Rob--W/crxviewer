@@ -100,7 +100,7 @@ function get_crx_url(extensionID_or_url) {
     var platformInfo = getPlatformInfo();
 
     // Omitting this value is allowed, but add it just in case.
-    // Source: http://cs.chromium.org/file:omaha_query_params.cc%20GetProdIdString
+    // Source: https://cs.chromium.org/file:update_query_params.cc%20GetProdIdString
     var product_id = isChromeNotChromium() ? 'chromecrx' : 'chromiumcrx';
     // Channel is "unknown" on Chromium on ArchLinux, so using "unknown" will probably be fine for everyone.
     var product_channel = 'unknown';
@@ -119,10 +119,12 @@ function get_crx_url(extensionID_or_url) {
     url = 'https://clients2.google.com/service/update2/crx?response=redirect';
     url += '&os=' + platformInfo.os;
     url += '&arch=' + platformInfo.arch;
+    url += '&os_arch=' + platformInfo.arch; // crbug.com/709147 - should be archName of chrome.system.cpu.getInfo
     url += '&nacl_arch=' + platformInfo.nacl_arch;
     url += '&prod=' + product_id;
     url += '&prodchannel=' + product_channel;
     url += '&prodversion=' + product_version;
+    url += '&acceptformat=crx2,crx3';
     url += '&x=id%3D' + extensionID;
     url += '%26uc';
     return url;

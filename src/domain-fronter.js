@@ -102,7 +102,7 @@
                     console.warn(`Unexpected Host header. Expected "${domainFront}${portSuffix}" (from "${this.originalDomain}"), got "${hostHeader.value}"`);
                     return;
                 }
-                hostHeader.value = this.originalDomain + portSuffix;
+                hostHeader.value = `${this.originalDomain}.${portSuffix}`;
                 let cacheHeader = requestHeaders.find(({name}) => /^cache-control$/i.test(name));
                 if (!cacheHeader) {
                     cacheHeader = {name: 'Cache-Control'};

@@ -615,12 +615,7 @@ var viewFileInfo = (function() {
             var sourceCodeElem = document.getElementById('source-code');
             sourceCodeElem.innerHTML = '<button>View the content of this file in a new CRX Viewer</button>';
             sourceCodeElem.firstChild.onclick = function() {
-//#if FIREFOX
-                // window.open is broken, so use chrome.tabs.create: bugzil.la/1288901.
-                chrome.tabs.create({url: viewerUrl});
-//#else
                 window.open(viewerUrl);
-//#endif
             };
         }
     };

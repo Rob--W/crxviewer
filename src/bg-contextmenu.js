@@ -22,14 +22,39 @@
     var MENU_ID_ACTION_MENU_VIEW_SOURCE = MENU_ID_ACTION_MENU + 'view-source';
     var MENU_ID_ACTION_MENU_DOWNLOAD = MENU_ID_ACTION_MENU + 'download';
 
+    var DEFAULT_LINK_TARGET_URL_PATTERNS = [
+        '*://*/*.crx*',
+        '*://*/*.CRX*',
+        '*://*/*.NEX*',
+        '*://*/*.nex*',
+        '*://*/*.XPI*',
+        '*://*/*.xpi*',
+        cws_match_pattern,
+        ows_match_pattern,
+    ].concat(amo_file_version_match_patterns);
+
     chrome.storage.onChanged.addListener(function(changes) {
         if (changes.actionClickAction) {
             setActionClickAction(changes.actionClickAction.newValue);
             return;
         }
-        if (!changes.showContextMenu) return;
-        if (changes.showContextMenu.newValue) show();
-        else hide();
+        if (changes.showContextMenu) {
+            if (changes.showContextMenu.newValue) {
+                show();
+                chrome.storage.sync.get('contextmenuPatterns', function(items) {
+                    updateLinkMenu(items.contextmenuPatterns, true);
+                });
+            } else {
+                hide();
+            }
+            return;
+        }
+        if (changes.contextmenuPatterns) {
+            // The options page only allows 'contextmenuPatterns' to be edited
+            // if 'showContextMenu' is true, so assume that the menu is shown,
+            // so we can just edit the menu item.
+            updateLinkMenu(changes.contextmenuPatterns.newValue, false);
+        }
     });
 //#if !FIREFOX
     chrome.runtime.onInstalled.addListener(checkContextMenuPref);
@@ -50,8 +75,12 @@
         storageArea.get({
             showContextMenu: true,
             actionClickAction: 'popup',
+            contextmenuPatterns: [],
         }, function(items) {
-            if (items.showContextMenu) show();
+            if (items.showContextMenu) {
+                show();
+                updateLinkMenu(items.contextmenuPatterns, false);
+            }
             setActionClickAction(items.actionClickAction);
         });
 //#if FIREFOX
@@ -131,6 +160,18 @@
 //#if !FIREFOX
     chrome.contextMenus.onClicked.addListener(contextMenusOnClicked);
 //#endif
+
+    function updateLinkMenu(contextmenuPatterns, forceUpdate) {
+        if (!contextmenuPatterns ||
+            !contextmenuPatterns.length && !forceUpdate) {
+            return;
+        }
+        // An error may be printed to the console if the pattern is malformed,
+        // or the menu item does not exist (any more).
+        chrome.contextMenus.update(MENU_ID_LINK, {
+            targetUrlPatterns: DEFAULT_LINK_TARGET_URL_PATTERNS.concat(contextmenuPatterns),
+        });
+    }
     function show() {
         chrome.contextMenus.create({
             id: MENU_ID_LINK,
@@ -139,16 +180,7 @@
 //#if FIREFOX
             onclick: contextMenusOnClicked,
 //#endif
-            targetUrlPatterns: [
-                '*://*/*.crx*',
-                '*://*/*.CRX*',
-                '*://*/*.NEX*',
-                '*://*/*.nex*',
-                '*://*/*.XPI*',
-                '*://*/*.xpi*',
-                cws_match_pattern,
-                ows_match_pattern,
-            ].concat(amo_file_version_match_patterns),
+            targetUrlPatterns: DEFAULT_LINK_TARGET_URL_PATTERNS,
         });
         // AMO lists multiple versions, specifically state that this
         // is the latest approved version to avoid ambiguity.

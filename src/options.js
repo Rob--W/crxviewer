@@ -41,11 +41,54 @@ if (chrome.declarativeWebRequest) {
 //#endif
 
 var storageArea = chrome.storage.sync;
+var contextmenuPatternsInput = document.getElementById('contextmenuPatterns');
 document.getElementById('contextmenu').onchange = function() {
     storageArea.set({showContextMenu: this.checked});
+    contextmenuPatternsInput.disabled = !this.checked;
 };
-storageArea.get({showContextMenu:true}, function(items) {
+
+contextmenuPatternsInput.oninput = function() {
+    var patterns = [];
+    var errorMsg = '';
+    this.value.split('\n').every(function(line, i) {
+        line = line.trim();
+        if (!line) {
+            return;
+        }
+        if (!/^(\*|https?|ftp|file|data):\/\/\*?[^/*]*\//.test(line)) {
+            errorMsg = 'Invalid URL pattern at line ' + (i + 1) + ': ' + line;
+            errorMsg += '\nPatterns must look like a URL and may contain at most one * (wildcard) as a subdomain, and any number of * in the path.';
+            return;
+        }
+        patterns.push(line);
+        return true;
+    });
+
+    var contextmenuPatternsOutput = document.getElementById('contextmenuPatternsOutput');
+    contextmenuPatternsOutput.style.color = 'red';
+    if (errorMsg) {
+        contextmenuPatternsOutput.textContent = 'URL patterns not applied; ' + errorMsg;
+        return;
+    }
+    storageArea.set({contextmenuPatterns: patterns}, function() {
+        if (chrome.runtime.lastError) {
+            contextmenuPatternsOutput.textContent =
+                'Failed to save URL patterns due to error: ' + chrome.runtime.lastError.message;
+        } else {
+            contextmenuPatternsOutput.style.color = '';
+            contextmenuPatternsOutput.textContent =
+                'Applied ' + patterns.length + ' URL patterns.';
+        }
+    });
+};
+
+storageArea.get({
+    showContextMenu: true,
+    contextmenuPatterns: [],
+}, function(items) {
     document.getElementById('contextmenu').checked = items.showContextMenu;
+    contextmenuPatternsInput.disabled = !items.showContextMenu;
+    contextmenuPatternsInput.value = items.contextmenuPatterns.join('\n');
 });
 
 //#if FIREFOX

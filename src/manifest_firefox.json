@@ -5,6 +5,7 @@
     "manifest_version": 2,
     "applications": {
         "gecko": {
+            "strict_min_version": "52.0",
             "id": "crxviewer-firefox@robwu.nl"
         }
     },

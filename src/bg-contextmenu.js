@@ -63,12 +63,6 @@
     chrome.contextMenus.removeAll(function() {
         checkContextMenuPref();
     });
-    if (/Firefox\/4\d\./.test(navigator.userAgent)) {
-        // Work-around for bugzil.la/1287359
-        addEventListener('unload', function() {
-            chrome.contextMenus.removeAll();
-        });
-    }
 //#endif
     function checkContextMenuPref() {
         var storageArea = chrome.storage.sync;
@@ -88,11 +82,6 @@
             id: MENU_ID_PAGE_ACTION,
             title: 'Hide this button',
             contexts: ['page_action'],
-            onclick: function() {
-                storageArea.set({showPageAction: false});
-                // background.js will now pick up the storage change
-                // and disable page actions.
-            },
         });
 //#endif
         chrome.contextMenus.create({
@@ -107,9 +96,6 @@
             type: 'radio',
             checked: true,
             contexts: ['page_action'],
-//#if FIREFOX
-            onclick: contextMenusOnClicked,
-//#endif
         });
         // Note: Keep the same order as in popup.html for consistency.
         chrome.contextMenus.create({
@@ -118,9 +104,6 @@
             title: 'Download as zip',
             type: 'radio',
             contexts: ['page_action'],
-//#if FIREFOX
-            onclick: contextMenusOnClicked,
-//#endif
         });
         chrome.contextMenus.create({
             id: MENU_ID_ACTION_MENU_VIEW_SOURCE,
@@ -128,9 +111,6 @@
             title: 'View source',
             type: 'radio',
             contexts: ['page_action'],
-//#if FIREFOX
-            onclick: contextMenusOnClicked,
-//#endif
         });
     }
 
@@ -142,6 +122,14 @@
     }
     
     function contextMenusOnClicked(info, tab) {
+//#if FIREFOX
+        if (info.menuItemId === MENU_ID_PAGE_ACTION) {
+            // background.js will now pick up the storage change
+            // and disable page actions.
+            chrome.storage.sync.set({showPageAction: false});
+            return;
+        }
+//#endif
         if (info.menuItemId.startsWith(MENU_ID_ACTION_MENU)) {
             var choice = info.menuItemId.slice(MENU_ID_ACTION_MENU.length);
             chrome.storage.sync.set({actionClickAction: choice});
@@ -157,9 +145,7 @@
             active: true
         });
     }
-//#if !FIREFOX
     chrome.contextMenus.onClicked.addListener(contextMenusOnClicked);
-//#endif
 
     function updateLinkMenu(contextmenuPatterns, forceUpdate) {
         if (!contextmenuPatterns ||
@@ -177,9 +163,6 @@
             id: MENU_ID_LINK,
             title: 'View linked extension source',
             contexts: ['link'],
-//#if FIREFOX
-            onclick: contextMenusOnClicked,
-//#endif
             targetUrlPatterns: DEFAULT_LINK_TARGET_URL_PATTERNS,
         });
         // AMO lists multiple versions, specifically state that this
@@ -188,25 +171,12 @@
             id: MENU_ID_AMO_APPROVED_LINK,
             title: 'View linked extension source (latest approved version)',
             contexts: ['link'],
-//#if FIREFOX
-            onclick: contextMenusOnClicked,
-//#endif
             targetUrlPatterns: amo_match_patterns,
         });
-//#if FIREFOX
-        if (/Firefox\/4\d\./.test(navigator.userAgent)) {
-            // documentUrlPatterns was not supported until 50, the menu is always hidden (bugzil.la/1275116).
-            // Not returning causes a useless menu item to appear on every page in Firefox 46 and 47 (bugzil.la/1250685).
-            return;
-        }
-//#endif
         chrome.contextMenus.create({
             id: MENU_ID_PAGE,
             title: 'View extension source',
             contexts: ['all'],
-//#if FIREFOX
-            onclick: contextMenusOnClicked,
-//#endif
             documentUrlPatterns: [
                 cws_match_pattern,
                 ows_match_pattern,
@@ -218,9 +188,6 @@
             id: MENU_ID_AMO_APPROVED_PAGE,
             title: 'View extension source (latest approved version)',
             contexts: ['page', 'frame', 'link'],
-//#if FIREFOX
-            onclick: contextMenusOnClicked,
-//#endif
             documentUrlPatterns: amo_match_patterns,
         });
     }

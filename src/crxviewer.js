@@ -2033,16 +2033,6 @@ function setBlobAsDownload(zipname, blob) {
     dl_link.href = URL.createObjectURL(blob);
     dl_link.download = zipname;
     dl_link.title = 'Download zip file as ' + zipname + ' (' + formatByteSize(blob.size) + ' bytes)';
-//#if FIREFOX
-//  // If e10s is enabled, then <a download> ceases to work with blob:moz-extension-URLs.
-//  // (bugzil.la/1287346). So work around this by converting the blob-URL to a data-URL.
-//  if (!/Firefox\/4\d\./.test(navigator.userAgent)) return; // Fixed in Firefox 50
-//  var fr = new FileReader();
-//  fr.onloadend = function() {
-//      dl_link.href = fr.result;
-//  };
-//  fr.readAsDataURL(blob);
-//#endif
 }
 function setRawCRXAsDownload(zipname, arraybuffer) {
     var dl_link = document.getElementById('download-link-crx');
@@ -2057,16 +2047,6 @@ function setRawCRXAsDownload(zipname, arraybuffer) {
     var crxname = zipname.replace(/\.zip$/i, '.crx');
     dl_link.download = crxname;
     dl_link.title = 'Download original CRX file as ' + crxname;
-//#if FIREFOX
-//  // If e10s is enabled, then <a download> ceases to work with blob:moz-extension-URLs.
-//  // (bugzil.la/1287346). So work around this by converting the blob-URL to a data-URL.
-//  if (!/Firefox\/4\d\./.test(navigator.userAgent)) return; // Fixed in Firefox 50
-//  var fr = new FileReader();
-//  fr.onloadend = function() {
-//      dl_link.href = fr.result;
-//  };
-//  fr.readAsDataURL(blob);
-//#endif
 }
 function setPublicKey(publicKey) {
     if (!publicKey) {

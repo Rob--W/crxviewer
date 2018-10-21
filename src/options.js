@@ -92,14 +92,6 @@ storageArea.get({
 });
 
 //#if FIREFOX
-if (/Firefox\/4\d\./.test(navigator.userAgent)) {
-    document.getElementById('contextmenu').parentNode.insertAdjacentHTML('beforeend',
-        '<em>Because of a <a href="https://bugzil.la/1275126">bug in Firefox</a>, ' +
-       'the menu item appears on all links (instead of just the addon links). ' +
-       'This bug has been fixed in Firefox 50.</em>');
-    // ^ If not done by someone else I will submit a patch, hence that statement must be true.
-}
-
 document.getElementById('pageaction').onchange = function() {
     storageArea.set({showPageAction: this.checked});
 };

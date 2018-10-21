@@ -217,10 +217,6 @@ function is_crx_download_url(url) {
 // returned.
 function getParam(name, querystring) { // Assume name contains no RegEx-specific char
     var haystack = querystring || location.search || location.hash;
-//#if FIREFOX || WEB
-    // Work-around for bugzil.la/719905 - see encodeQueryString below.
-    haystack = haystack.replace(/%u003A/g, '%3A');
-//#endif
     var pattern, needle, match;
     if (name.slice(-2, name.length) === '[]') {
         pattern = new RegExp('[&?#]' + name.slice(0, -2) + '\\[\\]=([^&]*)', 'g');
@@ -250,12 +246,6 @@ function encodeQueryString(params) {
     return parts.join('&');
     function encodeQueryStringPart(key, value) {
         value = encodeURIComponent(value);
-//#if FIREFOX
-        // Work-around for bugzil.la/719905 - colons in URL break loading the URL.
-        if (/Firefox\/[34]\d/.test(navigator.userAgent)) {
-            value = value.replace(/%3A/g, '%u003A');
-        }
-//#endif
         return key + '=' + value;
     }
 }

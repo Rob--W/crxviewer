@@ -142,7 +142,8 @@
 
         chrome.tabs.create({
             url: chrome.extension.getURL('crxviewer.html') + '?' + params,
-            active: true
+            active: true,
+            index: tab ? tab.index + 1 : undefined,
         });
     }
     chrome.contextMenus.onClicked.addListener(contextMenusOnClicked);

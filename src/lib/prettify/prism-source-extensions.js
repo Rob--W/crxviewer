@@ -23,9 +23,6 @@ if (typeof importScripts === 'function') { // In a Web Worker.
 }
 
 Prism.hooks.add('wrap', function(env) {
-    // Delete spellcheck attribute (from core).
-    delete env.attributes.spellcheck;
-
     // Delete title attributes (from markup).
     // (they preview HTML entities, but in XUL add-ons custom entities
     //  are very common, so highlighting them only adds noise).

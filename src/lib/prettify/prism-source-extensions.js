@@ -12,12 +12,9 @@
            console */
 
 if (typeof importScripts === 'function') { // In a Web Worker.
-    // Prism.js adds an "message" handler unless "addEventListener" is absent.
-    // So temporarily null it.
-    var ael = self.addEventListener;
-    self.addEventListener = null;
+    // Disable Prism.js's message handler; we are going to take care of it.
+    self.Prism = {disableWorkerMessageHandler: true};
     importScripts('prism.js');
-    self.addEventListener = ael;
     self.addEventListener('message', function(event) {
         self.postMessage('PRISM_ROB_WORKER_MSG_RECEIVED');
         self.postMessage(

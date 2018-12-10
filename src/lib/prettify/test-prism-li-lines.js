@@ -14,6 +14,7 @@ function checkHighlightSource(extension, input, expected) {
     // wrapped in a block-level element.
     expected = expected.replace(/\n<li/g, '<li');
     // Normalize appearance, in case we change the fixed attributes.
+    actual = actual.replace(/^<ol class="line-nums"/, '<ol');
     actual = actual.replace(/<li class="odd-code-line"/g, '<li');
     console.assert(expected == actual, `highlightSource with ${extension}
 ${input}

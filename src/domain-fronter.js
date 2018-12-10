@@ -18,8 +18,8 @@
 
 (() => {
     let DOMAIN_FRONTS = new Map();
-    DOMAIN_FRONTS.set('addons.mozilla.org', 'reviewers.addons.mozilla.org');
-    DOMAIN_FRONTS.set('addons.cdn.mozilla.net', 'd1sp2sgy246t7c.cloudfront.net');
+    DOMAIN_FRONTS.set('addons.mozilla.org', 'addons.mozilla.org.');
+    DOMAIN_FRONTS.set('addons.cdn.mozilla.net', 'addons.cdn.mozilla.net.');
 
     const REQUEST_ID_HEADER = 'random-id-to-map-xhr-to-domain-fronter';
     let thisTabId = -1;

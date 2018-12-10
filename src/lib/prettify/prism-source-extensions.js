@@ -217,7 +217,10 @@ Prism.rob.extToLanguage = function(ext) {
     case 'scss':
         return 'scss';
     case 'ts':
+    case 'tsx': // "tsx" in Prism is an alias for "typescript".
         return 'typescript';
+    case 'wat':
+        return 'wasm';
     default:
         return '';
     }

@@ -129,7 +129,7 @@ function getGenericType(filename) {
         return '';
     }
     var extension = filename.split('.').pop().toLowerCase();
-    if (/^(js|coffee)$/.test(extension)) {
+    if (/^(jsx?|tsx?|wat|coffee)$/.test(extension)) {
         return 'code';
     }
     if (/^(bmp|cur|gif|ico|jpe?g|png|psd|svg|tiff?|xcf|webp)$/.test(extension)) {

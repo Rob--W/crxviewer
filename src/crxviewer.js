@@ -1274,6 +1274,7 @@ var checkAndApplyFilter = (function() {
                 filteredFilenames.push(filename);
             }
         }
+        renderTotalFileSize();
     }
     // Filter on files containing |searchTerm|. See search-worker.js for the algorithm.
     function grepSearch(searchTerm) {
@@ -1290,8 +1291,23 @@ var checkAndApplyFilter = (function() {
                 listItem.classList.toggle('grep-unknown', found === null);
                 listItem.classList.toggle('grep-no-match', found === false);
             }
+            renderTotalFileSize();
         });
         textSearchEngine.doPlaintextSearch(searchTerm, filteredFilenames);
+    }
+    function renderTotalFileSize() {
+        var listItems = document.querySelectorAll('#file-list li:not(.file-filtered):not(.grep-no-match)');
+        var totalUncompressedSize = 0;
+        for (var i = 0; i < listItems.length; ++i) {
+            var listItem = listItems[i];
+            if (listItem.gtypefiltered) continue;
+            totalUncompressedSize += listItem.zipEntry.uncompressedSize;
+        }
+        var totalSizeElem = document.getElementById('total-size');
+        // parentNode = .total-size-wrapper
+        totalSizeElem.parentNode.hidden = totalUncompressedSize === 0;
+        totalSizeElem.title = 'Total size: ' + formatByteSize(totalUncompressedSize) + ' bytes';
+        totalSizeElem.textContent = formatByteSizeSuffix(totalUncompressedSize);
     }
     var debounceGrep;
     function checkAndApplyFilter(shouldDebounce) {
@@ -1407,6 +1423,12 @@ var checkAndApplyFilter = (function() {
 //#endif
             function updateFileListView() {
                 fileList.classList.toggle('gfilter-' + checkbox.dataset.filterType, !checkbox.checked);
+                // Save filter state for renderTotalFileSize.
+                var gtypefiltered = !checkbox.checked;
+                [].forEach.call(fileList.querySelectorAll('li.gtype-' + checkbox.dataset.filterType), function(li) {
+                    li.gtypefiltered = gtypefiltered;
+                });
+                renderTotalFileSize();
             }
         });
     })();

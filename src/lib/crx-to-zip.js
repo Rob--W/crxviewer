@@ -6,6 +6,7 @@
 
 /* exported openCRXasZip */
 /* jshint browser:true, devel:true */
+/* globals CryptoJS */ // For sha256 hash calculation
 'use strict';
 
 // Strips CRX headers from zip
@@ -40,7 +41,7 @@ var CRXtoZIP = (function() {
             zipStartOffset = 16 + publicKeyLength + signatureLength;
 
             // Public key
-            publicKeyBase64 = getAsBase64(view, 16, 16 + publicKeyLength);
+            publicKeyBase64 = btoa(getBinaryString(view, 16, 16 + publicKeyLength));
         } else { // view[4] === 3
             // CRX3 - https://cs.chromium.org/chromium/src/components/crx_file/crx3.proto
             var crx3HeaderLength = calcLength(view[ 8], view[ 9], view[10], view[11]);
@@ -67,12 +68,12 @@ var CRXtoZIP = (function() {
         length += d << 24 >>> 0;
         return length;
     }
-    function getAsBase64(bytesView, startOffset, endOffset) {
+    function getBinaryString(bytesView, startOffset, endOffset) {
         var binaryString = '';
         for (var i = startOffset; i < endOffset; ++i) {
             binaryString += String.fromCharCode(bytesView[i]);
         }
-        return btoa(binaryString);
+        return binaryString;
     }
     function getPublicKeyFromProtoBuf(bytesView, startOffset, endOffset) {
         // Protobuf definition: https://cs.chromium.org/chromium/src/components/crx_file/crx3.proto
@@ -81,6 +82,9 @@ var CRXtoZIP = (function() {
         // To find the public key:
         // 1. Look for CrxFileHeader.sha256_with_rsa (field number 2).
         // 2. Look for AsymmetricKeyProof.public_key (field number 1).
+        // 3. Look for CrxFileHeader.signed_header_data (SignedData.crx_id).
+        //    This has 16 bytes (128 bits). Verify that those match with the
+        //    first 128 bits of the sha256 hash of the chosen public key.
 
         function getvarint() {
             // Note: We don't do bound checks (startOffset < endOffset) here,
@@ -100,18 +104,38 @@ var CRXtoZIP = (function() {
             return val;
         }
 
+        var publicKeys = [];
+        var crxIdBin;
         while (startOffset < endOffset) {
             var key = getvarint();
             var length = getvarint();
+            if (key === 80002) { // This is ((10000 << 3) | 2) (signed_header_data).
+                var sigdatakey = getvarint();
+                var sigdatalen = getvarint();
+                if (sigdatakey !== 0xA) {
+                    console.warn('proto: Unexpected key in signed_header_data: ' + sigdatakey);
+                } else if (sigdatalen !== 16) {
+                    console.warn('proto: Unexpected signed_header_data length ' + length);
+                } else if (crxIdBin) {
+                    console.warn('proto: Unexpected duplicate signed_header_data');
+                } else {
+                    crxIdBin = bytesView.subarray(startOffset, startOffset + 16);
+                }
+                startOffset += sigdatalen;
+                continue;
+            }
             if (key !== 0x12) {
-                // Likely 0x1a (sha256_with_ecdsa) or 0x82f104 (signed_header_data).
+                // Likely 0x1a (sha256_with_ecdsa).
+                if (key != 0x1a) {
+                    console.warn('proto: Unexpected key: ' + key);
+                }
                 startOffset += length;
                 continue;
             }
             // Found 0x12 (sha256_with_rsa); Look for 0xA (public_key).
+            var keyproofend = startOffset + length;
             var keyproofkey = getvarint();
             var keyprooflength = getvarint();
-            var keyproofend = startOffset + length;
             // AsymmetricKeyProof could contain 0xA (public_key) or 0x12 (signature).
             if (keyproofkey === 0x12) {
                 startOffset += keyprooflength;
@@ -132,8 +156,25 @@ var CRXtoZIP = (function() {
                 break;
             }
             // Found 0xA (public_key).
-            return getAsBase64(bytesView, startOffset, startOffset + keyprooflength);
+            publicKeys.push(getBinaryString(bytesView, startOffset, startOffset + keyprooflength));
+            startOffset = keyproofend;
         }
+        if (!publicKeys.length) {
+            console.warn('proto: Did not find any public key');
+            return;
+        }
+        if (!crxIdBin) {
+            console.warn('proto: Did not find crx_id');
+            return;
+        }
+        var crxIdHex = CryptoJS.enc.Latin1.parse(getBinaryString(crxIdBin, 0, 16)).toString();
+        for (var i = 0; i < publicKeys.length; ++i) {
+            var sha256sum = CryptoJS.SHA256(CryptoJS.enc.Latin1.parse(publicKeys[i])).toString();
+            if (sha256sum.slice(0, 32) === crxIdHex) {
+                return btoa(publicKeys[i]);
+            }
+        }
+        console.warn('proto: None of the public keys matched with crx_id');
     }
     return CRXtoZIP;
 })();

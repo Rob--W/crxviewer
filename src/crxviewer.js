@@ -1746,8 +1746,10 @@ function showAdvancedOpener() {
 // If called repeatedly: Will only call the callback of the last call.
 function getXpis(amodomain, slugorid, page, callback) {
     var apiUrl = 'https://' + amodomain + '/api/v4/addons/addon/' + slugorid + '/versions/';
+    // Have smaller response bodies by only including one language.
+    apiUrl += '?lang=en-US';
     if (page) {
-        apiUrl += '?page=' + page;
+        apiUrl += '&page=' + page;
     } else {
         // When the page parameter is omitted, it defaults to 1.
         page = 1;

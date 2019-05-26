@@ -1650,10 +1650,18 @@ function showAdvancedOpener() {
         var amodescription = amoOptions.querySelector('.amodescription');
         var slugorid = amoOptions.querySelector('input[name="amoslugorid"]').value;
         amodescription.textContent = 'Searching for add-ons with slug or ID: ' + slugorid;
-        getXpis(amodomain, slugorid, function(description, results) {
+        var amoxpilist = amoOptions.querySelector('.amoxpilist');
+        getXpis(amodomain, slugorid, 0, function(description, results, nextPage) {
             amodescription.textContent = description;
-            var amoxpilist = amoOptions.querySelector('.amoxpilist');
             amoxpilist.textContent = '';
+            appendResults(results);
+            if (nextPage) {
+                showMoreResultsPager(nextPage);
+            }
+        });
+
+        function appendResults(results) {
+            var fragment = document.createDocumentFragment();
             results.forEach(function(result) {
                 var a = document.createElement('a');
                 a.textContent = 'Version ' + result.version + ' (' + result.platform + '), ' + result.createdDate.toLocaleString();
@@ -1666,11 +1674,40 @@ function showAdvancedOpener() {
                     event.preventDefault();
                     closeViewAndOpenCrxUrl(result.url);
                 };
-                amoxpilist.appendChild(document.createElement('li')).appendChild(a);
+                var li = document.createElement('li');
+                li.appendChild(a);
+                fragment.appendChild(li);
             });
-        });
-//#if WEB
-//#endif
+            amoxpilist.appendChild(fragment);
+        }
+        function showMoreResultsPager(page) {
+            var li = document.createElement('li');
+            var button = document.createElement('button');
+            button.textContent = 'Show more versions from page ' + page;
+            button.onclick = function(e) {
+                e.preventDefault();
+                button.disabled = true;
+                getXpis(amodomain, slugorid, page, function(description, results, nextPage) {
+                    if (!results.length) {
+                        // Odd. The button should only be shown if there are more items.
+                        // There might be an intermittent (network) error,
+                        // so allow the user to retry the same action.
+                        button.disabled = false;
+                        return;
+                    }
+                    appendResults(results);
+                    if (nextPage) {
+                        // Replace button with page separator.
+                        li.textContent = 'Results from page ' + page + ':';
+                        showMoreResultsPager(nextPage);
+                    } else {
+                        li.remove();
+                    }
+                });
+            };
+            li.appendChild(button);
+            amoxpilist.appendChild(li);
+        }
     };
     fileInput.onchange = function() {
         var file = fileInput.files[0];
@@ -1705,9 +1742,16 @@ function showAdvancedOpener() {
 }
 
 // Calls callback(description, Array<{url:String, version:String, platform:String}>)
+// If there are more results: The callback will include a third parameter with a non-zero page number to use.
 // If called repeatedly: Will only call the callback of the last call.
-function getXpis(amodomain, slugorid, callback) {
+function getXpis(amodomain, slugorid, page, callback) {
     var apiUrl = 'https://' + amodomain + '/api/v4/addons/addon/' + slugorid + '/versions/';
+    if (page) {
+        apiUrl += '?page=' + page;
+    } else {
+        // When the page parameter is omitted, it defaults to 1.
+        page = 1;
+    }
 //#if WEB
     getXpis.fallbackToCORSAnywhere = true;
 //#endif
@@ -1723,7 +1767,7 @@ function getXpis(amodomain, slugorid, callback) {
 
         if (!x.status && !getXpis.fallbackToCORSAnywhere) {
             getXpis.fallbackToCORSAnywhere = true;
-            getXpis(amodomain, slugorid, callback);
+            getXpis(amodomain, slugorid, page, callback);
             return;
         }
         if (x.status === 401 || x.status === 403) {
@@ -1734,6 +1778,8 @@ function getXpis(amodomain, slugorid, callback) {
             callback('No results found for: ' + slugorid, []);
             return;
         }
+        var nextPage = 0;
+        var totalVersions = 0;
         var results = [];
         try {
             var response = JSON.parse(x.responseText);
@@ -1747,9 +1793,17 @@ function getXpis(amodomain, slugorid, callback) {
                     });
                 });
             });
+            if (response.next) {
+                nextPage = page + 1;
+            }
+            totalVersions = response.count;
         } catch (e) {
             console.error('Failed to parse response', e);
             callback('Unexpected response from add-ons server (' + e + ').', results);
+            return;
+        }
+        if (nextPage) {
+            callback('Found ' + totalVersions + ' results', results, nextPage);
             return;
         }
         callback('Found ' + results.length + ' recent results.', results);

@@ -1653,6 +1653,14 @@ function showAdvancedOpener() {
         var amoxpilist = amoOptions.querySelector('.amoxpilist');
         getXpis(amodomain, slugorid, 0, function(description, results, nextPage) {
             amodescription.textContent = description;
+            if (results.length) {
+                var a = document.createElement('a');
+                a.href = 'https://' + amodomain + '/addon/' + slugorid;
+                a.textContent = 'add-on listing';
+                amodescription.appendChild(document.createTextNode(' ('));
+                amodescription.appendChild(a);
+                amodescription.appendChild(document.createTextNode(')'));
+            }
             amoxpilist.textContent = '';
             appendResults(results);
             if (nextPage) {

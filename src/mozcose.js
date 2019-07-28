@@ -161,8 +161,8 @@ if (typeof require !== 'undefined') {
             console.log('Input:', data);
             let der = parseMozCOSE(data);
             asn1lite.parseDERTLVs(der, asn1lite.tlvInfo);
-            let name = asn1lite.parseCertificate(der);
-            console.log(`commonName: ${name}`);
+            let subject = asn1lite.parseCertificate(der);
+            console.log(`subject: ${JSON.stringify(subject)}`);
         });
     } else {
         module.exports = {

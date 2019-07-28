@@ -11,17 +11,22 @@
 
 const TAG_CLASS_UNIVERSAL = 0;
 const TAG_CLASS_CONTEXT = 2;
-const TAG_NUMBER_SEQUENCE = 16;
-const TAG_NUMBER_SET = 17;
 
 const TYPE_OBJECT_IDENTIFIER = 6;
 const TYPE_UTF8STRING = 12;
-const TYPE_T61String = 20;
+const TYPE_SEQUENCE = 16;
+const TYPE_SET = 17;
+const TYPE_PrintableString = 19;
+const TYPE_TeletexString = 20;
+const TYPE_UTCTime = 23;
+const TYPE_GeneralizedTime = 24;
 
-// { joint-iso-ccitt(2) ds(5) 4 }
+// id-at = { joint-iso-ccitt(2) ds(5) 4 }
 const OID_ID_AT = [2, 5, 4];
-// { id-at 3 }
+// id-at-commonName = { id-at 3 }
 const OID_ID_AT_COMMONNAME = OID_ID_AT.concat([3]);
+// id-at-organizationalUnitName = { id-at 11 }
+const OID_ID_AT_ORGANIZATIONALUNITNAME = OID_ID_AT.concat([11]);
 
 const universalTypes = [
     "reserved for BER",
@@ -140,8 +145,8 @@ function parseDERTLVs(data, cb, depth = 0, originalOffset = 0) {
         let valueOffset = tlvOffset + headerLength;
         cb(tlv, depth, tlvOffset);
         if (tlv.tagClass === TAG_CLASS_UNIVERSAL) {
-            if (tlv.tagNumber === TAG_NUMBER_SEQUENCE ||
-                tlv.tagNumber === TAG_NUMBER_SET) {
+            if (tlv.tagNumber === TYPE_SEQUENCE ||
+                tlv.tagNumber === TYPE_SET) {
                 parseDERTLVs(tlv.value, cb, depth + 1, valueOffset);
             }
         } else if (tlv.tagClass === TAG_CLASS_CONTEXT) {
@@ -176,31 +181,31 @@ function parseOID(tlv) {
 }
 
 /**
- * Parses a string from a TLV.
+ * Parses a string from a DirectoryString TLV.
  *
  * @param {object} tlv - A TLV from parseDERTLV.
- * @returns {null|string} A string if the TLV is a supported string type or null
- * otherwise.
- * @throws {Error} The type is recognized, but contains unsupported characters.
+ * @returns {string} A string if the TLV is a supported string type.
+ * @throws {Error} Unrecognized type or invalid characters.
  */
-function parseString(tlv) {
+function parseDirectoryString(tlv) {
     if (tlv.tagClass !== TAG_CLASS_UNIVERSAL) {
-        return null;
+        throw new Error(`Unsupported tag class: ${tlv.tagClass}`);
     }
     let value = tlv.value;
     switch (tlv.tagNumber) {
-        case TYPE_UTF8STRING:
-            return new TextDecoder().decode(value);
-        case TYPE_T61String:
+        case TYPE_TeletexString:
             for (let i = 0; i < value.length; i++) {
                 let c = value[0];
                 if (!(c >= 0x20 && c <= 0x7e)) {
-                    throw new Error(`Unsupported character in T61String: ${c}`);
+                    throw new Error(`Unsupported character in TeletexString: ${c}`);
                 }
             }
             return new TextDecoder().decode(value);
+        case TYPE_PrintableString:  // do not bother with validation, gigo.
+        case TYPE_UTF8STRING:
+            return new TextDecoder().decode(value);
         default:
-            return null;
+            throw new Error(`Unsupported string, TLV tag ${tlv.tagNumber}`);
     }
 }
 
@@ -224,42 +229,61 @@ function tlvInfo(tlv, depth, tlvOffset) {
 }
 
 /**
- * Parses the Subject commonName from a given DER-encoded certificate.
+ * Parses the Subject from a given DER-encoded certificate.
  *
  * @param {Uint8Array|Buffer} data - An array of bytes.
- * @returns {string} The Subject commonName.
+ * @returns {object} The Subject from the certificate with CN and OU keys.
  * @throws {Error} If the data was invalid.
  */
 function parseCertificate(data) {
-    // A Certificate has a commonName field in the Issuer and Subject fields.
-    // Look for the second commonName OID and obtain the next string value.
-    let commonNameCount = 0;
-    let foundKey = false;
-    let value;
-    let tlvCallback = (tlv) => {
-        if (value) {
-            return;
+    let validityDepth;
+    let oid;
+    let subject = {};
+    // 0 - Look for start of Subject
+    // 1 - in Subject
+    // 2 - after Subject.
+    let stage = 0;
+    let tlvCallback = (tlv, depth) => {
+        switch (stage) {
+            case 0:     // Looking for Subject.
+                if ([TYPE_UTCTime, TYPE_GeneralizedTime].includes(tlv.tagNumber)) {
+                    // The notBefore and notAfter fields occur before the Subject.
+                    validityDepth = depth - 1;
+                }
+                if (tlv.tagNumber === TYPE_SEQUENCE && depth === validityDepth) {
+                    // The next TLVs must be the Subject.
+                    stage = 1;
+                }
+                break;
+
+            case 1:     // In subject
+                if (validityDepth === depth) {
+                    // Reached subjectPublicKeyInfo which is after Subject.
+                    stage = 2;
+                    break;
+                }
+                // Look for RDNSequence, type (OID) followed by value
+                if (!oid) {
+                    oid = parseOID(tlv);
+                } else {
+                    switch (oid.toString()) {
+                        case OID_ID_AT_COMMONNAME.toString():
+                            subject.CN = parseDirectoryString(tlv);
+                            break;
+                        case OID_ID_AT_ORGANIZATIONALUNITNAME.toString():
+                            subject.OU = parseDirectoryString(tlv);
+                            break;
+                    }
+                    oid = undefined;
+                }
+                break;
         }
-        if (foundKey) {
-            value = tlv;
-            return;
-        }
-        let oid = parseOID(tlv);
-        if (!oid || oid.toString() !== OID_ID_AT_COMMONNAME.toString()) {
-            return;
-        }
-        commonNameCount++;
-        foundKey = commonNameCount === 2;
     };
     parseDERTLVs(data, tlvCallback);
-    if (!value) {
-        throw new Error('Could not find second commonName');
+    if (stage !== 2) {
+        throw new Error(`Could not parse Subject fields at stage ${stage}`);
     }
-    let name = parseString(value);
-    if (!name) {
-        throw new Error(`Failed to parse commonName: ${JSON.stringify(value)}`);
-    }
-    return name;
+    return subject;
 }
 
 if (typeof require !== 'undefined') {
@@ -274,8 +298,8 @@ if (typeof require !== 'undefined') {
             }
             console.log('Input:', data);
             parseDERTLVs(data, tlvInfo);
-            let name = parseCertificate(data);
-            console.log(`commonName: ${name}`);
+            let subject = parseCertificate(data);
+            console.log(`subject: ${JSON.stringify(subject)}`);
         });
     } else {
         module.exports = {

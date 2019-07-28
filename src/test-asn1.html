@@ -16,20 +16,20 @@ document.querySelector("input").onchange = (ev) => {
     }
     console.log(f);
     let parse = (buf) => {
-        let msg = `Loading ${f.name}, ${f.size} bytes\n`, name;
+        let msg = `Loading ${f.name}, ${f.size} bytes\n`, subject;
         try {
             // Try DER
             msg += '\nTrying to decode as DER-encoded X.509 Certificate...\n';
             parseDERTLVs(buf, tlvInfo);
-            name = parseCertificate(buf);
-            msg += `Success: name is ${name}`;
+            subject = parseCertificate(buf);
+            msg += `Success: subject is ${JSON.stringify(subject)}`;
         } catch (e) {
             msg += `Failed: ${e}\n`;
             msg += '\nTrying to decode as Mozilla COSE signature...\n';
             try {
                 let der = parseMozCOSE(buf);
-                name = parseCertificate(der);
-                msg += `Success: name is ${name}`;
+                subject = parseCertificate(der);
+                msg += `Success: subject is ${JSON.stringify(subject)}`;
             } catch (e2) {
                 msg += `Failed: ${e}\n`;
                 msg += 'Unknown file type!';

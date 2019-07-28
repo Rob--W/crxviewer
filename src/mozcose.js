@@ -6,6 +6,7 @@
 
 // jshint esversion:6
 /* globals TextDecoder */
+/* exported parseMozCOSE */
 'use strict';
 
 const CBOR_MT_INT = 0;
@@ -31,7 +32,6 @@ function decodeInitial(buffer) {
         case 24:    // 1 byte unsigned integer follows
         case 25:    // 2 byte unsigned integer follows
         case 26:    // 4 byte unsigned integer follows
-        case 27:    // 8 byte unsigned integer follows
             valueLength = 1 << (additionalInfo - 24);
             if (buffer.length < 1 + valueLength) {
                 throw new Error('Buffer too small for value');
@@ -43,6 +43,9 @@ function decodeInitial(buffer) {
             // Treat as unsigned integer.
             value >>>= 0;
             break;
+
+        case 27:    // 8 byte unsigned integer follows
+            throw new Error('Unsupported 8 byte unsigned integer');
 
         case 28:    // reserved
         case 29:    // reserved
@@ -73,7 +76,7 @@ function decodeInitial(buffer) {
                 case CBOR_VALUE_NULL:
                     break;
                 default:
-                    throw new Error('Unsupported stop code, float or other simple type.');
+                    throw new Error('Unsupported stop code, float or other simple type');
             }
     }
 
@@ -91,11 +94,21 @@ function decodeValue(data, majorType, expected) {
     return [value, nextData];
 }
 
+/**
+ * Parse a DER-encoded signing certificate from a COSE signature.
+ *
+ * @param {Uint8Array|Buffer} data - An array of bytes.
+ * @returns {Uint8Array|Buffer} The slice representing the DER-encoded
+ * certificate that is used for signing.
+ * @throws {Error} If the data was invalid.
+ */
 function parseMozCOSE(data) {
+    // Parses Mozilla's dialect of COSE as described at
+    // https://github.com/franziskuskiefer/cose-rust/issues/60
     let arrLen, mapData, mapSize;
     // Expect cose-sign (CBOR Tag 98);
     [, data] = decodeValue(data, CBOR_MT_TAG, 98);
-    // Expected:
+    // Expected: an array with four elements:
     //  / protected /       bytes
     //  / unprotected /     map (assume empty)
     //  / payload /         null
@@ -107,7 +120,7 @@ function parseMozCOSE(data) {
     [arrLen, data] = decodeValue(data, CBOR_MT_ARRAY);
     // One signature for every signing certificate.
     for (let i = 0; i < arrLen; i++) {
-        // Expected:
+        // Expected: an array with three elements:
         //  / protected /       bytes
         //  / unprotected /     map (assume empty)
         //  / signature /       bytes

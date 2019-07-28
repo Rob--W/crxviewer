@@ -6,6 +6,7 @@
 
 // jshint esversion:6
 /* globals TextDecoder */
+/* exported parseCertificate, parseDERTLVs, tlvInfo */
 'use strict';
 
 const TAG_CLASS_UNIVERSAL = 0;
@@ -115,6 +116,22 @@ function parseDERTLV(buffer) {
     };
 }
 
+/**
+ * Callback for a parsed TLV.
+ *
+ * @callback tlvCallback
+ * @param {object} tlv - A TLV from parseDERTLV.
+ * @param {number} depth - The tree depth, starting at zero and increasing for
+ * sequence or set types.
+ * @param {number} tlvOffset - The absolute offset within the original buffer.
+ */
+
+/**
+ * Parses the a series of DER-encoded TLVs.
+ *
+ * @param {Uint8Array|Buffer} data - An array of bytes.
+ * @param {tlvCallback} cb - The callback that is called for every TLV.
+ */
 function parseDERTLVs(data, cb, depth = 0, originalOffset = 0) {
     for (let offset = 0; offset < data.length;) {
         let tlv = parseDERTLV(data.slice(offset));
@@ -134,8 +151,15 @@ function parseDERTLVs(data, cb, depth = 0, originalOffset = 0) {
     }
 }
 
+/**
+ * Parses an OID from a TLV.
+ *
+ * @param {object} tlv - A TLV from parseDERTLV.
+ * @returns {null|number[]} An array of integers representing the OID or
+ * null if the TLV is not an OID type.
+ */
 function parseOID(tlv) {
-    if (tlv.tagClass != TAG_CLASS_UNIVERSAL || tlv.tagNumber !== TYPE_OBJECT_IDENTIFIER) {
+    if (tlv.tagClass !== TAG_CLASS_UNIVERSAL || tlv.tagNumber !== TYPE_OBJECT_IDENTIFIER) {
         return null;
     }
     let d = tlv.value;
@@ -151,8 +175,16 @@ function parseOID(tlv) {
     return oid;
 }
 
+/**
+ * Parses a string from a TLV.
+ *
+ * @param {object} tlv - A TLV from parseDERTLV.
+ * @returns {null|string} A string if the TLV is a supported string type or null
+ * otherwise.
+ * @throws {Error} The type is recognized, but contains unsupported characters.
+ */
 function parseString(tlv) {
-    if (tlv.tagClass != TAG_CLASS_UNIVERSAL) {
+    if (tlv.tagClass !== TAG_CLASS_UNIVERSAL) {
         return null;
     }
     let value = tlv.value;
@@ -172,7 +204,10 @@ function parseString(tlv) {
     }
 }
 
-// Generate debug output, similar to 'openssl asn1parse'.
+/**
+ * Generate debug output, similar to 'openssl asn1parse'. For use with
+ * parseDERTLVs.
+ */
 function tlvInfo(tlv, depth, tlvOffset) {
     let headerLength = tlv.size - tlv.value.length;
     let valueOffset = tlvOffset + headerLength;
@@ -188,7 +223,13 @@ function tlvInfo(tlv, depth, tlvOffset) {
     );
 }
 
-// Returns the Subject commonName for a given DER-encoded certificate.
+/**
+ * Parses the Subject commonName from a given DER-encoded certificate.
+ *
+ * @param {Uint8Array|Buffer} data - An array of bytes.
+ * @returns {string} The Subject commonName.
+ * @throws {Error} If the data was invalid.
+ */
 function parseCertificate(data) {
     // A Certificate has a commonName field in the Issuer and Subject fields.
     // Look for the second commonName OID and obtain the next string value.
@@ -204,7 +245,7 @@ function parseCertificate(data) {
             return;
         }
         let oid = parseOID(tlv);
-        if (!oid || oid.toString() != OID_ID_AT_COMMONNAME.toString()) {
+        if (!oid || oid.toString() !== OID_ID_AT_COMMONNAME.toString()) {
             return;
         }
         commonNameCount++;

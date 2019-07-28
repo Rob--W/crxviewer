@@ -1,0 +1,45 @@
+<!doctype html>
+<meta charset="utf8">
+<script src="asn1lite.js"></script>
+<script src="mozcose.js"></script>
+<input type="file">
+<pre id="message"></pre>
+<script>
+function showMessage(text) {
+    document.querySelector("#message").textContent = Date() + "\n" + text;
+}
+document.querySelector("input").onchange = (ev) => {
+    let f = ev.target.files[0];
+    if (!f) {
+        showMessage('No file selected');
+        return;
+    }
+    console.log(f);
+    let parse = (buf) => {
+        let msg = `Loading ${f.name}, ${f.size} bytes\n`, name;
+        try {
+            // Try DER
+            msg += '\nTrying to decode as DER-encoded X.509 Certificate...\n';
+            parseDERTLVs(buf, tlvInfo);
+            name = parseCertificate(buf);
+            msg += `Success: name is ${name}`;
+        } catch (e) {
+            msg += `Failed: ${e}\n`;
+            msg += '\nTrying to decode as Mozilla COSE signature...\n';
+            try {
+                let der = parseMozCOSE(buf);
+                name = parseCertificate(der);
+                msg += `Success: name is ${name}`;
+            } catch (e2) {
+                msg += `Failed: ${e}\n`;
+                msg += 'Unknown file type!';
+            }
+        }
+        showMessage(msg);
+    };
+    //f.arrayBuffer().then(parse);
+    let fr = new FileReader();
+    fr.onload = (ev) => parse(new Uint8Array(fr.result));
+    fr.readAsArrayBuffer(f);
+};
+</script>

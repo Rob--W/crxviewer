@@ -37,9 +37,49 @@ document.querySelector("input").onchange = (ev) => {
         }
         showMessage(msg);
     };
-    //f.arrayBuffer().then(parse);
     let fr = new FileReader();
     fr.onload = (ev) => parse(new Uint8Array(fr.result));
     fr.readAsArrayBuffer(f);
 };
+
+function verify(data, expected, what, cb) {
+    let actual;
+    if (typeof expected !== 'string') {
+        expected = JSON.stringify(expected);
+    }
+    try {
+        actual = JSON.stringify(cb(data));
+    } catch (e) {
+        actual = e.toString();
+    }
+    if (expected !== actual) {
+        throw new Error(`Expected ${what} '${expected}', got '${actual}'`);
+    }
+}
+
+function fetchData(url, asn1Result, coseResult) {
+    return fetch(url).then((resp) => {
+        if (!resp.ok) {
+            throw new Error(`Bad response for ${url}: ${resp.status}`);
+        }
+        return resp.arrayBuffer().then((data) => {
+            let b = new Uint8Array(data);
+            verify(b, asn1Result, 'asn1', parseCertificate);
+            verify(b, coseResult, 'cose', (d) => parseCertificate(parseMozCOSE(d)));
+        });
+    });
+}
+
+// selftests
+const crxInfo = {"OU": "Production", "CN": "crxviewer-firefox@robwu.nl"};
+Promise.all([
+    fetchData('testdata/cose.sig',
+        'Error: Length is too long (unsupported)',
+        crxInfo),
+    fetchData('testdata/mozilla.rsa',
+        crxInfo,
+        'Error: Expected majorType 6, found 1'),
+]).then(() => {
+    showMessage('Self-tests passed.');
+}).catch((err) => showMessage(`FAILED self-tests: ${err}`));
 </script>

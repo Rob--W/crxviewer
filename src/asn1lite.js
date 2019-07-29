@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // jshint esversion:6
-/* globals TextDecoder */
+/* globals TextDecoder, module, console */
 /* exported parseCertificate, parseDERTLVs, tlvInfo */
 'use strict';
 
@@ -286,26 +286,10 @@ function parseCertificate(data) {
     return subject;
 }
 
-if (typeof require !== 'undefined') {
-    // jshint node:true
-    if (require.main === module) {
-        let fs = require('fs');
-        let der_file = process.argv[2];
-        fs.readFile(der_file, (err, data) => {
-            if (err) {
-                console.log('Failed to read file:', err);
-                return;
-            }
-            console.log('Input:', data);
-            parseDERTLVs(data, tlvInfo);
-            let subject = parseCertificate(data);
-            console.log(`subject: ${JSON.stringify(subject)}`);
-        });
-    } else {
-        module.exports = {
-            parseCertificate,
-            parseDERTLVs,
-            tlvInfo,
-        };
-    }
+if (typeof module !== 'undefined') {
+    module.exports = {
+        parseCertificate,
+        parseDERTLVs,
+        tlvInfo,
+    };
 }

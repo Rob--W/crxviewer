@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // jshint esversion:6
-/* globals TextDecoder */
+/* globals TextDecoder, module, console */
 /* exported parseMozCOSE */
 'use strict';
 
@@ -147,26 +147,8 @@ function parseMozCOSE(data) {
     throw new Error('Certificate not found');
 }
 
-if (typeof require !== 'undefined') {
-    // jshint node:true
-    if (require.main === module) {
-        let fs = require('fs');
-        let asn1lite = require('./asn1lite');
-        let der_file = process.argv[2];
-        fs.readFile(der_file, (err, data) => {
-            if (err) {
-                console.log('Failed to read file:', err);
-                return;
-            }
-            console.log('Input:', data);
-            let der = parseMozCOSE(data);
-            asn1lite.parseDERTLVs(der, asn1lite.tlvInfo);
-            let subject = asn1lite.parseCertificate(der);
-            console.log(`subject: ${JSON.stringify(subject)}`);
-        });
-    } else {
-        module.exports = {
-            parseMozCOSE,
-        };
-    }
+if (typeof module !== 'undefined') {
+    module.exports = {
+        parseMozCOSE,
+    };
 }

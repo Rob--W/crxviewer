@@ -16,6 +16,7 @@
            Prism,
            SearchEngineElement,
            Uint8ArrayWriter, ModernCrypto,
+           parseCertificate, parseMozCOSE,
            CryptoJS
            */
 
@@ -746,6 +747,13 @@ var viewFileInfo = (function() {
 
             infoTable.addRow('Link', '').appendChild(createPermaLinkAnchor(entry));
 
+            if (entry.filename === 'manifest.json') {
+                infoTable.addRow('Extension ID', '(unknown)');
+                calculateExtensionID().then(function(result) {
+                    infoTable.updateRow('Extension ID', result);
+                });
+            }
+
             output.appendChild(infoTable);
             output.insertAdjacentHTML('beforeend',
                 '<small>Need more tools? <a href="https://github.com/Rob--W/crxviewer/issues">Create a feature request!</a></small>');
@@ -886,6 +894,94 @@ var viewFileInfo = (function() {
     }
     return viewFileInfo;
 })();
+
+function parseExtensionIdFromManifest(manifest) {
+    var id;
+    if (manifest.browser_specific_settings &&
+        manifest.browser_specific_settings.gecko &&
+        (id = manifest.browser_specific_settings.gecko.id)) {
+        return id;
+    }
+
+    if (manifest.applications && manifest.applications.gecko &&
+        (id = manifest.applications.gecko.id)) {
+        return id;
+    }
+
+    return '';
+}
+
+// Parse a manifest.json file into an object. These can contain '//' comments.
+function parseManifest(str) {
+    var parsed;
+    parsed = JSON.parse(str);
+    return parsed;
+}
+
+// Extract the extension ID from the currently loaded extension. The ID will be
+// determined from the COSE signature, the PKCS#7 signature, or manifest.json,
+// whatever comes first. Resolves to the extension ID (and the signature type
+// between parentheses if available), or rejects on parser errors.
+function calculateExtensionID() {
+    var fileList = document.getElementById('file-list');
+    var readEntry = function(filename, Writer) {
+        var li = fileList.querySelector('li[data-filename="' + filename + '"]');
+        if (!li) {
+            return null;
+        }
+        return new Promise(function(resolve) {
+            li.zipEntry.getData(new Writer(), function(data) {
+                resolve(data);
+            });
+        });
+    };
+    // https://searchfox.org/mozilla-central/rev/2738efcf/toolkit/components/extensions/schemas/manifest.json#421-431
+    var extensionID_pattern =
+        /^(\{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\}|[a-z0-9-._]*@[a-z0-9-._]+)$/i;
+    var formatSubject = function(id, subject) {
+        if (extensionID_pattern.test(subject.CN)) {
+            id = subject.CN;
+        }
+        var mapping = {
+            'Mozilla Components': 'system',
+            'Mozilla Extensions': 'privileged',
+        };
+        var type = mapping[subject.OU] || 'signed';
+        return id + ' (' + type + ')';
+    };
+
+    return Promise.all([
+        readEntry('manifest.json', EfficientTextWriter),
+        readEntry('META-INF/cose.sig', Uint8ArrayWriter),
+        readEntry('META-INF/mozilla.rsa', Uint8ArrayWriter),
+    ]).then(function(entries) {
+        var manifest_json = entries[0];
+        var cose_sig = entries[1];
+        var pkcs7_sig = entries[2];
+        var id;
+
+        // manifest.json contains the certification source (e.g. Production), so
+        // check it in addition to the other sources.
+        if (manifest_json) {
+            id = parseExtensionIdFromManifest(parseManifest(manifest_json));
+        }
+
+        if (cose_sig) {
+            return formatSubject(id, parseCertificate(parseMozCOSE(cose_sig)));
+        }
+
+        if (pkcs7_sig) {
+            return formatSubject(id, parseCertificate(pkcs7_sig));
+        }
+
+        if (id) {
+            // Unsigned extension, return it as-is.
+            return id;
+        }
+
+        throw new Error('Invalid extension file');
+    });
+}
 
 var textSearchEngine;  // Initialized as soon as we have a zip file.
 var TextSearchEngine = (function() {

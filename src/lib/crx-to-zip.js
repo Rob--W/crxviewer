@@ -237,6 +237,10 @@ function openCRXasZip_url(url, callback, errCallback, xhrProgressListener) {
         requestUrl = 'https://cors-anywhere.herokuapp.com/' + url;
     }
 //#endif
+//#if OPERA
+    // Opera blocks access to addons.opera.com. Let's bypass this restriction.
+    requestUrl = url.replace(/^https?:\/\/addons\.opera\.com(?=\/)/i, '$&.');
+//#endif
     var x = new XMLHttpRequest();
     x.open('GET', requestUrl);
     x.responseType = 'arraybuffer';

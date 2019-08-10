@@ -895,6 +895,9 @@ var viewFileInfo = (function() {
     return viewFileInfo;
 })();
 
+// Set while loading an extension in handleBlob.
+var crx_public_key;
+
 function parseExtensionIdFromManifest(manifest) {
     var id;
     if (manifest.browser_specific_settings &&
@@ -906,6 +909,11 @@ function parseExtensionIdFromManifest(manifest) {
     if (manifest.applications && manifest.applications.gecko &&
         (id = manifest.applications.gecko.id)) {
         return id;
+    }
+
+    var crxKey = manifest.key || crx_public_key;
+    if (typeof crxKey === "string") {
+        return publicKeyToExtensionId(crxKey);
     }
 
     return '';
@@ -2115,11 +2123,14 @@ function loadUrlInViewer(crx_url, onHasBlob) {
 function handleBlob(zipname, blob, publicKey, raw_crx_data) {
     var progressDiv = document.getElementById('initial-status');
     progressDiv.hidden = true;
-    
+
     setBlobAsDownload(zipname, blob);
     setRawCRXAsDownload(zipname, publicKey && raw_crx_data);
     if (publicKey || raw_crx_data) {
         setPublicKey(publicKey);
+        crx_public_key = publicKey;
+    } else {
+        crx_public_key = null;
     }
     textSearchEngine = new TextSearchEngine(blob);
 

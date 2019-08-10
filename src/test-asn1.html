@@ -1,0 +1,85 @@
+<!doctype html>
+<meta charset="utf8">
+<script src="asn1lite.js"></script>
+<script src="mozcose.js"></script>
+<input type="file">
+<pre id="message"></pre>
+<script>
+function showMessage(text) {
+    document.querySelector("#message").textContent = Date() + "\n" + text;
+}
+document.querySelector("input").onchange = (ev) => {
+    let f = ev.target.files[0];
+    if (!f) {
+        showMessage('No file selected');
+        return;
+    }
+    console.log(f);
+    let parse = (buf) => {
+        let msg = `Loading ${f.name}, ${f.size} bytes\n`, subject;
+        try {
+            // Try DER
+            msg += '\nTrying to decode as DER-encoded X.509 Certificate...\n';
+            parseDERTLVs(buf, tlvInfo);
+            subject = parseCertificate(buf);
+            msg += `Success: subject is ${JSON.stringify(subject)}`;
+        } catch (e) {
+            msg += `Failed: ${e}\n`;
+            msg += '\nTrying to decode as Mozilla COSE signature...\n';
+            try {
+                let der = parseMozCOSE(buf);
+                subject = parseCertificate(der);
+                msg += `Success: subject is ${JSON.stringify(subject)}`;
+            } catch (e2) {
+                msg += `Failed: ${e}\n`;
+                msg += 'Unknown file type!';
+            }
+        }
+        showMessage(msg);
+    };
+    let fr = new FileReader();
+    fr.onload = (ev) => parse(new Uint8Array(fr.result));
+    fr.readAsArrayBuffer(f);
+};
+
+function verify(data, expected, what, cb) {
+    let actual;
+    if (typeof expected !== 'string') {
+        expected = JSON.stringify(expected);
+    }
+    try {
+        actual = JSON.stringify(cb(data));
+    } catch (e) {
+        actual = e.toString();
+    }
+    if (expected !== actual) {
+        throw new Error(`Expected ${what} '${expected}', got '${actual}'`);
+    }
+}
+
+function fetchData(url, asn1Result, coseResult) {
+    return fetch(url).then((resp) => {
+        if (!resp.ok) {
+            throw new Error(`Bad response for ${url}: ${resp.status}`);
+        }
+        return resp.arrayBuffer().then((data) => {
+            let b = new Uint8Array(data);
+            verify(b, asn1Result, 'asn1', parseCertificate);
+            verify(b, coseResult, 'cose', (d) => parseCertificate(parseMozCOSE(d)));
+        });
+    });
+}
+
+// selftests
+const crxInfo = {"OU": "Production", "CN": "crxviewer-firefox@robwu.nl"};
+Promise.all([
+    fetchData('testdata/cose.sig',
+        'Error: Length is too long (unsupported)',
+        crxInfo),
+    fetchData('testdata/mozilla.rsa',
+        crxInfo,
+        'Error: Expected majorType 6, found 1'),
+]).then(() => {
+    showMessage('Self-tests passed.');
+}).catch((err) => showMessage(`FAILED self-tests: ${err}`));
+</script>

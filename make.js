@@ -194,6 +194,8 @@ target.web = function() {
             [SRC_DIR + 'search-tools.js', dest_dir],
             [SRC_DIR + 'lib', dest_dir],
             [SRC_DIR + 'chrome-platform-info.js', dest_dir],
+            [SRC_DIR + 'asn1lite.js', dest_dir],
+            [SRC_DIR + 'mozcose.js', dest_dir],
         ],
         preprocess: [
             [SRC_DIR + 'crxviewer.html', dest_dir],

@@ -914,7 +914,14 @@ function parseExtensionIdFromManifest(manifest) {
 // Parse a manifest.json file into an object. These can contain '//' comments.
 function parseManifest(str) {
     var parsed;
-    parsed = JSON.parse(str);
+    try {
+        parsed = JSON.parse(str);
+    } catch (e) {
+        // JSON.minify from src/lib/beautify/minify.json.js
+        // Add a LF at the end of the file to ensure that comments at the end of
+        // the file end with a LF are properly stripped.
+        parsed = JSON.parse(JSON.minify(str + '\n'));
+    }
     return parsed;
 }
 

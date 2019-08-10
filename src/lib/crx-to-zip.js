@@ -25,8 +25,15 @@ var CRXtoZIP = (function() {
         }
 
         // 43 72 32 34
-        if (view[0] !== 67 || view[1] !== 114 || view[2] !== 50 || view[3] !== 52)
-            return errCallback('Invalid header: Does not start with Cr24.'), void 0;
+        if (view[0] !== 67 || view[1] !== 114 || view[2] !== 50 || view[3] !== 52) {
+            if (isMaybeZipData(view)) {
+                console.warn('Input is not a CRX file, but possibly a ZIP file.');
+                callback(new Blob([arraybuffer], {type: 'application/zip'}), undefined);
+                return;
+            }
+            errCallback('Invalid header: Does not start with Cr24.');
+            return;
+        }
 
         // 02 00 00 00
         // 03 00 00 00 CRX3
@@ -175,6 +182,17 @@ var CRXtoZIP = (function() {
             }
         }
         console.warn('proto: None of the public keys matched with crx_id');
+    }
+    function isMaybeZipData(view) {
+        // Find EOCD (0xFFFF is the maximum size of an optional trailing comment).
+        for (var i = view.length - 22, ii = Math.max(0, i - 0xFFFF); i >= ii; --i) {
+            if (view[i] === 0x50 && view[i + 1] === 0x4b &&
+                view[i + 2] === 0x05 && view[i + 3] === 0x06) {
+                return true;
+            }
+        }
+
+        return false;
     }
     return CRXtoZIP;
 })();

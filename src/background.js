@@ -8,7 +8,7 @@
    amo_file_version_match_patterns,
    cws_pattern, ows_pattern, amo_pattern, amo_file_version_pattern,
    get_crx_url, get_zip_name, console,
-   localStorage */
+    */
 /* globals encodeQueryString */
 
 'use strict';
@@ -133,24 +133,6 @@ chrome.runtime.onInstalled.addListener(function() {
     }, function(tabs) {
         tabs.forEach(showPageActionIfNeeded);
     });
-    // Migrate from old localStorage settings to chrome.storage
-    var items = {};
-    Object.keys(localStorage).forEach(function(key) {
-        if (key.lastIndexOf('filter-', 0) !== 0) {
-            return;
-        }
-        var value = localStorage.getItem(key);
-        localStorage.removeItem(key);
-        if (value === '1') {
-            items[key] = true;
-        } else if (value === '0') {
-            items[key] = false;
-        }
-    });
-    if (Object.keys(items).length) {
-        var storageArea = chrome.storage.sync;
-        storageArea.set(items);
-    }
 });
 
 function setupDeclarativeWebRequest() {

@@ -10,6 +10,7 @@
            get_extensionID, getPlatformInfo,
            cws_pattern, get_crx_url, is_crx_download_url,
            get_amo_domain, get_amo_slug,
+           get_equivalent_download_url,
            zip,
            EfficientTextWriter,
            beautify,
@@ -2061,17 +2062,7 @@ function loadNonCrxUrlInViewer(url, human_readable_name, onHasBlob, onHasNoBlob)
     progressDiv.hidden = false;
     progressDiv.textContent = 'Loading ' + human_readable_name;
 
-    var requestUrl = url;
-//#if WEB
-    if (/^https?:/.test(url)) {
-        // Proxy request through CORS Anywhere.
-        requestUrl = 'https://cors-anywhere.herokuapp.com/' + url;
-    }
-//#endif
-//#if OPERA
-    // Opera blocks access to addons.opera.com. Let's bypass this restriction.
-    requestUrl = url.replace(/^https?:\/\/addons\.opera\.com(?=\/)/i, '$&.');
-//#endif
+    var requestUrl = get_equivalent_download_url(url);
     try {
         var x = new XMLHttpRequest();
         x.open('GET', requestUrl);

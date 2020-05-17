@@ -7,6 +7,7 @@
 /* exported openCRXasZip */
 /* jshint browser:true, devel:true */
 /* globals CryptoJS */ // For sha256 hash calculation
+/* globals get_equivalent_download_url */
 'use strict';
 
 // Strips CRX headers from zip
@@ -230,17 +231,7 @@ function openCRXasZip_blob(blob, callback, errCallback, frProgressListener) {
     fr.readAsArrayBuffer(blob);
 }
 function openCRXasZip_url(url, callback, errCallback, xhrProgressListener) {
-    var requestUrl = url;
-//#if WEB
-    if (/^https?:/.test(url)) {
-        // Proxy request through CORS Anywhere.
-        requestUrl = 'https://cors-anywhere.herokuapp.com/' + url;
-    }
-//#endif
-//#if OPERA
-    // Opera blocks access to addons.opera.com. Let's bypass this restriction.
-    requestUrl = url.replace(/^https?:\/\/addons\.opera\.com(?=\/)/i, '$&.');
-//#endif
+    var requestUrl = get_equivalent_download_url(url);
     var x = new XMLHttpRequest();
     x.open('GET', requestUrl);
     x.responseType = 'arraybuffer';

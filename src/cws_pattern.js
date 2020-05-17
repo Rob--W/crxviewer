@@ -10,6 +10,7 @@
 /* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, is_not_crx_url, getParam */
 /* exported is_crx_download_url */
 /* exported get_amo_domain, get_amo_slug */
+/* exported get_equivalent_download_url */
 /* exported encodeQueryString */
 'use strict';
 
@@ -41,6 +42,8 @@ var amo_file_version_match_patterns = [
     '*://addons.allizom.org/*firefox/files/browse/*',
     '*://addons-dev.allizom.org/*firefox/files/browse/*',
 ];
+// Depends on: https://bugzilla.mozilla.org/show_bug.cgi?id=1620084
+var amo_xpi_cdn_pattern = /^https?:\/\/(?:addons\.cdn\.mozilla\.net|addons-dev-cdn\.allizom\.org)\/user-media\/addons\//;
 
 // string extensionID if valid URL
 // null otherwise
@@ -192,6 +195,24 @@ function get_amo_slug(url) {
     if (match) {
         return match[2];
     }
+}
+
+// Some environments enforce restrictions on the URLs that can be accessed.
+// This function rewrites the input URL to one that should serve exactly the
+// same result as the requested URL, sans restrictions.
+function get_equivalent_download_url(url) {
+    var requestUrl = url;
+//#if WEB
+    if (/^https?:/.test(url)) {
+        // Proxy request through CORS Anywhere.
+        requestUrl = 'https://cors-anywhere.herokuapp.com/' + url;
+    }
+//#endif
+//#if OPERA
+    // Opera blocks access to addons.opera.com. Let's bypass this restriction.
+    requestUrl = url.replace(/^https?:\/\/addons\.opera\.com(?=\/)/i, '$&.');
+//#endif
+    return requestUrl;
 }
 
 function is_crx_url(url) {

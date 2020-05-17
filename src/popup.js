@@ -129,10 +129,12 @@ function doInstall() {
 }
 //#endif
 
-// Delegate download to background page to make sure that the download dialog shows up.
 function tryTriggerDownload(blob, filename) {
-    chrome.runtime.getBackgroundPage(function(bg) {
-        bg.tryTriggerDownload(blob, filename);
+    chrome.downloads.download({
+        url: URL.createObjectURL(blob),
+        filename: filename
+    }, function() {
+        // The popup should have closed already, but if not, do it now.
         window.close();
     });
 }

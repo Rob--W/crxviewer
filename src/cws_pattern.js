@@ -229,6 +229,21 @@ function get_equivalent_download_url(url) {
     // Opera blocks access to addons.opera.com. Let's bypass this restriction.
     requestUrl = url.replace(/^https?:\/\/addons\.opera\.com(?=\/)/i, '$&.');
 //#endif
+//#if CHROME
+    // Brave intercepts requests to the CWS update endpoint, and prevents us
+    // from reading the source file, as explained at
+    // https://github.com/Rob--W/crxviewer/issues/91#issuecomment-629854450
+    //
+    // Work around this by changing the URL to something that does not match
+    // https://github.com/brave/brave-core/blob/f453ab2a5e8425afea9bd980fb688d8fec137f53/browser/net/brave_common_static_redirect_network_delegate_helper.cc#L40
+    if (url.startsWith('https://clients2.google.com/service/update2')) {
+        // There are multiple ways to bypass the check. Replacing the host is
+        // one of them, but we don't do that because manifest.json does not
+        // include permissions for access to other subdomains of google.com.
+        // Prepending another slash works, so let's use it.
+        requestUrl = url.replace('.com/', '.com//');
+    }
+//#endif
     return requestUrl;
 }
 

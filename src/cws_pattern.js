@@ -197,13 +197,30 @@ function get_amo_slug(url) {
     }
 }
 
+function is_cors_enabled_download_url(url) {
+    if (
+        // We're only interested in XPI files from AMO,
+        // which supports CORS as of March 2020:
+        // https://github.com/mozilla/addons-server/issues/9118
+        // The following matches the whole AMO domain, including non-CORS
+        // endpoints. That's fine since we only care about XPI URLs.
+        amo_domain_pattern.test(url) ||
+        // The full redirect chain should also allow CORS, including the CDN:
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=1620084
+        amo_xpi_cdn_pattern.test(url)
+    ) {
+        return true;
+    }
+    return false;
+}
+
 // Some environments enforce restrictions on the URLs that can be accessed.
 // This function rewrites the input URL to one that should serve exactly the
 // same result as the requested URL, sans restrictions.
 function get_equivalent_download_url(url) {
     var requestUrl = url;
 //#if WEB
-    if (/^https?:/.test(url)) {
+    if (/^https?:/.test(url) && !is_cors_enabled_download_url(url)) {
         // Proxy request through CORS Anywhere.
         requestUrl = 'https://cors-anywhere.herokuapp.com/' + url;
     }

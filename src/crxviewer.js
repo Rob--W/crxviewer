@@ -1873,12 +1873,6 @@ function getXpis(amodomain, slugorid, page, callback) {
         // When the page parameter is omitted, it defaults to 1.
         page = 1;
     }
-//#if WEB
-    getXpis.fallbackToCORSAnywhere = true;
-//#endif
-    if (getXpis.fallbackToCORSAnywhere) {
-        apiUrl = 'https://cors-anywhere.herokuapp.com/' + apiUrl;
-    }
     var x = new XMLHttpRequest();
     x.open('GET', apiUrl);
     x.onloadend = function() {
@@ -1886,11 +1880,6 @@ function getXpis(amodomain, slugorid, page, callback) {
             getXpis._pendingXhr = null;
         }
 
-        if (!x.status && !getXpis.fallbackToCORSAnywhere) {
-            getXpis.fallbackToCORSAnywhere = true;
-            getXpis(amodomain, slugorid, page, callback);
-            return;
-        }
         if (x.status === 401 || x.status === 403) {
             callback('The results are not publicly available for: ' + slugorid, []);
             return;

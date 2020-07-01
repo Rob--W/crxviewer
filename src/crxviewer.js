@@ -1647,7 +1647,7 @@ function showAdvancedOpener() {
     }
     function toCwsUrl() {  // Assuming that all inputs are valid.
         // See cws_pattern.js for an explanation of this URL.
-        var url = 'https://clients2.google.com/service/update2/crx?response=redirect';
+        var url = 'https://clients3.google.com/service/update2/crx?response=redirect';
         url += '&os=' + getCwsOption('os');
         url += '&arch=' + getCwsOption('arch');
         url += '&os_arch=' + getCwsOption('arch');

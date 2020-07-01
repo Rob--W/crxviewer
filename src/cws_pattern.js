@@ -15,7 +15,7 @@
 
 // cws_pattern[1] = extensionID
 var cws_pattern = /^https?:\/\/chrome.google.com\/webstore\/.+?\/([a-z]{32})(?=[\/#?]|$)/;
-var cws_download_pattern = /^https?:\/\/clients2\.google\.com\/service\/update2\/crx\b.*?%3D([a-z]{32})%26uc/;
+var cws_download_pattern = /^https?:\/\/clients3\.google\.com\/service\/update2\/crx\b.*?%3D([a-z]{32})%26uc/;
 // match pattern per Chrome spec
 var cws_match_pattern = '*://chrome.google.com/webstore/detail/*';
 

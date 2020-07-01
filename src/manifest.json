@@ -40,8 +40,8 @@
         "contextMenus",
         "declarativeWebRequest",
         "downloads",
-        "*://clients2.google.com/service/update2/crx*",
-        "*://clients2.googleusercontent.com/crx/download/*"
+        "*://clients3.google.com/service/update2/crx*",
+        "*://clients3.googleusercontent.com/crx/download/*"
     ],
     "optional_permissions": [
         "<all_urls>"

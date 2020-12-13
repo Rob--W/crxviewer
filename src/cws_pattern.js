@@ -5,8 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* globals location, getPlatformInfo, navigator */
-/* exported cws_match_pattern, ows_match_pattern, amo_match_patterns, amo_file_version_match_patterns */
-/* exported cws_pattern, ows_pattern, amo_pattern, amo_file_version_pattern */
+/* exported cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns, amo_file_version_match_patterns */
+/* exported cws_pattern, mea_pattern, ows_pattern, amo_pattern, amo_file_version_pattern */
 /* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, is_not_crx_url, getParam */
 /* exported is_crx_download_url */
 /* exported get_amo_domain, get_amo_slug */
@@ -19,6 +19,11 @@ var cws_pattern = /^https?:\/\/chrome.google.com\/webstore\/.+?\/([a-z]{32})(?=[
 var cws_download_pattern = /^https?:\/\/clients2\.google\.com\/service\/update2\/crx\b.*?%3D([a-z]{32})%26uc/;
 // match pattern per Chrome spec
 var cws_match_pattern = '*://chrome.google.com/webstore/detail/*';
+
+// Microsoft Edge Addons Store
+var mea_pattern = /^https?:\/\/microsoftedge.microsoft.com\/addons\/.+?\/([a-z]{32})(?=[\/#?]|$)/;
+var mea_download_pattern = /^https?:\/\/edge\.microsoft\.com\/extensionwebstorebase\/v1\/crx\b.*?%3D([a-z]{32})%26uc/;
+var mea_match_pattern = '*://microsoftedge.microsoft.com/addons/detail/*';
 
 // Opera add-on gallery
 var ows_pattern = /^https?:\/\/addons.opera.com\/.*?extensions\/(?:details|download)\/([^\/?#]+)/i;
@@ -83,7 +88,7 @@ function get_xpi_url(amoDomain, addonSlug) {
 }
 
 // Returns location of CRX file for a given extensionID or CWS url or Opera add-on URL
-// or Firefox addon URL.
+// or Firefox addon URL or Microsoft Edge addon URL.
 function get_crx_url(extensionID_or_url) {
     var url;
     var match = ows_pattern.exec(extensionID_or_url);
@@ -100,6 +105,10 @@ function get_crx_url(extensionID_or_url) {
     match = amo_file_version_pattern.exec(extensionID_or_url);
     if (match) {
         return 'https://' + match[1] + '/firefox/downloads/file/' + match[2] + (match[3] || '/addon.xpi');
+    }
+    match = mea_pattern.exec(url) || mea_download_pattern.exec(url);
+    if (match) {
+        return 'https://edge.microsoft.com/extensionwebstorebase/v1/crx?response=redirect&x=id%3D' + match[1] + '%26installsource%3Dondemand%26uc';
     }
     // Chrome Web Store
     match = get_extensionID(extensionID_or_url);
@@ -158,6 +167,10 @@ function get_webstore_url(url) {
     var cws = cws_pattern.exec(url) || cws_download_pattern.exec(url);
     if (cws) {
         return 'https://chrome.google.com/webstore/detail/' + cws[1];
+    }
+    var mea = mea_pattern.exec(url) || mea_download_pattern.exec(url);
+    if (mea) {
+        return 'https://microsoftedge.microsoft.com/addons/detail/' + mea[1];
     }
     var ows = ows_pattern.exec(url);
     if (ows) {
@@ -248,12 +261,12 @@ function get_equivalent_download_url(url) {
 }
 
 function is_crx_url(url) {
-    return cws_pattern.test(url) || ows_pattern.test(url) || /\.(crx|nex)\b/.test(url);
+    return cws_pattern.test(url) || mea_pattern.test(url) || ows_pattern.test(url) || /\.(crx|nex)\b/.test(url);
 }
 
 // Whether the given URL is not a CRX file, with certainty.
 function is_not_crx_url(url) {
-    if (is_crx_url(url) || cws_download_pattern.test(url))
+    if (is_crx_url(url) || cws_download_pattern.test(url) || mea_download_pattern.test(url))
         return false;
     return amo_pattern.test(url) ||
         amo_download_pattern.test(url) ||
@@ -262,7 +275,7 @@ function is_not_crx_url(url) {
 }
 
 function is_crx_download_url(url) {
-    return cws_download_pattern.test(url) || amo_download_pattern.test(url);
+    return cws_download_pattern.test(url) || mea_download_pattern.test(url) || amo_download_pattern.test(url);
 }
 
 // |name| should not contain special RegExp characters, except possibly maybe a '[]' at the end.

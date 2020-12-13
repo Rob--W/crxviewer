@@ -1574,7 +1574,7 @@ function initialize() {
     // the get_crx_url method only takes the extension ID and generates the other
     // parameters based on the current platform.
     if (!is_crx_download_url(crx_url)) {
-        if (cws_pattern.test(crx_url)) {
+        if (cws_pattern.test(crx_url) || mea_pattern.test(crx_url)) {
             // Prefer given URL because its slug contains an extra human-readable short name.
             webstore_url = crx_url;
         }

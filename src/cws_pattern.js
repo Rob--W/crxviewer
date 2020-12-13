@@ -30,10 +30,10 @@ var ows_pattern = /^https?:\/\/addons.opera.com\/.*?extensions\/(?:details|downl
 var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 
 // Firefox addon gallery
-var amo_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\/.*?(?:addon|review)\/([^/<>"'?#]+)/;
-var amo_download_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\/[^?#]*\/downloads\/latest\/([^/?#]+)/;
-var amo_domain_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\//;
-var amo_file_version_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\/(?:[^?#\/]*\/)?firefox\/files\/browse\/(\d+)(\/[^?#\/]+\.xpi)?/;
+var amo_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org|addons\.thunderbird\.net)\/.*?(?:addon|review)\/([^/<>"'?#]+)/;
+var amo_download_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org|addons\.thunderbird\.net)\/[^?#]*\/downloads\/latest\/([^/?#]+)/;
+var amo_domain_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org|addons\.thunderbird\.net)\//;
+var amo_file_version_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org|addons\.thunderbird\.net)\/(?:[^?#\/]*\/)?(?:firefox|thunderbird)\/files\/browse\/(\d+)(\/[^?#\/]+\.xpi)?/;
 var amo_match_patterns = [
     '*://addons.mozilla.org/*addon/*',
     '*://addons.mozilla.org/*review/*',
@@ -41,11 +41,14 @@ var amo_match_patterns = [
     '*://addons.allizom.org/*review/*',
     '*://addons-dev.allizom.org/*addon/*',
     '*://addons-dev.allizom.org/*review/*',
+    '*://addons.thunderbird.net/*addon/*',
+    '*://addons.thunderbird.net/*review/*',
 ];
 var amo_file_version_match_patterns = [
     '*://addons.mozilla.org/*firefox/files/browse/*',
     '*://addons.allizom.org/*firefox/files/browse/*',
     '*://addons-dev.allizom.org/*firefox/files/browse/*',
+    '*://addons.thunderbird.net/*thunderbird/files/browse/*',
 ];
 // Depends on: https://bugzilla.mozilla.org/show_bug.cgi?id=1620084
 var amo_xpi_cdn_pattern = /^https?:\/\/(?:addons\.cdn\.mozilla\.net|addons-dev-cdn\.allizom\.org)\/user-media\/addons\//;
@@ -78,7 +81,7 @@ function get_xpi_url(amoDomain, addonSlug) {
         platformId = 2;
     }
 
-    var url = 'https://' + amoDomain + '/firefox/downloads/latest/';
+    var url = get_amo_base_url(amoDomain) + '/downloads/latest/';
     url += addonSlug;
     url += '/platform:' + platformId;
     url += '/';
@@ -104,7 +107,7 @@ function get_crx_url(extensionID_or_url) {
     }
     match = amo_file_version_pattern.exec(extensionID_or_url);
     if (match) {
-        return 'https://' + match[1] + '/firefox/downloads/file/' + match[2] + (match[3] || '/addon.xpi');
+        return get_amo_base_url(match[1]) + '/downloads/file/' + match[2] + (match[3] || '/addon.xpi');
     }
     match = mea_pattern.exec(url) || mea_download_pattern.exec(url);
     if (match) {
@@ -178,7 +181,7 @@ function get_webstore_url(url) {
     }
     var amo = get_amo_slug(url);
     if (amo) {
-        return 'https://' + get_amo_domain(url) + '/firefox/addon/' + amo;
+        return get_amo_base_url(get_amo_domain(url))+'/addon/' + amo;
     }
 }
 
@@ -196,6 +199,13 @@ function get_zip_name(url, /*optional*/filename) {
         }
     }
     return filename.replace(/\.(crx|jar|nex|xpi|zip)$/i, '') + '.zip';
+}
+
+function get_amo_base_url(amoDomain) {
+    if (amoDomain === 'addons.thunderbird.net') {
+        return 'https://addons.thunderbird.net/thunderbird';
+    }
+    return 'https://' + amoDomain + '/firefox';
 }
 
 function get_amo_domain(url) {

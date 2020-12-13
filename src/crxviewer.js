@@ -1671,7 +1671,7 @@ function showAdvancedOpener() {
         var extensionId = get_extensionID(urlInput.value);
         var amoslug = get_amo_slug(urlInput.value);
         var maybeCrx = /\.crx([?#&]|$)|^(https?:\/\/)?(chrome|clients\d)\.google\.com/.test(urlInput.value) || !!extensionId;
-        var maybeXpi = /\.xpi([?#&]|$)|\.mozilla\./i.test(urlInput.value) || !!amoslug;
+        var maybeXpi = /\.xpi([?#&]|$)|\.mozilla\.|\.thunderbird\./i.test(urlInput.value) || !!amoslug;
         if (!extensionId) {
             cwsOptions.classList.add('disabled-site');
             if (maybeXpi) {

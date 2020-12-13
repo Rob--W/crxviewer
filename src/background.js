@@ -118,6 +118,8 @@ if (chrome.declarativeWebRequest) {
             hostEquals: 'addons.allizom.org'
         }, {
             hostEquals: 'addons-dev.allizom.org'
+        }, {
+            hostEquals: 'addons.thunderbird.net'
         }]
     };
     chrome.webNavigation.onCommitted.addListener(showPageActionIfNeeded, webNavigationFilter);

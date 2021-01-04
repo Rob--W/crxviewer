@@ -186,6 +186,10 @@ function get_webstore_url(url) {
 function get_zip_name(url, /*optional*/filename) {
     if (!filename) {
         var extensionID = get_extensionID(url);
+        if (!extensionID) {
+            extensionID = mea_pattern.exec(url) || mea_download_pattern.exec(url);
+            extensionID = extensionID && extensionID[1];
+        }
         if (extensionID) {
             filename = extensionID;
         } else {

@@ -106,7 +106,7 @@ function get_crx_url(extensionID_or_url) {
     if (match) {
         return 'https://' + match[1] + '/firefox/downloads/file/' + match[2] + (match[3] || '/addon.xpi');
     }
-    match = mea_pattern.exec(url) || mea_download_pattern.exec(url);
+    match = mea_pattern.exec(extensionID_or_url) || mea_download_pattern.exec(extensionID_or_url);
     if (match) {
         return 'https://edge.microsoft.com/extensionwebstorebase/v1/crx?response=redirect&x=id%3D' + match[1] + '%26installsource%3Dondemand%26uc';
     }

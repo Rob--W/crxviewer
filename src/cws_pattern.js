@@ -22,7 +22,7 @@ var cws_match_pattern = '*://chrome.google.com/webstore/detail/*';
 
 // Microsoft Edge Addons Store
 var mea_pattern = /^https?:\/\/microsoftedge.microsoft.com\/addons\/.+?\/([a-z]{32})(?=[\/#?]|$)/;
-var mea_download_pattern = /^https?:\/\/edge\.microsoft\.com\/extensionwebstorebase\/v1\/crx\b.*?%3D([a-z]{32})%26uc/;
+var mea_download_pattern = /^https?:\/\/edge\.microsoft\.com\/extensionwebstorebase\/v1\/crx\b.*?%3D([a-z]{32})%26/;
 var mea_match_pattern = '*://microsoftedge.microsoft.com/addons/detail/*';
 
 // Opera add-on gallery

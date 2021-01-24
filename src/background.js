@@ -18,25 +18,17 @@ var gActionClickAction = 'popup';
 
 //#if FIREFOX
 /* globals browser */
-//// Note: This feature may be unnecessary once bugzil.la/1395387 lands.
 function tabsOnUpdatedCheckPageAction(tabId, changeInfo, tab) {
     showPageActionIfNeeded(tab);
 }
-function togglePageAction(isEnabled) {
-    browser.tabs.onUpdated.removeListener(tabsOnUpdatedCheckPageAction);
-    if (isEnabled) {
-        browser.tabs.onUpdated.addListener(tabsOnUpdatedCheckPageAction);
-    }
+// TODO: Use page_action.show_matches instead of tabs.onUpdated,
+// and change this conditional to Firefox < 59.
+if (true) {
+    browser.tabs.onUpdated.addListener(tabsOnUpdatedCheckPageAction);
     browser.tabs.query({
         url: [cws_match_pattern, mea_match_pattern, ows_match_pattern].concat(amo_match_patterns, amo_file_version_match_patterns),
     }).then(function(tabs) {
-        if (isEnabled) {
-            tabs.forEach(showPageActionIfNeeded);
-        } else {
-            tabs.forEach(function(tab) {
-                browser.pageAction.hide(tab.id);
-            });
-        }
+        tabs.forEach(showPageActionIfNeeded);
     });
 }
 //#endif
@@ -46,20 +38,11 @@ chrome.storage.onChanged.addListener(function(changes) {
         var valueInfo = key in changes && changes[key];
         if (valueInfo) callback(valueInfo.newValue);
     }
-//#if FIREFOX
-    callOnChange('showPageAction', togglePageAction);
-//#endif
     callOnChange('actionClickAction', setActionClickAction);
 });
 chrome.storage.sync.get({
-//#if FIREFOX
-    showPageAction: true,
-//#endif
     actionClickAction: gActionClickAction,
 }, function(items) {
-//#if FIREFOX
-    togglePageAction(items.showPageAction);
-//#endif
     setActionClickAction(items.actionClickAction);
 });
 

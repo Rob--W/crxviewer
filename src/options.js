@@ -91,22 +91,6 @@ storageArea.get({
     contextmenuPatternsInput.value = items.contextmenuPatterns.join('\n');
 });
 
-//#if FIREFOX
-document.getElementById('pageaction').onchange = function() {
-    storageArea.set({showPageAction: this.checked});
-};
-storageArea.get({showPageAction:true}, function(items) {
-    document.getElementById('pageaction').checked = items.showPageAction;
-});
-
-chrome.storage.onChanged.addListener(function(items) {
-    if (items.showPageAction) {
-        document.getElementById('pageaction').checked = items.showPageAction.newValue;
-    }
-});
-
-//#endif
-
 if (location.hash !== '#optionsV2') {
     // A normal options page, open links in the same tab.
     document.querySelector('base').remove();

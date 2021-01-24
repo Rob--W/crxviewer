@@ -30,16 +30,16 @@ var ows_pattern = /^https?:\/\/addons.opera.com\/.*?extensions\/(?:details|downl
 var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 
 // Firefox addon gallery
-var amo_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\/.*?(?:addon|review)\/([^/<>"'?#]+)/;
+var amo_pattern = /^https?:\/\/(reviewers\.)?(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\/.*?(?:addon|review)\/([^/<>"'?#]+)/;
 var amo_download_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\/[^?#]*\/downloads\/latest\/([^/?#]+)/;
 var amo_domain_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\//;
 var amo_match_patterns = [
     '*://addons.mozilla.org/*addon/*',
-    '*://addons.mozilla.org/*review/*',
+    '*://*.addons.mozilla.org/*review/*',
     '*://addons.allizom.org/*addon/*',
-    '*://addons.allizom.org/*review/*',
+    '*://*.addons.allizom.org/*review/*',
     '*://addons-dev.allizom.org/*addon/*',
-    '*://addons-dev.allizom.org/*review/*',
+    '*://*.addons-dev.allizom.org/*review/*',
 ];
 // Depends on: https://bugzilla.mozilla.org/show_bug.cgi?id=1620084
 var amo_xpi_cdn_pattern = /^https?:\/\/(?:addons\.cdn\.mozilla\.net|addons-dev-cdn\.allizom\.org)\/user-media\/addons\//;

@@ -7,30 +7,6 @@
 /* jshint browser:true, devel:true */
 /* globals chrome */
 'use strict'; 
-//#if CHROME
-var permission = {
-    origins: ['<all_urls>']
-};
-chrome.permissions.contains(permission, setHasPermission);
-//// Assume that there is only one optional permission
-chrome.permissions.onAdded.addListener(setHasPermission.bind(null, true));
-chrome.permissions.onRemoved.addListener(setHasPermission.bind(null, false));
-
-function setHasPermission(hasAccessToAllURLs) {
-    document.getElementById('hasAccessToAllURLs').checked = hasAccessToAllURLs;
-    console.log('Has access to all URLs = ' + hasAccessToAllURLs);
-}
-
-document.getElementById('hasAccessToAllURLs').onchange = function() {
-    if (this.checked) {
-        chrome.permissions.request(permission, function(result) {
-            if (!result) setHasPermission(false);
-        });
-    } else {
-        chrome.permissions.remove(permission);
-    }
-};
-//#endif
 
 var storageArea = chrome.storage.sync;
 var contextmenuPatternsInput = document.getElementById('contextmenuPatterns');

@@ -5,8 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* globals chrome, cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns,
-   amo_file_version_match_patterns,
-   cws_pattern, mea_pattern, ows_pattern, amo_pattern, amo_file_version_pattern,
+   cws_pattern, mea_pattern, ows_pattern, amo_pattern,
    get_crx_url, get_zip_name, console,
     */
 /* globals encodeQueryString */
@@ -26,7 +25,7 @@ function tabsOnUpdatedCheckPageAction(tabId, changeInfo, tab) {
 if (true) {
     browser.tabs.onUpdated.addListener(tabsOnUpdatedCheckPageAction);
     browser.tabs.query({
-        url: [cws_match_pattern, mea_match_pattern, ows_match_pattern].concat(amo_match_patterns, amo_file_version_match_patterns),
+        url: [cws_match_pattern, mea_match_pattern, ows_match_pattern].concat(amo_match_patterns),
     }).then(function(tabs) {
         tabs.forEach(showPageActionIfNeeded);
     });
@@ -108,7 +107,7 @@ chrome.runtime.onInstalled.addListener(function() {
             cws_match_pattern,
             mea_match_pattern,
             ows_match_pattern,
-        ].concat(amo_match_patterns, amo_file_version_match_patterns),
+        ].concat(amo_match_patterns),
     }, function(tabs) {
         tabs.forEach(showPageActionIfNeeded);
     });
@@ -150,5 +149,5 @@ function showPageActionIfNeeded(details_or_tab) {
 }
 function isPageActionNeededForUrl(url) {
     return cws_pattern.test(url) || mea_pattern.test(url) || ows_pattern.test(url) ||
-        amo_pattern.test(url) || amo_file_version_pattern.test(url);
+        amo_pattern.test(url);
 }

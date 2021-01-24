@@ -5,8 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* globals location, getPlatformInfo, navigator */
-/* exported cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns, amo_file_version_match_patterns */
-/* exported cws_pattern, mea_pattern, ows_pattern, amo_pattern, amo_file_version_pattern */
+/* exported cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns */
+/* exported cws_pattern, mea_pattern, ows_pattern, amo_pattern */
 /* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, is_not_crx_url, getParam */
 /* exported is_crx_download_url */
 /* exported get_amo_domain, get_amo_slug */
@@ -33,7 +33,6 @@ var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 var amo_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\/.*?(?:addon|review)\/([^/<>"'?#]+)/;
 var amo_download_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\/[^?#]*\/downloads\/latest\/([^/?#]+)/;
 var amo_domain_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\//;
-var amo_file_version_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\/(?:[^?#\/]*\/)?firefox\/files\/browse\/(\d+)(\/[^?#\/]+\.xpi)?/;
 var amo_match_patterns = [
     '*://addons.mozilla.org/*addon/*',
     '*://addons.mozilla.org/*review/*',
@@ -41,11 +40,6 @@ var amo_match_patterns = [
     '*://addons.allizom.org/*review/*',
     '*://addons-dev.allizom.org/*addon/*',
     '*://addons-dev.allizom.org/*review/*',
-];
-var amo_file_version_match_patterns = [
-    '*://addons.mozilla.org/*firefox/files/browse/*',
-    '*://addons.allizom.org/*firefox/files/browse/*',
-    '*://addons-dev.allizom.org/*firefox/files/browse/*',
 ];
 // Depends on: https://bugzilla.mozilla.org/show_bug.cgi?id=1620084
 var amo_xpi_cdn_pattern = /^https?:\/\/(?:addons\.cdn\.mozilla\.net|addons-dev-cdn\.allizom\.org)\/user-media\/addons\//;
@@ -101,10 +95,6 @@ function get_crx_url(extensionID_or_url) {
     match = amo_pattern.exec(extensionID_or_url);
     if (match) {
         return get_xpi_url(match[1], match[2]);
-    }
-    match = amo_file_version_pattern.exec(extensionID_or_url);
-    if (match) {
-        return 'https://' + match[1] + '/firefox/downloads/file/' + match[2] + (match[3] || '/addon.xpi');
     }
     match = mea_pattern.exec(extensionID_or_url) || mea_download_pattern.exec(extensionID_or_url);
     if (match) {
@@ -274,7 +264,6 @@ function is_not_crx_url(url) {
         return false;
     return amo_pattern.test(url) ||
         amo_download_pattern.test(url) ||
-        amo_file_version_pattern.test(url) ||
         /\.xpi([#?]|$)/.test(url);
 }
 

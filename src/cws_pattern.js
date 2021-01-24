@@ -7,8 +7,9 @@
 /* globals location, getPlatformInfo, navigator */
 /* exported cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns */
 /* exported cws_pattern, mea_pattern, ows_pattern, amo_pattern */
-/* exported get_crx_url, get_webstore_url, get_zip_name, is_crx_url, is_not_crx_url, getParam */
-/* exported is_crx_download_url */
+/* exported can_viewsource_crx_url */
+/* exported get_crx_url, get_webstore_url, get_zip_name, is_not_crx_url, getParam */
+/* exported is_crx_download_url, is_webstore_url */
 /* exported get_amo_domain, get_amo_slug */
 /* exported get_equivalent_download_url */
 /* exported encodeQueryString */
@@ -27,6 +28,8 @@ var mea_match_pattern = '*://microsoftedge.microsoft.com/addons/detail/*';
 
 // Opera add-on gallery
 var ows_pattern = /^https?:\/\/addons.opera.com\/.*?extensions\/(?:details|download)\/([^\/?#]+)/i;
+// The gallery links to addons.opera.com/extensions/download and redirects to addons-extensions.operacdn.com.
+var ows_download_pattern = /^https?:\/\/addons.opera.com\/extensions\/download\/([^\/]+)/;
 var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 
 // Firefox addon gallery
@@ -83,6 +86,7 @@ function get_xpi_url(amoDomain, addonSlug) {
 
 // Returns location of CRX file for a given extensionID or CWS url or Opera add-on URL
 // or Firefox addon URL or Microsoft Edge addon URL.
+// Unrecognized values are returned as-is.
 function get_crx_url(extensionID_or_url) {
     var url;
     var match = ows_pattern.exec(extensionID_or_url);
@@ -154,6 +158,7 @@ function isChromeNotChromium() {
 
 // Get location of addon gallery for a given extension
 function get_webstore_url(url) {
+    // Keep logic in sync with is_webstore_url.
     var cws = cws_pattern.exec(url) || cws_download_pattern.exec(url);
     if (cws) {
         return 'https://chrome.google.com/webstore/detail/' + cws[1];
@@ -162,7 +167,7 @@ function get_webstore_url(url) {
     if (mea) {
         return 'https://microsoftedge.microsoft.com/addons/detail/' + mea[1];
     }
-    var ows = ows_pattern.exec(url);
+    var ows = ows_pattern.exec(url) || ows_download_pattern.exec(url);
     if (ows) {
         return 'https://addons.opera.com/extensions/details/' + ows[1];
     }
@@ -254,21 +259,46 @@ function get_equivalent_download_url(url) {
     return requestUrl;
 }
 
-function is_crx_url(url) {
-    return cws_pattern.test(url) || mea_pattern.test(url) || ows_pattern.test(url) || /\.(crx|nex)\b/.test(url);
+// Whether the URL is supported by crxviewer (used in the popup).
+function can_viewsource_crx_url(url) {
+    return is_crx_download_url(url) || is_webstore_url(url);
 }
 
 // Whether the given URL is not a CRX file, with certainty.
+// Used to determine whether a file should pass through openCRXasZip (of lib/crx-to-zip.js).
 function is_not_crx_url(url) {
-    if (is_crx_url(url) || cws_download_pattern.test(url) || mea_download_pattern.test(url))
+    // Chromium-based browsers use CRX with certainty.
+    if (
+        cws_pattern.test(url) || cws_download_pattern.test(url) ||
+        mea_pattern.test(url) || mea_download_pattern.test(url) ||
+        ows_pattern.test(url) || ows_download_pattern.test(url) ||
+        /\.(crx|nex)\b/.test(url)
+    ) {
         return false;
-    return amo_pattern.test(url) ||
-        amo_download_pattern.test(url) ||
-        /\.xpi([#?]|$)/.test(url);
+    }
+    // Firefox-based browsers use XPI, which is not a CRX with certainty.
+    if (
+        amo_pattern.test(url) || amo_domain_pattern.test(url) ||
+        /\.xpi([#?]|$)/.test(url)
+    ) {
+        return true;
+    }
+    // Unsure: maybe CRX, maybe not.
+    return false;
 }
 
+// Whether the given URL is from a URL that is expected to serve the extension file.
 function is_crx_download_url(url) {
-    return cws_download_pattern.test(url) || mea_download_pattern.test(url) || amo_download_pattern.test(url);
+    return cws_download_pattern.test(url) ||
+        mea_download_pattern.test(url) ||
+        ows_download_pattern.test(url) ||
+        amo_download_pattern.test(url) ||
+        /\.(crx|nex|xpi)\b/.test(url);
+}
+
+function is_webstore_url(url) {
+    // Keep logic in sync with get_webstore_url.
+    return cws_pattern.test(url) || mea_pattern.test(url) || ows_pattern.test(url) || amo_pattern.test(url);
 }
 
 // |name| should not contain special RegExp characters, except possibly maybe a '[]' at the end.

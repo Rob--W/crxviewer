@@ -6,9 +6,9 @@
 
 /* jshint browser:true, devel:true */
 /* globals chrome, URL,
-           getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url, is_not_crx_url,
+           getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url, is_webstore_url, is_not_crx_url,
            get_extensionID, getPlatformInfo,
-           cws_pattern, get_crx_url, is_crx_download_url,
+           get_crx_url, is_crx_download_url,
            get_amo_domain, get_amo_slug,
            get_equivalent_download_url,
            zip,
@@ -1574,7 +1574,7 @@ function initialize() {
     // the get_crx_url method only takes the extension ID and generates the other
     // parameters based on the current platform.
     if (!is_crx_download_url(crx_url)) {
-        if (cws_pattern.test(crx_url) || mea_pattern.test(crx_url)) {
+        if (is_webstore_url(crx_url)) {
             // Prefer given URL because its slug contains an extra human-readable short name.
             webstore_url = crx_url;
         }

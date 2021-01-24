@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* jshint browser:true, devel:true */
-/* globals chrome, get_crx_url, get_zip_name, is_crx_url, getParam, openCRXasZip */
+/* globals chrome, get_crx_url, get_zip_name, can_viewsource_crx_url, getParam, openCRXasZip */
 /* globals encodeQueryString */
 'use strict';
 var cws_url;
@@ -25,7 +25,7 @@ if (crx_url) {
         cws_url = tabs[0].url;
         crx_url = get_crx_url(cws_url);
         filename = get_zip_name(crx_url);
-        if (!is_crx_url(crx_url)) {
+        if (!can_viewsource_crx_url(crx_url)) {
             chrome.pageAction.hide(tabs[0].id);
             window.close();
             return;

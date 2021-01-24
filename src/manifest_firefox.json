@@ -42,8 +42,5 @@
         "webRequest",
         "webRequestBlocking",
         "*://*/*"
-    ],
-    "web_accessible_resources": [
-        "crxviewer.html"
     ]
 }

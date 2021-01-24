@@ -43,8 +43,5 @@
         "*://addons.opera.com/*",
         "*://*/*"
     ],
-    "web_accessible_resources": [
-        "crxviewer.html"
-    ],
     "incognito": "split"
 }

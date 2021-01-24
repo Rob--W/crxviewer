@@ -45,8 +45,5 @@
     "optional_permissions": [
         "<all_urls>"
     ],
-    "web_accessible_resources": [
-        "crxviewer.html"
-    ],
     "incognito": "split"
 }

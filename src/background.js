@@ -84,11 +84,6 @@ function setActionClickAction(actionClickAction) {
 }
 
 //#if !FIREFOX
-if (chrome.declarativeWebRequest) {
-    chrome.runtime.onInstalled.addListener(setupDeclarativeWebRequest);
-    chrome.declarativeWebRequest.onMessage.addListener(dwr_onMessage);
-}
-
 (function() {
     var webNavigationFilter = {
         url: [{
@@ -118,62 +113,6 @@ chrome.runtime.onInstalled.addListener(function() {
         tabs.forEach(showPageActionIfNeeded);
     });
 });
-
-function setupDeclarativeWebRequest() {
-    // Note: Requires host permissions for the given host before a message is sent.
-    var detectCrx = {
-        id: 'nl.robwu.crxviewer',
-        conditions: [
-            // Correct mime type
-            new chrome.declarativeWebRequest.RequestMatcher({
-                contentType: [
-                    'application/x-chrome-extension',
-                    'application/x-navigator-extension',
-                    'application/x-xpinstall',
-                ]
-            }),
-            // Octet stream, name ends with..
-            new chrome.declarativeWebRequest.RequestMatcher({
-                contentType: [
-                    'application/octet-stream'
-                ],
-                url: {
-                    urlMatches: '(?i)\\.(crx|nex|xpi)\\b'
-                }
-            }),
-            // Octet stream, with attachment
-            cdw_getRequestMatcherForExtensionAsAttachment()
-        ],
-        actions: [
-            new chrome.declarativeWebRequest.SendMessageToExtension({message: 'crx'})
-        ]
-    };
-    var rules = [detectCrx];
-    var rule_ids = rules.map(function(rule) { return rule.id; });
-    chrome.declarativeWebRequest.onRequest.removeRules(rule_ids);
-    chrome.declarativeWebRequest.onRequest.addRules(rules);
-}
-function cdw_getRequestMatcherForExtensionAsAttachment() {
-    return new chrome.declarativeWebRequest.RequestMatcher({
-        contentType: [
-            'application/octet-stream'
-        ],
-        responseHeaders: [
-            '.crx', '.CRX', '.crx"', ".crx'",
-            '.nex', '.NEX', '.NEX"', ".nex'",
-            '.xpi', '.XPI', '.XPI"', ".xpi'"
-        ].map(function(contentDispositionHeaderSuffix) {
-            return {
-                nameEquals: 'Content-disposition',
-                valueSuffix: contentDispositionHeaderSuffix
-            };
-        })
-    });
-}
-function dwr_onMessage(details) {
-    if (details.tabId === -1) return;
-    showPageAction(details.tabId, details.url);
-}
 //#endif
 function showPageAction(tabId, url) {
     var popup;

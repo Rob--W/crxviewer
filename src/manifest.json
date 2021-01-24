@@ -38,7 +38,6 @@
         "webNavigation",
         "storage",
         "contextMenus",
-        "declarativeWebRequest",
         "downloads",
         "*://clients2.google.com/service/update2/crx*",
         "*://clients2.googleusercontent.com/crx/download/*"

@@ -17,7 +17,7 @@ var ModernCrypto = {};
     function binaryToHex(uint8Array) {
         var s = '';
         uint8Array.forEach(function(b) {
-            if (b < 0xF) s += '0';
+            if (b <= 0xF) s += '0';
             s += b.toString(16);
         });
         return s;

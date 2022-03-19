@@ -5,8 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* globals location, getPlatformInfo, navigator */
-/* exported cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns */
-/* exported cws_pattern, mea_pattern, ows_pattern, amo_pattern */
+/* exported cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns, atn_match_patterns */
+/* exported cws_pattern, mea_pattern, ows_pattern, amo_pattern, atn_pattern */
 /* exported can_viewsource_crx_url */
 /* exported get_crx_url, get_webstore_url, get_zip_name, is_not_crx_url, getParam */
 /* exported is_crx_download_url, is_webstore_url */
@@ -46,6 +46,14 @@ var amo_match_patterns = [
 ];
 // Depends on: https://bugzilla.mozilla.org/show_bug.cgi?id=1620084
 var amo_xpi_cdn_pattern = /^https?:\/\/(?:addons\.cdn\.mozilla\.net|addons-dev-cdn\.allizom\.org)\/user-media\/addons\//;
+
+// Thunderbird
+var atn_pattern = /^https?:\/\/((?:addons|addons-stage)\.thunderbird\.net)\/.*?\/addon\/([^/?#]+)/;
+var atn_download_pattern = /^https?:\/\/((?:addons|addons-stage)\.thunderbird\.net)\/[^?#]*\/downloads\/latest\/([^/?#]+)/;
+var atn_match_patterns = [
+    '*://addons.thunderbird.net/*addon/*',
+    '*://addons-stage.thunderbird.net/*addon/*',
+];
 
 // page_action.show_matches (in manifest_firefox.json) uses:
 // cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns
@@ -108,6 +116,11 @@ function get_crx_url(extensionID_or_url) {
     match = amo_pattern.exec(extensionID_or_url);
     if (match) {
         return get_xpi_url(match[1], match[2]);
+    }
+    match = atn_pattern.exec(extensionID_or_url);
+    if (match) {
+        // Although /firefox/ works too, let's prefer /thunderbird/.
+        return get_xpi_url(match[1], match[2]).replace('/firefox/', '/thunderbird/');
     }
     match = mea_pattern.exec(extensionID_or_url) || mea_download_pattern.exec(extensionID_or_url);
     if (match) {
@@ -183,6 +196,10 @@ function get_webstore_url(url) {
     var amo = get_amo_slug(url);
     if (amo) {
         return 'https://' + get_amo_domain(url) + '/firefox/addon/' + amo;
+    }
+    var atn = atn_pattern.exec(url) || atn_download_pattern.exec(url);
+    if (atn) {
+        return 'https://' + atn[1] + '/thunderbird/addon/' + atn[2];
     }
 }
 
@@ -288,6 +305,7 @@ function is_not_crx_url(url) {
     // Firefox-based browsers use XPI, which is not a CRX with certainty.
     if (
         amo_pattern.test(url) || amo_domain_pattern.test(url) ||
+        atn_pattern.test(url) || atn_download_pattern.test(url) ||
         /\.xpi([#?]|$)/.test(url)
     ) {
         return true;
@@ -302,12 +320,17 @@ function is_crx_download_url(url) {
         mea_download_pattern.test(url) ||
         ows_download_pattern.test(url) ||
         amo_download_pattern.test(url) ||
+        atn_download_pattern.test(url) ||
         /\.(crx|nex|xpi)\b/.test(url);
 }
 
 function is_webstore_url(url) {
     // Keep logic in sync with get_webstore_url.
-    return cws_pattern.test(url) || mea_pattern.test(url) || ows_pattern.test(url) || amo_pattern.test(url);
+    return cws_pattern.test(url) ||
+        mea_pattern.test(url) ||
+        ows_pattern.test(url) ||
+        amo_pattern.test(url) ||
+        atn_pattern.test(url);
 }
 
 // |name| should not contain special RegExp characters, except possibly maybe a '[]' at the end.

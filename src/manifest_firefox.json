@@ -34,7 +34,9 @@
             "*://addons.allizom.org/*addon/*",
             "*://*.addons.allizom.org/*review/*",
             "*://addons-dev.allizom.org/*addon/*",
-            "*://*.addons-dev.allizom.org/*review/*"
+            "*://*.addons-dev.allizom.org/*review/*",
+            "*://addons.thunderbird.net/*addon/*",
+            "*://addons-stage.thunderbird.net/*addon/*"
         ]
     },
     "icons": {

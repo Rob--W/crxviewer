@@ -5,8 +5,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* globals navigator */
-/* globals chrome, cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns,
-   cws_pattern, mea_pattern, ows_pattern, amo_pattern,
+/* globals chrome, cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns, atn_match_patterns,
+   cws_pattern, mea_pattern, ows_pattern, amo_pattern, atn_pattern,
     */
 
 'use strict';
@@ -56,7 +56,7 @@ function togglePageAction(isEnabled) {
         }
     }
     browser.tabs.query({
-        url: [cws_match_pattern, mea_match_pattern, ows_match_pattern].concat(amo_match_patterns),
+        url: [cws_match_pattern, mea_match_pattern, ows_match_pattern].concat(amo_match_patterns, atn_match_patterns),
     }).then(function(tabs) {
         tabs.forEach(showPageActionIfNeeded);
     });
@@ -86,6 +86,6 @@ function showPageActionIfNeeded(tab) {
 }
 function isPageActionNeededForUrl(url) {
     return cws_pattern.test(url) || mea_pattern.test(url) || ows_pattern.test(url) ||
-        amo_pattern.test(url);
+        amo_pattern.test(url) || atn_pattern.test(url);
 }
 //#endif

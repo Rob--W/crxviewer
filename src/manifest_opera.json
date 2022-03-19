@@ -85,6 +85,18 @@
                 "hostSuffix": "addons-dev.allizom.org",
                 "pathContains": "review/"
             }
+        }, {
+            "type": "declarativeContent.PageStateMatcher",
+            "pageUrl": {
+                "hostEquals": "addons.thunderbird.net",
+                "pathContains": "addon/"
+            }
+        }, {
+            "type": "declarativeContent.PageStateMatcher",
+            "pageUrl": {
+                "hostSuffix": "addons-stage.thunderbird.net",
+                "pathContains": "addon/"
+            }
         }]
     }],
     "icons": {

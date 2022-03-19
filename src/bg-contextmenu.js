@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* jshint browser:true, devel:true */
-/* globals chrome, cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns, get_crx_url */
+/* globals chrome, cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns, atn_match_patterns, get_crx_url */
 /* globals encodeQueryString */
 
 'use strict';
@@ -173,7 +173,7 @@
             id: MENU_ID_AMO_APPROVED_LINK,
             title: 'View linked extension source (latest approved version)',
             contexts: ['link'],
-            targetUrlPatterns: amo_match_patterns,
+            targetUrlPatterns: amo_match_patterns.concat(atn_match_patterns),
         });
         chrome.contextMenus.create({
             id: MENU_ID_PAGE,
@@ -191,7 +191,7 @@
             id: MENU_ID_AMO_APPROVED_PAGE,
             title: 'View extension source (latest approved version)',
             contexts: ['page', 'frame', 'link'],
-            documentUrlPatterns: amo_match_patterns,
+            documentUrlPatterns: amo_match_patterns.concat(atn_match_patterns),
         });
     }
     function hide() {

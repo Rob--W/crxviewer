@@ -18,7 +18,7 @@
 
 (() => {
     let DOMAIN_FRONTS = new Map();
-    DOMAIN_FRONTS.set('addons.mozilla.org', 'reviewers.addons.mozilla.org');
+    DOMAIN_FRONTS.set('addons.mozilla.org', 'services.addons.mozilla.org');
     DOMAIN_FRONTS.set('addons.cdn.mozilla.net', 'addons.cdn.mozilla.net.');
 
     const REQUEST_ID_HEADER = 'random-id-to-map-xhr-to-domain-fronter';

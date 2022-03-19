@@ -12,13 +12,11 @@
  * - CSS
  */
 
-// jsbeautifier only exports to exports or window...
-var window = self;
+'use strict';
 
+/* globals beautifier, json_beautify */
 importScripts(
-    'jsbeautifier/beautify.js',
-    'jsbeautifier/beautify-css.js',
-    'jsbeautifier/beautify-html.js',
+    'beautifier.js',
     'beautify-json.js'
 );
 
@@ -56,11 +54,11 @@ self.onmessage = function(event) {
 function beautify(type, source, options) {
     switch (type) {
     case 'css':
-        return css_beautify(source, options);
+        return beautifier.css(source, options);
     case 'html':
-        return html_beautify(source, options);
+        return beautifier.html(source, options);
     case 'js':
-        return js_beautify(source, options);
+        return beautifier.js(source, options);
     case 'json':
         return json_beautify(source);
     default:

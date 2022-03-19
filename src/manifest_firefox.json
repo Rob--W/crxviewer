@@ -24,7 +24,18 @@
             "38": "icons/38.png"
         },
         "default_title": "Inspect contents of the current browser extension",
-        "default_popup": "popup.html"
+        "default_popup": "popup.html",
+        "show_matches": [
+            "*://chrome.google.com/webstore/detail/*",
+            "*://microsoftedge.microsoft.com/addons/detail/*",
+            "*://addons.opera.com/*extensions/details/*",
+            "*://addons.mozilla.org/*addon/*",
+            "*://*.addons.mozilla.org/*review/*",
+            "*://addons.allizom.org/*addon/*",
+            "*://*.addons.allizom.org/*review/*",
+            "*://addons-dev.allizom.org/*addon/*",
+            "*://*.addons-dev.allizom.org/*review/*"
+        ]
     },
     "icons": {
         "16": "icons/16.png",

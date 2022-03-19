@@ -5,18 +5,21 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* jshint browser:true, devel:true */
-/* globals chrome, get_crx_url, get_zip_name, can_viewsource_crx_url, getParam, openCRXasZip */
+/* globals chrome, get_crx_url, get_zip_name, can_viewsource_crx_url, openCRXasZip */
 /* globals encodeQueryString */
 'use strict';
 var cws_url;
-var crx_url = getParam('crx');
+var crx_url;
 var filename;
 
-if (crx_url) {
-    crx_url = get_crx_url(crx_url); // Normalize if needed.
-    filename = get_zip_name(crx_url);
-    ready();
-} else {
+// See bg-contextmenu for potential values, at MENU_ID_ACTION_MENU.
+var gActionClickAction = 'popup';
+
+initialize();
+
+function initialize() {
+    var storageIsReady = false;
+
     // Get CWS URL. On failure, close the popup
     chrome.tabs.query({
         active: true,
@@ -31,6 +34,18 @@ if (crx_url) {
             return;
         }
         ready();
+        if (storageIsReady) {
+            ready2();
+        }
+    });
+    chrome.storage.sync.get({
+        actionClickAction: gActionClickAction,
+    }, function(items) {
+        gActionClickAction = items && items.actionClickAction || gActionClickAction;
+        storageIsReady = true;
+        if (crx_url) {
+            ready2();
+        }
     });
 }
 
@@ -40,8 +55,16 @@ function ready() {
 //#if OPERA
     document.getElementById('install-as-nex').onclick = doInstall;
 //#endif
-    if (getParam('doDownload')) {
+    // When the settings have been read, ready2 will run to finish.
+}
+function ready2() {
+    if (gActionClickAction == 'popup') {
+        // Default action is keeping this popup open.
+        // Nothing else left to do.
+    } else if (gActionClickAction == 'download') {
         doDownload();
+    } else if (gActionClickAction == 'view-source') {
+        doViewSource();
     }
 }
 var hasDownloadedOnce = false;

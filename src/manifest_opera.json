@@ -26,6 +26,67 @@
         "default_title": "Inspect contents of the current browser extension",
         "default_popup": "popup.html"
     },
+    "event_rules": [{
+        "event": "declarativeContent.onPageChanged",
+        "actions": [{
+            "type": "declarativeContent.ShowPageAction"
+        }],
+        "conditions": [{
+            "type": "declarativeContent.PageStateMatcher",
+            "pageUrl": {
+                "hostEquals": "chrome.google.com",
+                "pathPrefix": "/webstore/detail/"
+            }
+        }, {
+            "type": "declarativeContent.PageStateMatcher",
+            "pageUrl": {
+                "hostEquals": "microsoftedge.microsoft.com",
+                "pathPrefix": "/webstore/detail/"
+            }
+        }, {
+            "type": "declarativeContent.PageStateMatcher",
+            "pageUrl": {
+                "hostEquals": "addons.opera.com",
+                "pathContains": "extensions/details/"
+            }
+        }, {
+            "type": "declarativeContent.PageStateMatcher",
+            "pageUrl": {
+                "hostEquals": "addons.mozilla.org",
+                "pathContains": "addon/"
+            }
+        }, {
+            "type": "declarativeContent.PageStateMatcher",
+            "pageUrl": {
+                "hostSuffix": "addons.mozilla.org",
+                "pathContains": "review/"
+            }
+        }, {
+            "type": "declarativeContent.PageStateMatcher",
+            "pageUrl": {
+                "hostEquals": "addons.allizom.org",
+                "pathContains": "addon/"
+            }
+        }, {
+            "type": "declarativeContent.PageStateMatcher",
+            "pageUrl": {
+                "hostSuffix": "addons.allizom.org",
+                "pathContains": "review/"
+            }
+        }, {
+            "type": "declarativeContent.PageStateMatcher",
+            "pageUrl": {
+                "hostEquals": "addons-dev.allizom.org",
+                "pathContains": "addon/"
+            }
+        }, {
+            "type": "declarativeContent.PageStateMatcher",
+            "pageUrl": {
+                "hostSuffix": "addons-dev.allizom.org",
+                "pathContains": "review/"
+            }
+        }]
+    }],
     "icons": {
         "16": "icons/16.png",
         "48": "icons/48.png",
@@ -34,7 +95,6 @@
     "options_page": "options.html",
     "permissions": [
         "tabs",
-        "webNavigation",
         "storage",
         "contextMenus",
         "downloads",

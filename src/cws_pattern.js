@@ -47,6 +47,15 @@ var amo_match_patterns = [
 // Depends on: https://bugzilla.mozilla.org/show_bug.cgi?id=1620084
 var amo_xpi_cdn_pattern = /^https?:\/\/(?:addons\.cdn\.mozilla\.net|addons-dev-cdn\.allizom\.org)\/user-media\/addons\//;
 
+// page_action.show_matches (in manifest_firefox.json) uses:
+// cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns
+//
+// event_rules / declarativeContent (in manifest.json / manifest_opera.json)
+// uses the same patterns, translated to a UrlFilter.
+//
+// popup.js uses can_viewsource_crx_url to determine whether the URL can actually be opened,
+// which use regexps that may be stricter than the match patterns.
+
 // string extensionID if valid URL
 // null otherwise
 function get_extensionID(url) {

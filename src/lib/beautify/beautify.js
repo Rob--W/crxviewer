@@ -13,8 +13,8 @@ var beautify = (function(){
         // Detect URL of current script.
         // Note: Does not work if loaded asynchronously.
         var workerURL;
-        if (document.scripts && document.scripts.length) {
-            workerURL = document.scripts[document.scripts.length - 1].src
+        if (document.currentScript) {
+            workerURL = document.currentScript.src
                 .replace(/[^\/]+.js([\?#].*?)?$/i, '');
         }
         workerURL = (workerURL || './') + 'worker-beautify.js';

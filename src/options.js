@@ -53,11 +53,30 @@ contextmenuPatternsInput.oninput = function() {
 storageArea.get({
     showContextMenu: true,
     contextmenuPatterns: [],
+//#if FIREFOX
+    showPageAction: true,
+//#endif
 }, function(items) {
     document.getElementById('contextmenu').checked = items.showContextMenu;
     contextmenuPatternsInput.disabled = !items.showContextMenu;
     contextmenuPatternsInput.value = items.contextmenuPatterns.join('\n');
+//#if FIREFOX
+    document.getElementById('pageaction').checked = items.showPageAction;
+//#endif
 });
+
+//#if FIREFOX
+document.getElementById('pageaction').onchange = function() {
+    storageArea.set({showPageAction: this.checked});
+};
+
+//// May change via bg-contextmenu.js when the user toggles the option via the context menu.
+chrome.storage.onChanged.addListener(function(items) {
+    if (items.showPageAction) {
+        document.getElementById('pageaction').checked = items.showPageAction.newValue;
+    }
+});
+//#endif
 
 if (location.hash !== '#optionsV2') {
     // A normal options page, open links in the same tab.

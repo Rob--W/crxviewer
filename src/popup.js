@@ -157,7 +157,16 @@ function tryTriggerDownload(blob, filename) {
         url: URL.createObjectURL(blob),
         filename: filename
     }, function() {
+//#if FIREFOX
+        // In Firefox, closing too soon may prevent the download from completing
+        // due to blob:-URL invalidation. So wait a little bit before actually
+        // closing the popup.
+        setTimeout(function() {
+            window.close();
+        }, 200);
+//#else
         // The popup should have closed already, but if not, do it now.
         window.close();
+//#endif
     });
 }

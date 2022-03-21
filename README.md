@@ -15,8 +15,15 @@ https://robwu.nl/crxviewer/
 ## Features
 
 This Chrome extension adds a button to right of the omnibox when a CRX file has been detected.
-By default, this is only enabled on the Chrome Web Store. Upon clicking the button, two actions
-become available:
+This button appears in the following extension stored:
+
+  - Chrome Web Store
+  - Opera add-ons gallery
+  - Firefox add-ons gallery
+  - Thunderbird add-ons gallery
+  - Microsoft Edge Addons store
+
+Upon clicking the button, two actions become available:
 
   - Download extension as zip file
   - View source
@@ -45,7 +52,7 @@ hosted elsewhere. Further, there is an option to show a contextmenu entry on lin
 is a Chromium extension. Both features can be toggled at the options page.
 
 ## Copyright
-(c) 2013 - 2018 Rob Wu <rob@robwu.nl> (https://robwu.nl/)
+(c) 2013 - 2022 Rob Wu <rob@robwu.nl> (https://robwu.nl/)
 
 This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this

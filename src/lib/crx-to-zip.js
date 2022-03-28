@@ -60,6 +60,29 @@ var CRXtoZIP = (function() {
             publicKeyBase64 = getPublicKeyFromProtoBuf(view, 12, zipStartOffset);
         }
 
+        // addons.opera.com creates CRX3 files by prepending the CRX3 header to the CRX2 data.
+        if (
+            // CRX3
+            view[4] === 3 &&
+            // 43 72 32 34 - Cr24 = CRX magic
+            view[zipStartOffset + 0] === 67 &&
+            view[zipStartOffset + 1] === 114 &&
+            view[zipStartOffset + 2] === 50 &&
+            view[zipStartOffset + 3] === 52
+        ) {
+            console.warn('Nested CRX: Expected zip data, but found another CRX file instead.');
+            return CRXtoZIP(
+                arraybuffer.slice(zipStartOffset),
+                function(zipFragment, nestedKey) {
+                    if (publicKeyBase64 != nestedKey) {
+                        console.warn('Nested CRX: pubkey mismatch; found ' + nestedKey);
+                    }
+                    callback(zipFragment, publicKeyBase64, arraybuffer);
+                },
+                errCallback
+            );
+        }
+
         // Create a new view for the existing buffer, and wrap it in a Blob object.
         var zipFragment = new Blob([
             new Uint8Array(arraybuffer, zipStartOffset)

@@ -2066,6 +2066,12 @@ function loadNonCrxUrlInViewer(url, human_readable_name, onHasBlob, onHasNoBlob)
     try {
         var x = new XMLHttpRequest();
         x.open('GET', requestUrl);
+//#if OPERA
+        // Required for access to addons.opera.com, see get_equivalent_download_url
+        if (requestUrl.startsWith('https://cors-anywhere.herokuapp.com/')) {
+            x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+        }
+//#endif
         x.responseType = 'blob';
         x.onerror = function() {
             onHasNoBlob('Network error for ' + url);

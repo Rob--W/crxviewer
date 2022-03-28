@@ -257,6 +257,12 @@ function openCRXasZip_url(url, callback, errCallback, xhrProgressListener) {
     var requestUrl = get_equivalent_download_url(url);
     var x = new XMLHttpRequest();
     x.open('GET', requestUrl);
+//#if OPERA
+    // Required for access to addons.opera.com, see get_equivalent_download_url
+    if (requestUrl.startsWith('https://cors-anywhere.herokuapp.com/')) {
+        x.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    }
+//#endif
     x.responseType = 'arraybuffer';
     x.onprogress = xhrProgressListener;
     x.onload = function() {

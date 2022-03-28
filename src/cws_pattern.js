@@ -265,7 +265,16 @@ function get_equivalent_download_url(url) {
 //#endif
 //#if OPERA
     // Opera blocks access to addons.opera.com. Let's bypass this restriction.
-    requestUrl = url.replace(/^https?:\/\/addons\.opera\.com(?=\/)/i, '$&.');
+    // Unfortunately, there is no way to retrieve the .crx file in an ordinary way.
+    // If given the extension ID, it is possible to fetch
+    // "https://extension-updates.opera.com/api/omaha/update/?[see get_crx_url for params]"
+    // but using the following x param instead:
+    // "&x=id%3D[extensionID]%26v%3D[old version, e.g. 0]%26installedby%3Dinternal"
+    // and then download the crx from https://addons-extensions.operacdn.com/media/direct/*/*/*.crx
+    // ... but we are given the slug of the store listing, not the extension ID, so we cannot use this.
+    if (ows_download_pattern.test(url)) {
+        requestUrl = 'https://cors-anywhere.herokuapp.com/' + url;
+    }
 //#endif
 //#if CHROME
     // Brave intercepts requests to the CWS update endpoint, and prevents us

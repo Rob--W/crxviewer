@@ -24,7 +24,7 @@ if (hasStaticPageActionPatterns) {
     // Static actions not enabled yet, enable them now.
     togglePageAction(true);
 }
-// Later below, actions may be disabled via prefs.
+//// Later below, actions may be disabled via prefs.
 
 function togglePageAction(isEnabled) {
     var didChange = pageActionIsEnabled !== isEnabled;

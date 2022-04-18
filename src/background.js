@@ -88,4 +88,68 @@ function isPageActionNeededForUrl(url) {
     return cws_pattern.test(url) || mea_pattern.test(url) || ows_pattern.test(url) ||
         amo_pattern.test(url) || atn_pattern.test(url);
 }
+//#else
+//// Work-around for crbug.com/1132684: static event_rules disappear after a
+//// restart, so we register rules dynamically instead, on install.
+function registerEventRules() {
+    if (registerEventRules.hasRunOnce) {
+        return;
+    }
+    registerEventRules.hasRunOnce = true;
+
+    var pageUrlFilters = [{
+        hostEquals: "chrome.google.com",
+        pathPrefix: "/webstore/detail/"
+    }, {
+        hostEquals: "microsoftedge.microsoft.com",
+        pathPrefix: "/webstore/detail/"
+    }, {
+        hostEquals: "addons.opera.com",
+        pathContains: "extensions/details/"
+    }, {
+        hostEquals: "addons.mozilla.org",
+        pathContains: "addon/"
+    }, {
+        hostSuffix: "addons.mozilla.org",
+        pathContains: "review/"
+    }, {
+        hostEquals: "addons.allizom.org",
+        pathContains: "addon/"
+    }, {
+        hostSuffix: "addons.allizom.org",
+        pathContains: "review/"
+    }, {
+        hostEquals: "addons-dev.allizom.org",
+        pathContains: "addon/"
+    }, {
+        hostSuffix: "addons-dev.allizom.org",
+        pathContains: "review/"
+    }, {
+        hostEquals: "addons.thunderbird.net",
+        pathContains: "addon/"
+    }, {
+        hostSuffix: "addons-stage.thunderbird.net",
+        pathContains: "addon/"
+    }];
+
+    var rule = {
+        conditions: pageUrlFilters.map(function(pageUrlFilter) {
+            return new chrome.declarativeContent.PageStateMatcher({
+                pageUrl: pageUrlFilter,
+            });
+        }),
+        actions: [
+            new chrome.declarativeContent.ShowPageAction(),
+        ],
+    };
+
+    chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
+        chrome.declarativeContent.onPageChanged.addRules([rule]);
+    });
+}
+//// Work-around for crbug.com/388231 is in incognito-events.js
+chrome.runtime.onInstalled.addListener(registerEventRules);
+//// Work-around for crbug.com/264963: onInstalled is not fired when the
+//// extension was disabled during an update.
+chrome.runtime.onStartup.addListener(registerEventRules);
 //#endif

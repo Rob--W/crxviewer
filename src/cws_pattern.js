@@ -58,8 +58,7 @@ var atn_match_patterns = [
 // page_action.show_matches (in manifest_firefox.json) uses:
 // cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns
 //
-// event_rules / declarativeContent (in manifest.json / manifest_opera.json)
-// uses the same patterns, translated to a UrlFilter.
+// declarativeContent (in background.js) uses the same patterns, translated to a UrlFilter.
 //
 // popup.js uses can_viewsource_crx_url to determine whether the URL can actually be opened,
 // which use regexps that may be stricter than the match patterns.

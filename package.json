@@ -16,5 +16,8 @@
   "devDependencies": {
     "less": "^2.7.1",
     "shelljs": "^0.8.5"
+  },
+  "dependencies": {
+    "lodash": "4.17.21"
   }
 }

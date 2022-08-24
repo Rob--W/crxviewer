@@ -32,6 +32,7 @@
         cws_match_pattern,
         mea_match_pattern,
         ows_match_pattern,
+        wes_match_pattern,
     ];
 
     chrome.storage.onChanged.addListener(function(changes) {
@@ -183,6 +184,7 @@
                 cws_match_pattern,
                 mea_match_pattern,
                 ows_match_pattern,
+                wes_match_pattern,
             ],
         });
         // AMO lists multiple versions, specifically state that this

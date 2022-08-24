@@ -32,6 +32,11 @@ var ows_pattern = /^https?:\/\/addons.opera.com\/.*?extensions\/(?:details|downl
 var ows_download_pattern = /^https?:\/\/addons.opera.com\/extensions\/download\/([^\/]+)/;
 var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 
+// Whale extensions store
+var wes_pattern = /^https?:\/\/store.whale.naver.com\/detail\/([a-z]{32})(?=[\/#?]|$)/;
+var wes_download_pattern = /^https?:\/\/store.whale.naver.com\/update\/whx\b.*?%3D([a-z]{32})%26/;
+var wes_match_pattern = '*://store.whale.naver.com/detail/*';
+
 // Firefox addon gallery
 var amo_pattern = /^https?:\/\/((?:reviewers\.)?(?:addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org))\/.*?(?:addon|review)\/([^/<>"'?#]+)/;
 var amo_download_pattern = /^https?:\/\/(addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org)\/[^?#]*\/downloads\/latest\/([^/?#]+)/;
@@ -125,6 +130,10 @@ function get_crx_url(extensionID_or_url) {
     if (match) {
         return 'https://edge.microsoft.com/extensionwebstorebase/v1/crx?response=redirect&x=id%3D' + match[1] + '%26installsource%3Dondemand%26uc';
     }
+    match = wes_pattern.exec(extensionID_or_url) || wes_download_pattern.exec(extensionID_or_url);
+    if (match) {
+        return 'https://store.whale.naver.com/update/whx?response=redirect&x=id%3D' + match[1] + '%26installsource%3Dondemand%26uc';
+    }
     // Chrome Web Store
     match = get_extensionID(extensionID_or_url);
     var extensionID = match ? match : extensionID_or_url;
@@ -191,6 +200,10 @@ function get_webstore_url(url) {
     var ows = ows_pattern.exec(url) || ows_download_pattern.exec(url);
     if (ows) {
         return 'https://addons.opera.com/extensions/details/' + ows[1];
+    }
+    var wes = wes_pattern.exec(url) || wes_download_pattern.exec(url);
+    if (wes) {
+        return 'https://store.whale.naver.com/detail/' + wes[1];
     }
     var amo = get_amo_slug(url);
     if (amo) {
@@ -291,6 +304,7 @@ function is_not_crx_url(url) {
         cws_pattern.test(url) || cws_download_pattern.test(url) ||
         mea_pattern.test(url) || mea_download_pattern.test(url) ||
         ows_pattern.test(url) || ows_download_pattern.test(url) ||
+        wes_pattern.test(url) || wes_download_pattern.test(url) ||
         /\.(crx|nex)\b/.test(url)
     ) {
         return false;
@@ -312,6 +326,7 @@ function is_crx_download_url(url) {
     return cws_download_pattern.test(url) ||
         mea_download_pattern.test(url) ||
         ows_download_pattern.test(url) ||
+        wes_download_pattern.test(url) ||
         amo_download_pattern.test(url) ||
         atn_download_pattern.test(url) ||
         /\.(crx|nex|xpi)\b/.test(url);
@@ -322,6 +337,7 @@ function is_webstore_url(url) {
     return cws_pattern.test(url) ||
         mea_pattern.test(url) ||
         ows_pattern.test(url) ||
+        wes_pattern.test(url) ||
         amo_pattern.test(url) ||
         atn_pattern.test(url);
 }

@@ -35,7 +35,7 @@ var ows_match_pattern = '*://addons.opera.com/*extensions/details/*';
 // Whale extensions store
 var wes_pattern = /^https?:\/\/store.whale.naver.com\/detail\/([a-z]{32})(?=[\/#?]|$)/;
 var wes_download_pattern = /^https?:\/\/store.whale.naver.com\/update\/whx\b.*?%3D([a-z]{32})%26/;
-var wes_match_pattern = '*://store.whale.naver.com\/detail/*';
+var wes_match_pattern = '*://store.whale.naver.com/detail/*';
 
 // Firefox addon gallery
 var amo_pattern = /^https?:\/\/((?:reviewers\.)?(?:addons\.mozilla\.org|addons(?:-dev)?\.allizom\.org))\/.*?(?:addon|review)\/([^/<>"'?#]+)/;

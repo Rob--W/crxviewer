@@ -85,7 +85,7 @@ function showPageActionIfNeeded(tab) {
     }
 }
 function isPageActionNeededForUrl(url) {
-    return cws_pattern.test(url) || mea_pattern.test(url) || ows_pattern.test(url) ||
+    return cws_pattern.test(url) || mea_pattern.test(url) || ows_pattern.test(url) || wes_pattern.test(url) ||
         amo_pattern.test(url) || atn_pattern.test(url);
 }
 //#else

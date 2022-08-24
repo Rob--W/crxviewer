@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* globals navigator */
-/* globals chrome, cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns, atn_match_patterns,
+/* globals chrome, cws_match_pattern, mea_match_pattern, ows_match_pattern, wes_match_pattern, amo_match_patterns, atn_match_patterns,
    cws_pattern, mea_pattern, ows_pattern, amo_pattern, atn_pattern,
     */
 
@@ -56,7 +56,7 @@ function togglePageAction(isEnabled) {
         }
     }
     browser.tabs.query({
-        url: [cws_match_pattern, mea_match_pattern, ows_match_pattern].concat(amo_match_patterns, atn_match_patterns),
+        url: [cws_match_pattern, mea_match_pattern, ows_match_pattern, wes_match_pattern].concat(amo_match_patterns, atn_match_patterns),
     }).then(function(tabs) {
         tabs.forEach(showPageActionIfNeeded);
     });
@@ -102,7 +102,7 @@ function registerEventRules() {
         pathPrefix: "/webstore/detail/"
     }, {
         hostEquals: "microsoftedge.microsoft.com",
-        pathPrefix: "/webstore/detail/"
+        pathPrefix: "/addons/detail/"
     }, {
         hostEquals: "addons.opera.com",
         pathContains: "extensions/details/"
@@ -130,6 +130,9 @@ function registerEventRules() {
     }, {
         hostSuffix: "addons-stage.thunderbird.net",
         pathContains: "addon/"
+    }, {
+        hostSuffix: "store.whale.naver.com",
+        pathPrefix: "/detail/"
     }];
 
     var rule = {

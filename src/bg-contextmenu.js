@@ -145,6 +145,9 @@
             url: chrome.extension.getURL('crxviewer.html') + '?' + params,
             active: true,
             index: tab ? tab.index + 1 : undefined,
+//#if FIREFOX
+            cookieStoreId: tab ? tab.cookieStoreId : undefined,
+//#endif
         });
     }
     chrome.contextMenus.onClicked.addListener(contextMenusOnClicked);

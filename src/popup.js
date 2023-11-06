@@ -94,6 +94,9 @@ function doViewSource() {
                 '?' + encodeQueryString({crx: crx_url, zipname: filename}),
             active: true,
             index: tabs && tabs.length ? tabs[0].index + 1 : undefined,
+//#if FIREFOX
+            cookieStoreId: tabs && tabs[0] && tabs[0].cookieStoreId,
+//#endif
         }, function() {
             window.close();
         });

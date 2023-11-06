@@ -53,6 +53,7 @@
         "storage",
         "contextMenus",
         "downloads",
+        "cookies",
         "webRequest",
         "webRequestBlocking",
         "*://*/*"

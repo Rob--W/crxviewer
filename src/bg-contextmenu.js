@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* jshint browser:true, devel:true */
-/* globals chrome, cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns, atn_match_patterns, get_crx_url */
+/* jshint browser:true, devel:true, esversion:6 */
+/* globals chrome, cws_match_patterns, mea_match_pattern, ows_match_pattern, amo_match_patterns, atn_match_patterns, get_crx_url */
 /* globals encodeQueryString */
 
 'use strict';
@@ -29,7 +29,7 @@
         '*://*/*.nex*',
         '*://*/*.XPI*',
         '*://*/*.xpi*',
-        cws_match_pattern,
+        ...cws_match_patterns,
         mea_match_pattern,
         ows_match_pattern,
     ];
@@ -180,7 +180,7 @@
             title: 'View extension source',
             contexts: ['all'],
             documentUrlPatterns: [
-                cws_match_pattern,
+                ...cws_match_patterns,
                 mea_match_pattern,
                 ows_match_pattern,
             ],

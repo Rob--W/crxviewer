@@ -4,8 +4,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* jshint esversion:6 */
 /* globals navigator */
-/* globals chrome, cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns, atn_match_patterns,
+/* globals chrome, cws_match_patterns, mea_match_pattern, ows_match_pattern, amo_match_patterns, atn_match_patterns,
    cws_pattern, mea_pattern, ows_pattern, amo_pattern, atn_pattern,
     */
 
@@ -56,7 +57,13 @@ function togglePageAction(isEnabled) {
         }
     }
     browser.tabs.query({
-        url: [cws_match_pattern, mea_match_pattern, ows_match_pattern].concat(amo_match_patterns, atn_match_patterns),
+        url: [
+            ...cws_match_patterns,
+            mea_match_pattern,
+            ows_match_pattern,
+            ...amo_match_patterns,
+            ...atn_match_patterns,
+        ],
     }).then(function(tabs) {
         tabs.forEach(showPageActionIfNeeded);
     });

@@ -5,7 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 /* globals location, getPlatformInfo, navigator */
-/* exported cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns, atn_match_patterns */
+/* exported cws_match_patterns, mea_match_pattern, ows_match_pattern, amo_match_patterns, atn_match_patterns */
 /* exported cws_pattern, mea_pattern, ows_pattern, amo_pattern, atn_pattern */
 /* exported can_viewsource_crx_url */
 /* exported get_crx_url, get_webstore_url, get_zip_name, is_not_crx_url, getParam */
@@ -19,7 +19,10 @@
 var cws_pattern = /^https?:\/\/(?:chrome.google.com\/webstore|chromewebstore.google.com)\/.+?\/([a-z]{32})(?=[\/#?]|$)/;
 var cws_download_pattern = /^https?:\/\/clients2\.google\.com\/service\/update2\/crx\b.*?%3D([a-z]{32})%26uc/;
 // match pattern per Chrome spec
-var cws_match_pattern = '*://chrome.google.com/webstore/detail/*';
+var cws_match_patterns = [
+    '*://chrome.google.com/webstore/detail/*',
+    '*://chromewebstore.google.com/detail/*',
+];
 
 // Microsoft Edge Addons Store
 var mea_pattern = /^https?:\/\/microsoftedge.microsoft.com\/addons\/.+?\/([a-z]{32})(?=[\/#?]|$)/;
@@ -56,7 +59,7 @@ var atn_match_patterns = [
 ];
 
 // page_action.show_matches (in manifest_firefox.json) uses:
-// cws_match_pattern, mea_match_pattern, ows_match_pattern, amo_match_patterns
+// cws_match_patterns, mea_match_pattern, ows_match_pattern, amo_match_patterns
 //
 // declarativeContent (in background.js) uses the same patterns, translated to a UrlFilter.
 //

@@ -101,6 +101,9 @@ function registerEventRules() {
         hostEquals: "chrome.google.com",
         pathPrefix: "/webstore/detail/"
     }, {
+        hostEquals: "chromewebstore.google.com",
+        pathPrefix: "/detail/"
+    }, {
         hostEquals: "microsoftedge.microsoft.com",
         pathPrefix: "/webstore/detail/"
     }, {

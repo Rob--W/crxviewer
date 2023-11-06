@@ -27,6 +27,7 @@
         "default_popup": "popup.html",
         "show_matches": [
             "*://chrome.google.com/webstore/detail/*",
+            "*://chromewebstore.google.com/detail/*",
             "*://microsoftedge.microsoft.com/addons/detail/*",
             "*://addons.opera.com/*extensions/details/*",
             "*://addons.mozilla.org/*addon/*",

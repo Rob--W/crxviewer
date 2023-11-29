@@ -7,9 +7,14 @@
 // Chrome's platform information
 // Exported methods:
 //
+// - getPlatformInfoAsync(callback)
+//   Calls callback with the most accurate PlatformInfo, sourced from
+//   chrome.runtime.getPlatformInfo if possible.
+//
 // - getPlatformInfo()
 //   Returns platformInfo compatible with the format of chrome.runtime.getPlatformInfo
 //   When this method is unavailable, the getPlatformInfoFallback method is called.
+//   To avoid this fallback, call getPlatformInfoAsync() at first (at least once).
 //
 // - getPlatformInfoFallback() is exposed for debugging purposes, other methods should
 //   use getPlatformInfo() instead.
@@ -19,30 +24,46 @@
 // - When the platform info is needed, but the information is not ready yet.
 // Then, when available, query the platform information
 
-/* globals chrome, localStorage, navigator */
-/* exported getPlatformInfo */
+/* globals chrome, console, navigator */
+/* exported getPlatformInfoAsync, getPlatformInfo */
 
 'use strict';
 
+var _platformInfo_cached;
+
 // Set platform info if unset
-if (typeof chrome === 'object' && chrome.runtime &&
-    chrome.runtime.getPlatformInfo && !localStorage.getItem('platformInfo')) {
+function getPlatformInfoAsync(callback) {
+    if (_platformInfo_cached) {
+        callback(getPlatformInfo());
+        return;
+    }
+    if (
+        typeof chrome !== 'object' ||
+        !chrome.runtime ||
+        !chrome.runtime.getPlatformInfo
+    ) {
+        _platformInfo_cached = getPlatformInfoFallback();
+        callback(getPlatformInfo());
+        return;
+    }
     chrome.runtime.getPlatformInfo(function(platformInfo) {
-        localStorage.setItem('platformInfo', JSON.stringify(platformInfo));
+        _platformInfo_cached = platformInfo;
+        callback(getPlatformInfo());
     });
 }
 
 /**
  * Get platform info.
- * If it's not available in localStorage, then the chrome.runtime.getPlatformInfo
+ * If it's not available in _platformInfo_cached, then the chrome.runtime.getPlatformInfo
  * method hasn't returned anything useful. Fall back to UA-sniffing.
  **/
 function getPlatformInfo() {
-    var platformInfo = localStorage.getItem('platformInfo');
+    var platformInfo = _platformInfo_cached;
     if (!platformInfo) {
+        console.warn('getPlatformInfoAsync() has not been called, using getPlatformInfoFallback()');
         return getPlatformInfoFallback();
     }
-    platformInfo = JSON.parse(platformInfo);
+    platformInfo = Object.assign({}, platformInfo);
     // Firefox does not have nacl_arch.
     if (!platformInfo.nacl_arch) {
         platformInfo.nacl_arch = getPlatformInfoFallback().nacl_arch;

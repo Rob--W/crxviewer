@@ -7,6 +7,7 @@
 /* jshint browser:true, devel:true */
 /* globals chrome, get_crx_url, get_zip_name, can_viewsource_crx_url, openCRXasZip */
 /* globals encodeQueryString */
+/* globals getPlatformInfoAsync */
 'use strict';
 var cws_url;
 var crx_url;
@@ -20,12 +21,19 @@ initialize();
 function initialize() {
     var storageIsReady = false;
 
+    getPlatformInfoAsync(function() {
+        // Hack: although not guaranteed by the API, the getPlatformInfoAsync
+        // call resolves ealier than the later tabs.query call, in practice.
+        console.assert(!crx_url, 'getPlatformInfoAsync() should run first');
+    });
+
     // Get CWS URL. On failure, close the popup
     chrome.tabs.query({
         active: true,
         currentWindow: true
     }, function(tabs) {
         cws_url = tabs[0].url;
+        // Note: Assuming getPlatformInfoAsync() to have resolved first.
         crx_url = get_crx_url(cws_url);
         filename = get_zip_name(crx_url);
         if (!can_viewsource_crx_url(crx_url)) {

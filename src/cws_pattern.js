@@ -106,6 +106,8 @@ function get_xpi_url(amoDomain, addonSlug) {
 // Returns location of CRX file for a given extensionID or CWS url or Opera add-on URL
 // or Firefox addon URL or Microsoft Edge addon URL.
 // Unrecognized values are returned as-is.
+// If the input is potentially a CWS URL, ensure that getPlatformInfoAsync() has been called before,
+// which results in a CRX URL with richer version information.
 function get_crx_url(extensionID_or_url) {
     var url;
     var match = ows_pattern.exec(extensionID_or_url);
@@ -136,6 +138,7 @@ function get_crx_url(extensionID_or_url) {
         return extensionID_or_url;
     }
 
+    // Note: To avoid the fallback, ensure that getPlatformInfoAsync() has been called before.
     var platformInfo = getPlatformInfo();
 
     // Omitting this value is allowed, but add it just in case.

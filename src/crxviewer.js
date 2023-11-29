@@ -7,7 +7,7 @@
 /* jshint browser:true, devel:true */
 /* globals chrome, URL,
            getParam, encodeQueryString, openCRXasZip, get_zip_name, get_webstore_url, is_webstore_url, is_not_crx_url,
-           get_extensionID, getPlatformInfo,
+           get_extensionID, getPlatformInfo, getPlatformInfoAsync,
            get_crx_url, is_crx_download_url,
            get_amo_domain, get_amo_slug,
            get_equivalent_download_url,
@@ -1559,6 +1559,17 @@ var checkAndApplyFilter = (function() {
 // Go load the stuff
 initialize();
 function initialize() {
+    // initialize2 calls getPlatformInfo via get_crx_url or showAdvancedOpener.
+    // When getPlatformInfoAsync is called first, more accurate information may
+    // be returned by getPlatformInfo(), so do that now.
+    getPlatformInfoAsync(initialize2);
+//#if CHROME
+    // TODO: Remove sometime in the future. This removes obsolete data that
+    // was stored by an older version of the chrome-platform-info.js file.
+    localStorage.removeItem('platformInfo');
+//#endif
+}
+function initialize2() {
     if (getParam('noview')) {
         showAdvancedOpener();
         return;

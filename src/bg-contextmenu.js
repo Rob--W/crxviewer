@@ -7,6 +7,7 @@
 /* jshint browser:true, devel:true, esversion:6 */
 /* globals chrome, cws_match_patterns, mea_match_pattern, ows_match_pattern, amo_match_patterns, atn_match_patterns, get_crx_url */
 /* globals encodeQueryString */
+/* globals getPlatformInfoAsync */
 
 'use strict';
 (function() {
@@ -138,7 +139,12 @@
         }
         var url = info.menuItemId == MENU_ID_PAGE ||
            info.menuItemId == MENU_ID_AMO_APPROVED_PAGE ? info.pageUrl : info.linkUrl;
-        url = get_crx_url(url);
+        getPlatformInfoAsync(function() {
+            url = get_crx_url(url);
+            openCrxViewerRelatedToTab(url, tab);
+        });
+    }
+    function openCrxViewerRelatedToTab(url, tab) {
         var params = encodeQueryString({crx: url});
 
         chrome.tabs.create({

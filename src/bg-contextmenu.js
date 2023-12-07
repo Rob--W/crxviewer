@@ -77,13 +77,28 @@
     var MENU_ID_DUMMY_NEVER_SHOWN = 'MENU_ID_DUMMY_NEVER_SHOWN';
     function isMenuRegistrationCompleted(callback) {
         // A relatively inexpensive check to see if the menu items have been
-        // registered. Should certainly be less expensive than calling
-        // contextMenus.create unconditionally.
+        // registered. Should certainly be less expensive than repeatedly
+        // calling contextMenus.create unconditionally.
+        // In Chrome: contextMenus.update fails if the menu item already exists.
+//#if FIREFOX
+        // In Firefox: contextMenus.update returns early without further
+        // validation if the menu item does not exist. If the menu item exists,
+        // validation is performed, including verifying that parentId is valid.
+        // parentId is invalid when it points to itself.
+        chrome.contextMenus.update(MENU_ID_DUMMY_NEVER_SHOWN, {
+            parentId: MENU_ID_DUMMY_NEVER_SHOWN,
+        }, function() {
+            // No error = menu does not exist, so it was not persisted before.
+            var hasPersistedMenu = !!chrome.runtime.lastError;
+            callback(hasPersistedMenu);
+        });
+//#else
         chrome.contextMenus.update(MENU_ID_DUMMY_NEVER_SHOWN, {}, function() {
             // Error = menu does not exist, so it was not persisted before.
             var hasPersistedMenu = !chrome.runtime.lastError;
             callback(hasPersistedMenu);
         });
+//#endif
     }
     function markMenuRegistrationCompleted() {
         // Create an invisible menu item. This persists across browser

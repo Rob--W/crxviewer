@@ -21,7 +21,7 @@ function tabsOnUpdatedCheckPageAction(tabId, changeInfo, tab) {
 var hasStaticPageActionPatterns = !/Firefox\/5[0-8]\./.test(navigator.userAgent);
 var pageActionIsEnabled = hasStaticPageActionPatterns;
 var pageActionEverToggled = false;
-if (hasStaticPageActionPatterns) {
+if (!hasStaticPageActionPatterns) {
     // Static actions not enabled yet, enable them now.
     togglePageAction(true);
 }

@@ -44,7 +44,7 @@
         }
         storageAreaLocal.get(null, function(items) {
             if (Object.keys(items).length) {
-                syncSet(items);
+                syncSet.call(storageAreaSync, items);
                 // Note: storage.local is not cleared, just in case.
             }
         });

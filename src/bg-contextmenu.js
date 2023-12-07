@@ -58,14 +58,63 @@
             updateLinkMenu(changes.contextmenuPatterns.newValue, false);
         }
     });
-//#if !FIREFOX
-    chrome.runtime.onInstalled.addListener(checkContextMenuPref);
-    chrome.runtime.onStartup.addListener(checkContextMenuPref);
-//#else
-    chrome.contextMenus.removeAll(function() {
-        checkContextMenuPref();
+    // contextMenus are supposed to be stored once from onInstalled.
+    // We cannot only use a top-level onInstalled because it has these issues:
+    // - In Chrome, onInstalled does not fire in incognito - crbug.com/264963
+    // - In Chrome, in incognito mode the menus are tied to that session and
+    //   become unavailable when the last incognito context unloads.
+    //   When the incognito window is opened, the extension service worker wakes
+    //   up again (MV3). This does not happen with event pages (MV2)...
+    // - onInstalled does not fire if updated while disabled -
+    //   crbug.com/388231 & bugzil.la/1700797
+    // - In Firefox, menu items disappear upon disabling, and coupled with the
+    //   above lack of onInstalled, the menus are gone - bugzil.la/1817287
+    // - In Firefox 105 and earlier, menus did not persist in event pages.
+    // As a work-around, register the menus unconditionally (once on startup).
+    // To avoid too many contextMenus.create() calls, we only reset the menus
+    // if it has not been registered before. We do so by using a dummy menu
+    // item that never appears anywhere.
+    var MENU_ID_DUMMY_NEVER_SHOWN = 'MENU_ID_DUMMY_NEVER_SHOWN';
+    function isMenuRegistrationCompleted(callback) {
+        // A relatively inexpensive check to see if the menu items have been
+        // registered. Should certainly be less expensive than calling
+        // contextMenus.create unconditionally.
+        chrome.contextMenus.update(MENU_ID_DUMMY_NEVER_SHOWN, {}, function() {
+            // Error = menu does not exist, so it was not persisted before.
+            var hasPersistedMenu = !chrome.runtime.lastError;
+            callback(hasPersistedMenu);
+        });
+    }
+    function markMenuRegistrationCompleted() {
+        // Create an invisible menu item. This persists across browser
+        // restarts, but is cleared on extension updates.
+        // Chrome: also cleared when the incognito session ends.
+        // Firefox: cleared if extension is disabled and re-enabled.
+        var createProps = {
+            id: MENU_ID_DUMMY_NEVER_SHOWN,
+            title: 'dummy',
+            visible: false,
+            contexts: ['audio'], // <-- Chosen for rarity.
+            targetUrlPatterns: ['https://0.0.0.0/'], // Unresolvable URL.
+        };
+        try {
+            chrome.contextMenus.create(createProps);
+        } catch (e) {
+            // Firefox 62- doesn't support visible: bugzil.la/1482529
+            delete createProps.visible;
+            chrome.contextMenus.create(createProps);
+        }
+    }
+
+    isMenuRegistrationCompleted(function(hasPersistedMenu) {
+        if (hasPersistedMenu) {
+            // All menus have already been registered before, do nothing.
+            return;
+        }
+        chrome.contextMenus.removeAll(function() {
+            checkContextMenuPref();
+        });
     });
-//#endif
     function checkContextMenuPref() {
         var storageArea = chrome.storage.sync;
         storageArea.get({
@@ -78,6 +127,7 @@
                 updateLinkMenu(items.contextmenuPatterns, false);
             }
             setActionClickAction(items.actionClickAction);
+            markMenuRegistrationCompleted();
         });
 //#if FIREFOX
         chrome.contextMenus.create({

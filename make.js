@@ -183,8 +183,6 @@ target.firefox = function() {
 
     cd(FIREFOX_BUILD_DIR);
     removeTestFiles();
-    // Split incognito is not supported in Firefox.
-    rm('incognito-events.js');
     rm('-f', '../crxviewer_firefox.zip');
     exec('7z a ../crxviewer_firefox.zip * -tzip');
     lintDir(FIREFOX_BUILD_DIR);

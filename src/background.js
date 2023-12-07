@@ -157,9 +157,22 @@ function registerEventRules() {
         chrome.declarativeContent.onPageChanged.addRules([rule]);
     });
 }
-//// Work-around for crbug.com/388231 is in incognito-events.js
+//// The documentation recommends to use runtime.onInstalled to register
+//// declarativeContent rules. Due to bugs, additional work-arounds are needed
+//// to ensure that the declarativeContent rules are registered correctly.
 chrome.runtime.onInstalled.addListener(registerEventRules);
-//// Work-around for crbug.com/264963: onInstalled is not fired when the
+//// Work-around for crbug.com/388231: onInstalled is not fired when the
 //// extension was disabled during an update.
 chrome.runtime.onStartup.addListener(registerEventRules);
+//// Work-around for crbug.com/264963: onInstalled is not fired when the
+//// extension is run in incognito mode. Although not documented, incognito
+//// contexts have their own declarativeContent rule store.
+if (chrome.extension.inIncognitoContext) {
+    chrome.declarativeContent.onPageChanged.getRules(function(rules) {
+        if (!rules.length) {
+            registerEventRules();
+        }
+    });
+}
+
 //#endif

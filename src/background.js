@@ -269,7 +269,7 @@ function registerEventRules() {
         pathPrefix: "/detail/"
     }, {
         hostEquals: "microsoftedge.microsoft.com",
-        pathPrefix: "/webstore/detail/"
+        pathPrefix: "/addons/detail/"
     }, {
         hostEquals: "addons.opera.com",
         pathContains: "extensions/details/"

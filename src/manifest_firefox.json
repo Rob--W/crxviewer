@@ -3,7 +3,7 @@
     "description": "View source code of Firefox addons and Chrome extensions (crx/nex/xpi) from addons.mozilla.org, the Chrome Webstore and elsewhere.",
     "version": "1.6.12",
     "manifest_version": 2,
-    "applications": {
+    "browser_specific_settings": {
         "gecko": {
             "strict_min_version": "52.0",
             "id": "crxviewer-firefox@robwu.nl"

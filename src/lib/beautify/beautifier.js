@@ -94,8 +94,8 @@ module.exports.html = style_html;
 
 
 
-var Beautifier = __webpack_require__(2).Beautifier,
-  Options = __webpack_require__(6).Options;
+var Beautifier = (__webpack_require__(2).Beautifier),
+  Options = (__webpack_require__(6).Options);
 
 function js_beautify(js_source_text, options) {
   var beautifier = new Beautifier(js_source_text, options);
@@ -142,14 +142,14 @@ module.exports.defaultOptions = function() {
 
 
 
-var Output = __webpack_require__(3).Output;
-var Token = __webpack_require__(4).Token;
+var Output = (__webpack_require__(3).Output);
+var Token = (__webpack_require__(4).Token);
 var acorn = __webpack_require__(5);
-var Options = __webpack_require__(6).Options;
-var Tokenizer = __webpack_require__(8).Tokenizer;
-var line_starters = __webpack_require__(8).line_starters;
-var positionable_operators = __webpack_require__(8).positionable_operators;
-var TOKEN = __webpack_require__(8).TOKEN;
+var Options = (__webpack_require__(6).Options);
+var Tokenizer = (__webpack_require__(8).Tokenizer);
+var line_starters = (__webpack_require__(8).line_starters);
+var positionable_operators = (__webpack_require__(8).positionable_operators);
+var TOKEN = (__webpack_require__(8).TOKEN);
 
 
 function in_array(what, arr) {
@@ -299,12 +299,14 @@ Beautifier.prototype.create_flags = function(flags_base, mode) {
     inline_frame: false,
     if_block: false,
     else_block: false,
+    class_start_block: false, // class A { INSIDE HERE } or class B extends C { INSIDE HERE }
     do_block: false,
     do_while: false,
     import_block: false,
     in_case_statement: false, // switch(..){ INSIDE HERE }
     in_case: false, // we're on the exact line with "case 0:"
     case_body: false, // the indented case-action block
+    case_block: false, // the indented case-action block is wrapped with {}
     indentation_level: next_indent_level,
     alignment: 0,
     line_indent_level: flags_base ? flags_base.line_indent_level : next_indent_level,
@@ -710,6 +712,8 @@ Beautifier.prototype.handle_start_expr = function(current_token) {
             (peek_back_two.text === '*' && (peek_back_three.text === '{' || peek_back_three.text === ','))) {
             this._output.space_before_token = true;
           }
+        } else if (this._flags.parent && this._flags.parent.class_start_block) {
+          this._output.space_before_token = true;
         }
       }
     } else {
@@ -804,10 +808,10 @@ Beautifier.prototype.handle_start_block = function(current_token) {
     )) {
     // We don't support TypeScript,but we didn't break it for a very long time.
     // We'll try to keep not breaking it.
-    if (!in_array(this._last_last_text, ['class', 'interface'])) {
-      this.set_mode(MODE.ObjectLiteral);
-    } else {
+    if (in_array(this._last_last_text, ['class', 'interface']) && !in_array(second_token.text, [':', ','])) {
       this.set_mode(MODE.BlockStatement);
+    } else {
+      this.set_mode(MODE.ObjectLiteral);
     }
   } else if (this._flags.last_token.type === TOKEN.OPERATOR && this._flags.last_token.text === '=>') {
     // arrow function: (param1, paramN) => { statements }
@@ -822,6 +826,12 @@ Beautifier.prototype.handle_start_block = function(current_token) {
     this.set_mode(MODE.ObjectLiteral);
   } else {
     this.set_mode(MODE.BlockStatement);
+  }
+
+  if (this._flags.last_token) {
+    if (reserved_array(this._flags.last_token.previous, ['class', 'extends'])) {
+      this._flags.class_start_block = true;
+    }
   }
 
   var empty_braces = !next_token.comments_before && next_token.text === '}';
@@ -869,7 +879,7 @@ Beautifier.prototype.handle_start_block = function(current_token) {
       }
     }
     if (this._flags.last_token.type !== TOKEN.OPERATOR && this._flags.last_token.type !== TOKEN.START_EXPR) {
-      if (this._flags.last_token.type === TOKEN.START_BLOCK && !this._flags.inline_frame) {
+      if (in_array(this._flags.last_token.type, [TOKEN.START_BLOCK, TOKEN.SEMICOLON]) && !this._flags.inline_frame) {
         this.print_newline();
       } else {
         this._output.space_before_token = true;
@@ -923,7 +933,7 @@ Beautifier.prototype.handle_word = function(current_token) {
   if (current_token.type === TOKEN.RESERVED) {
     if (in_array(current_token.text, ['set', 'get']) && this._flags.mode !== MODE.ObjectLiteral) {
       current_token.type = TOKEN.WORD;
-    } else if (current_token.text === 'import' && this._tokens.peek().text === '(') {
+    } else if (current_token.text === 'import' && in_array(this._tokens.peek().text, ['(', '.'])) {
       current_token.type = TOKEN.WORD;
     } else if (in_array(current_token.text, ['as', 'from']) && !this._flags.import_block) {
       current_token.type = TOKEN.WORD;
@@ -983,7 +993,7 @@ Beautifier.prototype.handle_word = function(current_token) {
 
   if (this._flags.in_case_statement && reserved_array(current_token, ['case', 'default'])) {
     this.print_newline();
-    if (this._flags.last_token.type !== TOKEN.END_BLOCK && (this._flags.case_body || this._options.jslint_happy)) {
+    if (!this._flags.case_block && (this._flags.case_body || this._options.jslint_happy)) {
       // switch cases following one another
       this.deindent();
     }
@@ -995,7 +1005,9 @@ Beautifier.prototype.handle_word = function(current_token) {
   }
 
   if (this._flags.last_token.type === TOKEN.COMMA || this._flags.last_token.type === TOKEN.START_EXPR || this._flags.last_token.type === TOKEN.EQUALS || this._flags.last_token.type === TOKEN.OPERATOR) {
-    if (!this.start_of_object_property()) {
+    if (!this.start_of_object_property() && !(
+        // start of object property is different for numeric values with +/- prefix operators
+        in_array(this._flags.last_token.text, ['+', '-']) && this._last_last_text === ':' && this._flags.parent.mode === MODE.ObjectLiteral)) {
       this.allow_wrap_or_preserved_newline(current_token);
     }
   }
@@ -1264,13 +1276,6 @@ Beautifier.prototype.handle_operator = function(current_token) {
     this.handle_whitespace_and_comments(current_token, preserve_statement_flags);
   }
 
-  if (reserved_array(this._flags.last_token, special_words)) {
-    // "return" had a special handling in TK_WORD. Now we need to return the favor
-    this._output.space_before_token = true;
-    this.print_token(current_token);
-    return;
-  }
-
   // hack for actionscript's import .*;
   if (current_token.text === '*' && this._flags.last_token.type === TOKEN.DOT) {
     this.print_token(current_token);
@@ -1279,6 +1284,12 @@ Beautifier.prototype.handle_operator = function(current_token) {
 
   if (current_token.text === '::') {
     // no spaces around exotic namespacing syntax operator
+    this.print_token(current_token);
+    return;
+  }
+
+  if (in_array(current_token.text, ['-', '+']) && this.start_of_object_property()) {
+    // numeric value with +/- symbol in front as a property
     this.print_token(current_token);
     return;
   }
@@ -1297,7 +1308,9 @@ Beautifier.prototype.handle_operator = function(current_token) {
     if (this._tokens.peek().type !== TOKEN.START_BLOCK) {
       this.indent();
       this.print_newline();
+      this._flags.case_block = false;
     } else {
+      this._flags.case_block = true;
       this._output.space_before_token = true;
     }
     return;
@@ -1395,8 +1408,12 @@ Beautifier.prototype.handle_operator = function(current_token) {
 
     // http://www.ecma-international.org/ecma-262/5.1/#sec-7.9.1
     // if there is a newline between -- or ++ and anything else we should preserve it.
-    if (current_token.newlines && (current_token.text === '--' || current_token.text === '++')) {
-      this.print_newline(false, true);
+    if (current_token.newlines && (current_token.text === '--' || current_token.text === '++' || current_token.text === '~')) {
+      var new_line_needed = reserved_array(this._flags.last_token, special_words) && current_token.newlines;
+      if (new_line_needed && (this._previous_flags.if_block || this._previous_flags.else_block)) {
+        this.restore_mode();
+      }
+      this.print_newline(new_line_needed, true);
     }
 
     if (this._flags.last_token.text === ';' && is_expression(this._flags.mode)) {
@@ -1534,6 +1551,10 @@ Beautifier.prototype.handle_dot = function(current_token) {
     // The conditional starts the statement if appropriate.
   } else {
     this.handle_whitespace_and_comments(current_token, true);
+  }
+
+  if (this._flags.last_token.text.match('^[0-9]+$')) {
+    this._output.space_before_token = true;
   }
 
   if (reserved_array(this._flags.last_token, special_words)) {
@@ -2099,12 +2120,13 @@ var nonASCIIidentifierChars = "\\u0300-\\u036f\\u0483-\\u0487\\u0591-\\u05bd\\u0
 //var nonASCIIidentifierStart = new RegExp("[" + nonASCIIidentifierStartChars + "]");
 //var nonASCIIidentifier = new RegExp("[" + nonASCIIidentifierStartChars + nonASCIIidentifierChars + "]");
 
-var identifierStart = "(?:\\\\u[0-9a-fA-F]{4}|[" + baseASCIIidentifierStartChars + nonASCIIidentifierStartChars + "])";
-var identifierChars = "(?:\\\\u[0-9a-fA-F]{4}|[" + baseASCIIidentifierChars + nonASCIIidentifierStartChars + nonASCIIidentifierChars + "])*";
+var unicodeEscapeOrCodePoint = "\\\\u[0-9a-fA-F]{4}|\\\\u\\{[0-9a-fA-F]+\\}";
+var identifierStart = "(?:" + unicodeEscapeOrCodePoint + "|[" + baseASCIIidentifierStartChars + nonASCIIidentifierStartChars + "])";
+var identifierChars = "(?:" + unicodeEscapeOrCodePoint + "|[" + baseASCIIidentifierChars + nonASCIIidentifierStartChars + nonASCIIidentifierChars + "])*";
 
 exports.identifier = new RegExp(identifierStart + identifierChars, 'g');
 exports.identifierStart = new RegExp(identifierStart);
-exports.identifierMatch = new RegExp("(?:\\\\u[0-9a-fA-F]{4}|[" + baseASCIIidentifierChars + nonASCIIidentifierStartChars + nonASCIIidentifierChars + "])+");
+exports.identifierMatch = new RegExp("(?:" + unicodeEscapeOrCodePoint + "|[" + baseASCIIidentifierChars + nonASCIIidentifierStartChars + nonASCIIidentifierChars + "])+");
 
 var nonASCIIwhitespace = /[\u1680\u180e\u2000-\u200a\u202f\u205f\u3000\ufeff]/; // jshint ignore:line
 
@@ -2155,7 +2177,7 @@ exports.allLineBreaks = new RegExp(exports.lineBreak.source, 'g');
 
 
 
-var BaseOptions = __webpack_require__(7).Options;
+var BaseOptions = (__webpack_require__(7).Options);
 
 var validPositionValues = ['before-newline', 'after-newline', 'preserve-newline'];
 
@@ -2453,13 +2475,13 @@ module.exports.mergeOpts = _mergeOpts;
 
 
 
-var InputScanner = __webpack_require__(9).InputScanner;
-var BaseTokenizer = __webpack_require__(10).Tokenizer;
-var BASETOKEN = __webpack_require__(10).TOKEN;
-var Directives = __webpack_require__(14).Directives;
+var InputScanner = (__webpack_require__(9).InputScanner);
+var BaseTokenizer = (__webpack_require__(10).Tokenizer);
+var BASETOKEN = (__webpack_require__(10).TOKEN);
+var Directives = (__webpack_require__(14).Directives);
 var acorn = __webpack_require__(5);
-var Pattern = __webpack_require__(13).Pattern;
-var TemplatablePattern = __webpack_require__(15).TemplatablePattern;
+var Pattern = (__webpack_require__(13).Pattern);
+var TemplatablePattern = (__webpack_require__(15).TemplatablePattern);
 
 
 function in_array(what, arr) {
@@ -2499,7 +2521,7 @@ var digit = /[0-9]/;
 var dot_pattern = /[^\d\.]/;
 
 var positionable_operators = (
-  ">>> === !== " +
+  ">>> === !== &&= ??= ||= " +
   "<< && >= ** != == <= >> || ?? |> " +
   "< / - + > : & % ? ^ | *").split(' ');
 
@@ -2507,7 +2529,7 @@ var positionable_operators = (
 // Also, you must update possitionable operators separately from punct
 var punct =
   ">>>= " +
-  "... >>= <<= === >>> !== **= " +
+  "... >>= <<= === >>> !== **= &&= ??= ||= " +
   "=> ^= :: /= << <= == && -= >= >> != -- += ** || ?? ++ %= &= *= |= |> " +
   "= ! ? > < : / ^ - + * & % ~ |";
 
@@ -2520,7 +2542,7 @@ var punct_pattern = new RegExp(punct);
 
 // words which should always start on new line.
 var line_starters = 'continue,try,throw,return,var,let,const,if,switch,case,default,for,while,break,function,import,export'.split(',');
-var reserved_words = line_starters.concat(['do', 'in', 'of', 'else', 'get', 'set', 'new', 'catch', 'finally', 'typeof', 'yield', 'async', 'await', 'from', 'as']);
+var reserved_words = line_starters.concat(['do', 'in', 'of', 'else', 'get', 'set', 'new', 'catch', 'finally', 'typeof', 'yield', 'async', 'await', 'from', 'as', 'class', 'extends']);
 var reserved_word_pattern = new RegExp('^(?:' + reserved_words.join('|') + ')$');
 
 // var template_pattern = /(?:(?:<\?php|<\?=)[\s\S]*?\?>)|(?:<%[\s\S]*?%>)/g;
@@ -2592,6 +2614,7 @@ Tokenizer.prototype._get_next_token = function(previous_token, open_token) { // 
 
   token = token || this._read_non_javascript(c);
   token = token || this._read_string(c);
+  token = token || this._read_pair(c, this._input.peek(1)); // Issue #2062 hack for record type '#{'
   token = token || this._read_word(previous_token);
   token = token || this._read_singles(c);
   token = token || this._read_comment(c);
@@ -2611,7 +2634,8 @@ Tokenizer.prototype._read_word = function(previous_token) {
     if (!(previous_token.type === TOKEN.DOT ||
         (previous_token.type === TOKEN.RESERVED && (previous_token.text === 'set' || previous_token.text === 'get'))) &&
       reserved_word_pattern.test(resulting_string)) {
-      if (resulting_string === 'in' || resulting_string === 'of') { // hack for 'in' and 'of' operators
+      if ((resulting_string === 'in' || resulting_string === 'of') &&
+        (previous_token.type === TOKEN.WORD || previous_token.type === TOKEN.STRING)) { // hack for 'in' and 'of' operators
         return this._create_token(TOKEN.OPERATOR, resulting_string);
       }
       return this._create_token(TOKEN.RESERVED, resulting_string);
@@ -2644,6 +2668,19 @@ Tokenizer.prototype._read_singles = function(c) {
   }
 
   if (token) {
+    this._input.next();
+  }
+  return token;
+};
+
+Tokenizer.prototype._read_pair = function(c, d) {
+  var token = null;
+  if (c === '#' && d === '{') {
+    token = this._create_token(TOKEN.START_BLOCK, c + d);
+  }
+
+  if (token) {
+    this._input.next();
     this._input.next();
   }
   return token;
@@ -2894,6 +2931,9 @@ function unescape_string(s) {
         matched = input_scan.match(/x([0-9A-Fa-f]{2})/g);
       } else if (input_scan.peek() === 'u') {
         matched = input_scan.match(/u([0-9A-Fa-f]{4})/g);
+        if (!matched) {
+          matched = input_scan.match(/u\{([0-9A-Fa-f]+)\}/g);
+        }
       } else {
         out += '\\';
         if (input_scan.hasNext()) {
@@ -2917,7 +2957,9 @@ function unescape_string(s) {
       } else if (escaped >= 0x00 && escaped < 0x20) {
         // leave 0x00...0x1f escaped
         out += '\\' + matched[0];
-        continue;
+      } else if (escaped > 0x10FFFF) {
+        // If the escape sequence is out of bounds, keep the original sequence and continue conversion
+        out += '\\' + matched[0];
       } else if (escaped === 0x22 || escaped === 0x27 || escaped === 0x5c) {
         // single-quote, apostrophe, backslash - escape these
         out += '\\' + String.fromCharCode(escaped);
@@ -3223,10 +3265,10 @@ module.exports.InputScanner = InputScanner;
 
 
 
-var InputScanner = __webpack_require__(9).InputScanner;
-var Token = __webpack_require__(4).Token;
-var TokenStream = __webpack_require__(11).TokenStream;
-var WhitespacePattern = __webpack_require__(12).WhitespacePattern;
+var InputScanner = (__webpack_require__(9).InputScanner);
+var Token = (__webpack_require__(4).Token);
+var TokenStream = (__webpack_require__(11).TokenStream);
+var WhitespacePattern = (__webpack_require__(12).WhitespacePattern);
 
 var TOKEN = {
   START: 'TK_START',
@@ -3453,7 +3495,7 @@ module.exports.TokenStream = TokenStream;
 
 
 
-var Pattern = __webpack_require__(13).Pattern;
+var Pattern = (__webpack_require__(13).Pattern);
 
 function WhitespacePattern(input_scanner, parent) {
   Pattern.call(this, input_scanner, parent);
@@ -3732,7 +3774,7 @@ module.exports.Directives = Directives;
 
 
 
-var Pattern = __webpack_require__(13).Pattern;
+var Pattern = (__webpack_require__(13).Pattern);
 
 
 var template_names = {
@@ -3949,8 +3991,8 @@ module.exports.TemplatablePattern = TemplatablePattern;
 
 
 
-var Beautifier = __webpack_require__(17).Beautifier,
-  Options = __webpack_require__(18).Options;
+var Beautifier = (__webpack_require__(17).Beautifier),
+  Options = (__webpack_require__(18).Options);
 
 function css_beautify(source_text, options) {
   var beautifier = new Beautifier(source_text, options);
@@ -3997,10 +4039,10 @@ module.exports.defaultOptions = function() {
 
 
 
-var Options = __webpack_require__(18).Options;
-var Output = __webpack_require__(3).Output;
-var InputScanner = __webpack_require__(9).InputScanner;
-var Directives = __webpack_require__(14).Directives;
+var Options = (__webpack_require__(18).Options);
+var Output = (__webpack_require__(3).Output);
+var InputScanner = (__webpack_require__(9).InputScanner);
+var Directives = (__webpack_require__(14).Directives);
 
 var directives_core = new Directives(/\/\*/, /\*\//);
 
@@ -4023,19 +4065,23 @@ function Beautifier(source_text, options) {
 
   // https://developer.mozilla.org/en-US/docs/Web/CSS/At-rule
   this.NESTED_AT_RULE = {
-    "@page": true,
-    "@font-face": true,
-    "@keyframes": true,
+    "page": true,
+    "font-face": true,
+    "keyframes": true,
     // also in CONDITIONAL_GROUP_RULE below
-    "@media": true,
-    "@supports": true,
-    "@document": true
+    "media": true,
+    "supports": true,
+    "document": true
   };
   this.CONDITIONAL_GROUP_RULE = {
-    "@media": true,
-    "@supports": true,
-    "@document": true
+    "media": true,
+    "supports": true,
+    "document": true
   };
+  this.NON_SEMICOLON_NEWLINE_PROPERTY = [
+    "grid-template-areas",
+    "grid-template"
+  ];
 
 }
 
@@ -4158,9 +4204,10 @@ Beautifier.prototype.beautify = function() {
   // label { content: blue }
   var insidePropertyValue = false;
   var enteringConditionalGroup = false;
-  var insideAtExtend = false;
-  var insideAtImport = false;
+  var insideNonNestedAtRule = false;
+  var insideScssMap = false;
   var topCharacter = this._ch;
+  var insideNonSemiColonValues = false;
   var whitespace;
   var isAfterSpace;
   var previous_ch;
@@ -4212,10 +4259,30 @@ Beautifier.prototype.beautify = function() {
 
       // Ensures any new lines following the comment are preserved
       this.eatWhitespace(true);
+    } else if (this._ch === '$') {
+      this.preserveSingleSpace(isAfterSpace);
+
+      this.print_string(this._ch);
+
+      // strip trailing space, if present, for hash property checks
+      var variable = this._input.peekUntilAfter(/[: ,;{}()[\]\/='"]/g);
+
+      if (variable.match(/[ :]$/)) {
+        // we have a variable or pseudo-class, add it and insert one space before continuing
+        variable = this.eatString(": ").replace(/\s+$/, '');
+        this.print_string(variable);
+        this._output.space_before_token = true;
+      }
+
+      // might be sass variable
+      if (parenLevel === 0 && variable.indexOf(':') !== -1) {
+        insidePropertyValue = true;
+        this.indent();
+      }
     } else if (this._ch === '@') {
       this.preserveSingleSpace(isAfterSpace);
 
-      // deal with less propery mixins @{...}
+      // deal with less property mixins @{...}
       if (this._input.peek() === '{') {
         this.print_string(this._ch + this.eatString('}'));
       } else {
@@ -4226,29 +4293,26 @@ Beautifier.prototype.beautify = function() {
 
         if (variableOrRule.match(/[ :]$/)) {
           // we have a variable or pseudo-class, add it and insert one space before continuing
-          variableOrRule = this.eatString(": ").replace(/\s$/, '');
+          variableOrRule = this.eatString(": ").replace(/\s+$/, '');
           this.print_string(variableOrRule);
           this._output.space_before_token = true;
         }
 
-        variableOrRule = variableOrRule.replace(/\s$/, '');
+        // might be less variable
+        if (parenLevel === 0 && variableOrRule.indexOf(':') !== -1) {
+          insidePropertyValue = true;
+          this.indent();
 
-        if (variableOrRule === 'extend') {
-          insideAtExtend = true;
-        } else if (variableOrRule === 'import') {
-          insideAtImport = true;
-        }
-
-        // might be a nesting at-rule
-        if (variableOrRule in this.NESTED_AT_RULE) {
+          // might be a nesting at-rule
+        } else if (variableOrRule in this.NESTED_AT_RULE) {
           this._nestedLevel += 1;
           if (variableOrRule in this.CONDITIONAL_GROUP_RULE) {
             enteringConditionalGroup = true;
           }
-          // might be less variable
-        } else if (!insideRule && parenLevel === 0 && variableOrRule.indexOf(':') !== -1) {
-          insidePropertyValue = true;
-          this.indent();
+
+          // might be a non-nested at-rule
+        } else if (parenLevel === 0 && !insidePropertyValue) {
+          insideNonNestedAtRule = true;
         }
       }
     } else if (this._ch === '#' && this._input.peek() === '{') {
@@ -4259,6 +4323,9 @@ Beautifier.prototype.beautify = function() {
         insidePropertyValue = false;
         this.outdent();
       }
+
+      // non nested at rule becomes nested
+      insideNonNestedAtRule = false;
 
       // when entering conditional groups, only rulesets are allowed
       if (enteringConditionalGroup) {
@@ -4283,7 +4350,12 @@ Beautifier.prototype.beautify = function() {
         this.indent();
         this._output.set_indent(this._indentLevel);
       } else {
-        this.indent();
+        // inside mixin and first param is object
+        if (previous_ch === '(') {
+          this._output.space_before_token = false;
+        } else if (previous_ch !== ',') {
+          this.indent();
+        }
         this.print_string(this._ch);
       }
 
@@ -4295,8 +4367,7 @@ Beautifier.prototype.beautify = function() {
       if (previous_ch === '{') {
         this._output.trim(true);
       }
-      insideAtImport = false;
-      insideAtExtend = false;
+
       if (insidePropertyValue) {
         this.outdent();
         insidePropertyValue = false;
@@ -4315,10 +4386,25 @@ Beautifier.prototype.beautify = function() {
           this._output.add_new_line(true);
         }
       }
+      if (this._input.peek() === ')') {
+        this._output.trim(true);
+        if (this._options.brace_style === "expand") {
+          this._output.add_new_line(true);
+        }
+      }
     } else if (this._ch === ":") {
-      if ((insideRule || enteringConditionalGroup) && !(this._input.lookBack("&") || this.foundNestedPseudoClass()) && !this._input.lookBack("(") && !insideAtExtend && parenLevel === 0) {
+
+      for (var i = 0; i < this.NON_SEMICOLON_NEWLINE_PROPERTY.length; i++) {
+        if (this._input.lookBack(this.NON_SEMICOLON_NEWLINE_PROPERTY[i])) {
+          insideNonSemiColonValues = true;
+          break;
+        }
+      }
+
+      if ((insideRule || enteringConditionalGroup) && !(this._input.lookBack("&") || this.foundNestedPseudoClass()) && !this._input.lookBack("(") && !insideNonNestedAtRule && parenLevel === 0) {
         // 'property: value' delimiter
         // which could be in a conditional group query
+
         this.print_string(':');
         if (!insidePropertyValue) {
           insidePropertyValue = true;
@@ -4344,17 +4430,18 @@ Beautifier.prototype.beautify = function() {
         }
       }
     } else if (this._ch === '"' || this._ch === '\'') {
-      this.preserveSingleSpace(isAfterSpace);
+      var preserveQuoteSpace = previous_ch === '"' || previous_ch === '\'';
+      this.preserveSingleSpace(preserveQuoteSpace || isAfterSpace);
       this.print_string(this._ch + this.eatString(this._ch));
       this.eatWhitespace(true);
     } else if (this._ch === ';') {
+      insideNonSemiColonValues = false;
       if (parenLevel === 0) {
         if (insidePropertyValue) {
           this.outdent();
           insidePropertyValue = false;
         }
-        insideAtExtend = false;
-        insideAtImport = false;
+        insideNonNestedAtRule = false;
         this.print_string(this._ch);
         this.eatWhitespace(true);
 
@@ -4387,22 +4474,39 @@ Beautifier.prototype.beautify = function() {
           }
         }
       } else {
-        this.preserveSingleSpace(isAfterSpace);
+        var space_needed = false;
+        if (this._input.lookBack("with")) {
+          // look back is not an accurate solution, we need tokens to confirm without whitespaces
+          space_needed = true;
+        }
+        this.preserveSingleSpace(isAfterSpace || space_needed);
         this.print_string(this._ch);
-        this.eatWhitespace();
-        parenLevel++;
-        this.indent();
+
+        // handle scss/sass map
+        if (insidePropertyValue && previous_ch === "$" && this._options.selector_separator_newline) {
+          this._output.add_new_line();
+          insideScssMap = true;
+        } else {
+          this.eatWhitespace();
+          parenLevel++;
+          this.indent();
+        }
       }
     } else if (this._ch === ')') {
       if (parenLevel) {
         parenLevel--;
         this.outdent();
       }
+      if (insideScssMap && this._input.peek() === ";" && this._options.selector_separator_newline) {
+        insideScssMap = false;
+        this.outdent();
+        this._output.add_new_line();
+      }
       this.print_string(this._ch);
     } else if (this._ch === ',') {
       this.print_string(this._ch);
       this.eatWhitespace(true);
-      if (this._options.selector_separator_newline && !insidePropertyValue && parenLevel === 0 && !insideAtImport && !insideAtExtend) {
+      if (this._options.selector_separator_newline && (!insidePropertyValue || insideScssMap) && parenLevel === 0 && !insideNonNestedAtRule) {
         this._output.add_new_line();
       } else {
         this._output.space_before_token = true;
@@ -4433,11 +4537,16 @@ Beautifier.prototype.beautify = function() {
         this._ch = '';
       }
     } else if (this._ch === '!' && !this._input.lookBack("\\")) { // !important
-      this.print_string(' ');
+      this._output.space_before_token = true;
       this.print_string(this._ch);
     } else {
-      this.preserveSingleSpace(isAfterSpace);
+      var preserveAfterSpace = previous_ch === '"' || previous_ch === '\'';
+      this.preserveSingleSpace(preserveAfterSpace || isAfterSpace);
       this.print_string(this._ch);
+
+      if (!this._output.just_added_newline() && this._input.peek() === '\n' && insideNonSemiColonValues) {
+        this._output.add_new_line();
+      }
     }
   }
 
@@ -4483,7 +4592,7 @@ module.exports.Beautifier = Beautifier;
 
 
 
-var BaseOptions = __webpack_require__(7).Options;
+var BaseOptions = (__webpack_require__(7).Options);
 
 function Options(options) {
   BaseOptions.call(this, options, 'css');
@@ -4545,8 +4654,8 @@ module.exports.Options = Options;
 
 
 
-var Beautifier = __webpack_require__(20).Beautifier,
-  Options = __webpack_require__(21).Options;
+var Beautifier = (__webpack_require__(20).Beautifier),
+  Options = (__webpack_require__(21).Options);
 
 function style_html(html_source, options, js_beautify, css_beautify) {
   var beautifier = new Beautifier(html_source, options, js_beautify, css_beautify);
@@ -4593,10 +4702,10 @@ module.exports.defaultOptions = function() {
 
 
 
-var Options = __webpack_require__(21).Options;
-var Output = __webpack_require__(3).Output;
-var Tokenizer = __webpack_require__(22).Tokenizer;
-var TOKEN = __webpack_require__(22).TOKEN;
+var Options = (__webpack_require__(21).Options);
+var Output = (__webpack_require__(3).Output);
+var Tokenizer = (__webpack_require__(22).Tokenizer);
+var TOKEN = (__webpack_require__(22).TOKEN);
 
 var lineBreak = /\r\n|[\r\n]/;
 var allLineBreaks = /\r\n|[\r\n]/g;
@@ -4861,11 +4970,11 @@ Beautifier.prototype.beautify = function() {
   while (raw_token.type !== TOKEN.EOF) {
 
     if (raw_token.type === TOKEN.TAG_OPEN || raw_token.type === TOKEN.COMMENT) {
-      parser_token = this._handle_tag_open(printer, raw_token, last_tag_token, last_token);
+      parser_token = this._handle_tag_open(printer, raw_token, last_tag_token, last_token, tokens);
       last_tag_token = parser_token;
     } else if ((raw_token.type === TOKEN.ATTRIBUTE || raw_token.type === TOKEN.EQUALS || raw_token.type === TOKEN.VALUE) ||
       (raw_token.type === TOKEN.TEXT && !last_tag_token.tag_complete)) {
-      parser_token = this._handle_inside_tag(printer, raw_token, last_tag_token, tokens);
+      parser_token = this._handle_inside_tag(printer, raw_token, last_tag_token, last_token);
     } else if (raw_token.type === TOKEN.TAG_CLOSE) {
       parser_token = this._handle_tag_close(printer, raw_token, last_tag_token);
     } else if (raw_token.type === TOKEN.TEXT) {
@@ -4922,7 +5031,7 @@ Beautifier.prototype._handle_tag_close = function(printer, raw_token, last_tag_t
   return parser_token;
 };
 
-Beautifier.prototype._handle_inside_tag = function(printer, raw_token, last_tag_token, tokens) {
+Beautifier.prototype._handle_inside_tag = function(printer, raw_token, last_tag_token, last_token) {
   var wrapped = last_tag_token.has_wrapped_attrs;
   var parser_token = {
     text: raw_token.text,
@@ -4943,7 +5052,6 @@ Beautifier.prototype._handle_inside_tag = function(printer, raw_token, last_tag_
   } else {
     if (raw_token.type === TOKEN.ATTRIBUTE) {
       printer.set_space_before_token(true);
-      last_tag_token.attr_count += 1;
     } else if (raw_token.type === TOKEN.EQUALS) { //no space before =
       printer.set_space_before_token(false);
     } else if (raw_token.type === TOKEN.VALUE && raw_token.previous.type === TOKEN.EQUALS) { //no space before value
@@ -4956,29 +5064,15 @@ Beautifier.prototype._handle_inside_tag = function(printer, raw_token, last_tag_
         wrapped = wrapped || raw_token.newlines !== 0;
       }
 
-
-      if (this._is_wrap_attributes_force) {
-        var force_attr_wrap = last_tag_token.attr_count > 1;
-        if (this._is_wrap_attributes_force_expand_multiline && last_tag_token.attr_count === 1) {
-          var is_only_attribute = true;
-          var peek_index = 0;
-          var peek_token;
-          do {
-            peek_token = tokens.peek(peek_index);
-            if (peek_token.type === TOKEN.ATTRIBUTE) {
-              is_only_attribute = false;
-              break;
-            }
-            peek_index += 1;
-          } while (peek_index < 4 && peek_token.type !== TOKEN.EOF && peek_token.type !== TOKEN.TAG_CLOSE);
-
-          force_attr_wrap = !is_only_attribute;
-        }
-
-        if (force_attr_wrap) {
-          printer.print_newline(false);
-          wrapped = true;
-        }
+      // Wrap for 'force' options, and if the number of attributes is at least that specified in 'wrap_attributes_min_attrs':
+      // 1. always wrap the second and beyond attributes
+      // 2. wrap the first attribute only if 'force-expand-multiline' is specified
+      if (this._is_wrap_attributes_force &&
+        last_tag_token.attr_count >= this._options.wrap_attributes_min_attrs &&
+        (last_token.type !== TOKEN.TAG_OPEN || // ie. second attribute and beyond
+          this._is_wrap_attributes_force_expand_multiline)) {
+        printer.print_newline(false);
+        wrapped = true;
       }
     }
     printer.print_token(raw_token);
@@ -5107,12 +5201,12 @@ Beautifier.prototype._print_custom_beatifier_text = function(printer, raw_token,
   }
 };
 
-Beautifier.prototype._handle_tag_open = function(printer, raw_token, last_tag_token, last_token) {
+Beautifier.prototype._handle_tag_open = function(printer, raw_token, last_tag_token, last_token, tokens) {
   var parser_token = this._get_tag_open_token(raw_token);
 
   if ((last_tag_token.is_unformatted || last_tag_token.is_content_unformatted) &&
     !last_tag_token.is_empty_element &&
-    raw_token.type === TOKEN.TAG_OPEN && raw_token.text.indexOf('</') === 0) {
+    raw_token.type === TOKEN.TAG_OPEN && !parser_token.is_start_tag) {
     // End element tags for unformatted or content_unformatted elements
     // are printed raw to keep any newlines inside them exactly the same.
     printer.add_raw_token(raw_token);
@@ -5124,6 +5218,19 @@ Beautifier.prototype._handle_tag_open = function(printer, raw_token, last_tag_to
       printer.set_wrap_point();
     }
     printer.print_token(raw_token);
+  }
+
+  // count the number of attributes
+  if (parser_token.is_start_tag && this._is_wrap_attributes_force) {
+    var peek_index = 0;
+    var peek_token;
+    do {
+      peek_token = tokens.peek(peek_index);
+      if (peek_token.type === TOKEN.ATTRIBUTE) {
+        parser_token.attr_count += 1;
+      }
+      peek_index += 1;
+    } while (peek_token.type !== TOKEN.EOF && peek_token.type !== TOKEN.TAG_CLOSE);
   }
 
   //indent attributes an auto, forced, aligned or forced-align line-wrap
@@ -5172,14 +5279,19 @@ var TagOpenParserToken = function(parent, raw_token) {
       tag_check_match = raw_token.text.match(/^<([^\s>]*)/);
       this.tag_check = tag_check_match ? tag_check_match[1] : '';
     } else {
-      tag_check_match = raw_token.text.match(/^{{(?:[\^]|#\*?)?([^\s}]+)/);
+      tag_check_match = raw_token.text.match(/^{{~?(?:[\^]|#\*?)?([^\s}]+)/);
       this.tag_check = tag_check_match ? tag_check_match[1] : '';
 
-      // handle "{{#> myPartial}}
-      if (raw_token.text === '{{#>' && this.tag_check === '>' && raw_token.next !== null) {
-        this.tag_check = raw_token.next.text;
+      // handle "{{#> myPartial}}" or "{{~#> myPartial}}"
+      if ((raw_token.text.startsWith('{{#>') || raw_token.text.startsWith('{{~#>')) && this.tag_check[0] === '>') {
+        if (this.tag_check === '>' && raw_token.next !== null) {
+          this.tag_check = raw_token.next.text.split(' ')[0];
+        } else {
+          this.tag_check = raw_token.text.split('>')[1];
+        }
       }
     }
+
     this.tag_check = this.tag_check.toLowerCase();
 
     if (raw_token.type === TOKEN.COMMENT) {
@@ -5191,9 +5303,17 @@ var TagOpenParserToken = function(parent, raw_token) {
     this.is_end_tag = !this.is_start_tag ||
       (raw_token.closed && raw_token.closed.text === '/>');
 
+    // if whitespace handler ~ included (i.e. {{~#if true}}), handlebars tags start at pos 3 not pos 2
+    var handlebar_starts = 2;
+    if (this.tag_start_char === '{' && this.text.length >= 3) {
+      if (this.text.charAt(2) === '~') {
+        handlebar_starts = 3;
+      }
+    }
+
     // handlebars tags that don't start with # or ^ are single_tags, and so also start and end.
     this.is_end_tag = this.is_end_tag ||
-      (this.tag_start_char === '{' && (this.text.length < 3 || (/[^#\^]/.test(this.text.charAt(2)))));
+      (this.tag_start_char === '{' && (this.text.length < 3 || (/[^#\^]/.test(this.text.charAt(handlebar_starts)))));
   }
 };
 
@@ -5210,7 +5330,7 @@ Beautifier.prototype._get_tag_open_token = function(raw_token) { //function to g
 
   parser_token.is_unformatted = !parser_token.tag_complete && in_array(parser_token.tag_check, this._options.unformatted);
   parser_token.is_content_unformatted = !parser_token.is_empty_element && in_array(parser_token.tag_check, this._options.content_unformatted);
-  parser_token.is_inline_element = in_array(parser_token.tag_name, this._options.inline) || parser_token.tag_start_char === '{';
+  parser_token.is_inline_element = in_array(parser_token.tag_name, this._options.inline) || (this._options.inline_custom_elements && parser_token.tag_name.includes("-")) || parser_token.tag_start_char === '{';
 
   return parser_token;
 };
@@ -5317,7 +5437,7 @@ Beautifier.prototype._calcluate_parent_multiline = function(printer, parser_toke
 };
 
 //To be used for <p> tag special case:
-var p_closers = ['address', 'article', 'aside', 'blockquote', 'details', 'div', 'dl', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'main', 'nav', 'ol', 'p', 'pre', 'section', 'table', 'ul'];
+var p_closers = ['address', 'article', 'aside', 'blockquote', 'details', 'div', 'dl', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'main', 'menu', 'nav', 'ol', 'p', 'pre', 'section', 'table', 'ul'];
 var p_parent_excludes = ['a', 'audio', 'del', 'ins', 'map', 'noscript', 'video'];
 
 Beautifier.prototype._do_optional_end_element = function(parser_token) {
@@ -5340,7 +5460,7 @@ Beautifier.prototype._do_optional_end_element = function(parser_token) {
 
   } else if (parser_token.tag_name === 'li') {
     // An li element’s end tag may be omitted if the li element is immediately followed by another li element or if there is no more content in the parent element.
-    result = result || this._tag_stack.try_pop('li', ['ol', 'ul']);
+    result = result || this._tag_stack.try_pop('li', ['ol', 'ul', 'menu']);
 
   } else if (parser_token.tag_name === 'dd' || parser_token.tag_name === 'dt') {
     // A dd element’s end tag may be omitted if the dd element is immediately followed by another dd element or a dt element, or if there is no more content in the parent element.
@@ -5464,7 +5584,7 @@ module.exports.Beautifier = Beautifier;
 
 
 
-var BaseOptions = __webpack_require__(7).Options;
+var BaseOptions = (__webpack_require__(7).Options);
 
 function Options(options) {
   BaseOptions.call(this, options, 'html');
@@ -5479,6 +5599,7 @@ function Options(options) {
   this.indent_handlebars = this._get_boolean('indent_handlebars', true);
   this.wrap_attributes = this._get_selection('wrap_attributes',
     ['auto', 'force', 'force-aligned', 'force-expand-multiline', 'aligned-multiple', 'preserve', 'preserve-aligned']);
+  this.wrap_attributes_min_attrs = this._get_number('wrap_attributes_min_attrs', 2);
   this.wrap_attributes_indent_size = this._get_number('wrap_attributes_indent_size', this.indent_size);
   this.extra_liners = this._get_array('extra_liners', ['head', 'body', '/html']);
 
@@ -5496,6 +5617,7 @@ function Options(options) {
     // obsolete inline tags
     'acronym', 'big', 'strike', 'tt'
   ]);
+  this.inline_custom_elements = this._get_boolean('inline_custom_elements', true);
   this.void_elements = this._get_array('void_elements', [
     // HTLM void elements - aka self-closing tags - aka singletons
     // https://www.w3.org/html/wg/drafts/html/master/syntax.html#void-elements
@@ -5561,11 +5683,11 @@ module.exports.Options = Options;
 
 
 
-var BaseTokenizer = __webpack_require__(10).Tokenizer;
-var BASETOKEN = __webpack_require__(10).TOKEN;
-var Directives = __webpack_require__(14).Directives;
-var TemplatablePattern = __webpack_require__(15).TemplatablePattern;
-var Pattern = __webpack_require__(13).Pattern;
+var BaseTokenizer = (__webpack_require__(10).Tokenizer);
+var BASETOKEN = (__webpack_require__(10).TOKEN);
+var Directives = (__webpack_require__(14).Directives);
+var TemplatablePattern = (__webpack_require__(15).TemplatablePattern);
+var Pattern = (__webpack_require__(13).Pattern);
 
 var TOKEN = {
   TAG_OPEN: 'TK_TAG_OPEN',

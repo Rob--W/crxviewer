@@ -16,7 +16,8 @@
             "cws_pattern.js",
             "background.js",
             "bg-contextmenu.js"
-        ]
+        ],
+        "persistent": false
     },
     "page_action": {
         "default_icon": {
@@ -53,6 +54,7 @@
         "storage",
         "contextMenus",
         "downloads",
+        "alarms",
         "cookies",
         "webRequest",
         "webRequestBlocking",

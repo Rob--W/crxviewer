@@ -213,7 +213,7 @@
         var params = encodeQueryString({crx: url});
 
         chrome.tabs.create({
-            url: chrome.extension.getURL('crxviewer.html') + '?' + params,
+            url: chrome.runtime.getURL('crxviewer.html') + '?' + params,
             active: true,
             index: tab ? tab.index + 1 : undefined,
 //#if FIREFOX

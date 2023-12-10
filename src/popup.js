@@ -98,7 +98,7 @@ function doViewSource() {
         lastFocusedWindow: true,
     }, function(tabs) {
         chrome.tabs.create({
-            url: chrome.extension.getURL('crxviewer.html') +
+            url: chrome.runtime.getURL('crxviewer.html') +
                 '?' + encodeQueryString({crx: crx_url, zipname: filename}),
             active: true,
             index: tabs && tabs.length ? tabs[0].index + 1 : undefined,

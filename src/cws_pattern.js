@@ -188,7 +188,7 @@ function get_webstore_url(url) {
     // Keep logic in sync with is_webstore_url.
     var cws = cws_pattern.exec(url) || cws_download_pattern.exec(url);
     if (cws) {
-        return 'https://chrome.google.com/webstore/detail/' + cws[1];
+        return 'https://chromewebstore.google.com/detail/' + cws[1];
     }
     var mea = mea_pattern.exec(url) || mea_download_pattern.exec(url);
     if (mea) {

@@ -3,18 +3,12 @@
     "short_name": "CRX Viewer",
     "description": "View source code of Chrome extensions, Firefox addons or Opera extensions (crx/nex/xpi) from the Chrome web store and elsewhere.",
     "version": "1.6.13",
-    "manifest_version": 2,
+    "manifest_version": 3,
+    "minimum_chrome_version": "88",
     "background": {
-        "scripts": [
-            "storage-sync-polyfill.js",
-            "chrome-platform-info.js",
-            "cws_pattern.js",
-            "background.js",
-            "bg-contextmenu.js"
-        ],
-        "persistent": false
+        "service_worker": "service_worker.js"
     },
-    "page_action": {
+    "action": {
         "default_icon": {
             "19": "icons/19.png",
             "38": "icons/38.png"
@@ -29,20 +23,21 @@
     },
     "options_page": "options.html",
     "options_ui": {
-        "page": "options.html#optionsV2",
-        "chrome_style": true
+        "page": "options.html#optionsV2"
     },
     "permissions": [
         "tabs",
         "storage",
         "contextMenus",
         "downloads",
-        "declarativeContent",
+        "declarativeContent"
+    ],
+    "host_permissions": [
         "*://clients2.google.com/service/update2/crx*",
         "*://clients2.googleusercontent.com/crx/download/*"
     ],
-    "optional_permissions": [
-        "<all_urls>"
+    "optional_host_permissions": [
+        "*://*/*"
     ],
     "incognito": "split"
 }

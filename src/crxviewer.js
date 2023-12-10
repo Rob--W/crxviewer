@@ -2142,7 +2142,7 @@ function loadUrlInViewer(crx_url, onHasBlob) {
 //#if CHROME
     function maybeShowPermissionRequest() {
         var permission = {
-            origins: ['<all_urls>']
+            origins: ['*://*/*']
         };
         chrome.permissions.contains(permission, function(hasAccess) {
             if (hasAccess) return;

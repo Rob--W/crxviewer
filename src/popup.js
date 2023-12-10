@@ -37,7 +37,11 @@ function initialize() {
         crx_url = get_crx_url(cws_url);
         filename = get_zip_name(crx_url);
         if (!can_viewsource_crx_url(crx_url)) {
+//#if FIREFOX
             chrome.pageAction.hide(tabs[0].id);
+//#else
+            chrome.action.disable(tabs[0].id);
+//#endif
             window.close();
             return;
         }

@@ -299,6 +299,11 @@ function registerEventRules() {
         pathContains: "addon/"
     }];
 
+    if (!chrome.declarativeContent.ShowAction) {
+        // Chrome < 97.
+        chrome.declarativeContent.ShowAction = chrome.declarativeContent.ShowPageAction;
+    }
+
     var rule = {
         conditions: pageUrlFilters.map(function(pageUrlFilter) {
             return new chrome.declarativeContent.PageStateMatcher({
@@ -306,12 +311,15 @@ function registerEventRules() {
             });
         }),
         actions: [
-            new chrome.declarativeContent.ShowPageAction(),
+            new chrome.declarativeContent.ShowAction(),
         ],
     };
 
     chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
-        chrome.declarativeContent.onPageChanged.addRules([rule]);
+        chrome.declarativeContent.onPageChanged.addRules([rule], function() {
+            // Visibility of action fully controlled by declarativeContent.
+            chrome.action.disable();
+        });
     });
 }
 //// The documentation recommends to use runtime.onInstalled to register

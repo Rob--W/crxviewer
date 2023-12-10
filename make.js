@@ -183,6 +183,8 @@ target.firefox = function() {
 
     cd(FIREFOX_BUILD_DIR);
     removeTestFiles();
+    // Firefox version uses event page instead of service worker.
+    rm('service_worker.js');
     rm('-f', '../crxviewer_firefox.zip');
     exec('7z a ../crxviewer_firefox.zip * -tzip');
     lintDir(FIREFOX_BUILD_DIR);

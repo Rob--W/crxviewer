@@ -2,22 +2,16 @@
     "name": "Extension source viewer",
     "description": "View source code of extensions in the Chrome Web Store, Firefox or Opera addon gallery. Has button to install from Chrome Web Store.",
     "version": "1.6.13",
-    "manifest_version": 2,
+    "manifest_version": 3,
+    "minimum_opera_version": "74",
     "developer": {
         "name": "Rob Wu",
         "url": "https://robwu.nl"
     },
     "background": {
-        "scripts": [
-            "storage-sync-polyfill.js",
-            "chrome-platform-info.js",
-            "cws_pattern.js",
-            "background.js",
-            "bg-contextmenu.js"
-        ],
-        "persistent": false
+        "service_worker": "service_worker.js"
     },
-    "page_action": {
+    "action": {
         "default_icon": {
             "19": "icons/19.png",
             "38": "icons/38.png"
@@ -36,7 +30,9 @@
         "storage",
         "contextMenus",
         "downloads",
-        "declarativeContent",
+        "declarativeContent"
+    ],
+    "host_permissions": [
         "*://clients2.google.com/service/update2/crx*",
         "*://clients2.googleusercontent.com/crx/download/*",
         "*://addons.opera.com/*",

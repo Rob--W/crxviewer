@@ -145,7 +145,7 @@ target.chrome = function() {
     removeFirefoxSpecificFiles();
     removeTestFiles();
     rm('-f', '../crxviewer.zip');
-    exec('7z a ../crxviewer.zip * -tzip');
+    exec('zip -r -q ../crxviewer.zip ./');
     lintDir(CHROME_BUILD_DIR);
 };
 
@@ -165,7 +165,7 @@ target.opera = function() {
     removeFirefoxSpecificFiles();
     removeTestFiles();
     rm('-f', '../crxviewer_opera.zip');
-    exec('7z a ../crxviewer_opera.zip * -tzip');
+    exec('zip -r -q ../crxviewer_opera.zip ./');
     lintDir(OPERA_BUILD_DIR);
 };
 
@@ -186,7 +186,7 @@ target.firefox = function() {
     // Firefox version uses event page instead of service worker.
     rm('service_worker.js');
     rm('-f', '../crxviewer_firefox.zip');
-    exec('7z a ../crxviewer_firefox.zip * -tzip');
+    exec('zip -r -q ../crxviewer_firefox.zip ./');
     lintDir(FIREFOX_BUILD_DIR);
 };
 

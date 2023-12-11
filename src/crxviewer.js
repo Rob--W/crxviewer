@@ -137,6 +137,9 @@ function getGenericType(filename) {
     if (/^(bmp|cur|gif|ico|jpe?g|png|psd|svg|tiff?|xcf|webp)$/.test(extension)) {
         return 'images';
     }
+    if (/^(mp3|ogg|wav|flac|aac)$/.test(extension)) {
+        return 'audio';
+    }
     if (/^(css|sass|less|html?|xhtml|xml)$/.test(extension)) {
         return 'markup';
     }
@@ -221,6 +224,9 @@ var viewFileInfo = (function() {
                 break;
             case 'images':
                 handler = handlers.image;
+                break;
+            case 'audio':
+                handler = handlers.audio;
                 break;
             }
         }
@@ -583,6 +589,29 @@ var viewFileInfo = (function() {
                     // The image is still being displayed.
                     sourceToolbarElem.appendChild(document.createTextNode(' ' + text));
                 }
+            }
+        }
+    };
+    handlers.audio = {
+        Writer: zip.Data64URIWriter,
+        callback: function(entry, data_url) {
+            var sourceToolbarElem = document.getElementById('source-toolbar');
+            sourceToolbarElem.appendChild(createDownloadLink(entry, data_url));
+            sourceToolbarElem.appendChild(createContentVerifier(entry));
+
+            var sourceCodeElem = document.getElementById('source-code');
+            sourceCodeElem.innerHTML = '<audio controls>';
+            var audio = sourceCodeElem.firstChild;
+            audio.onloadeddata = function() {
+                renderAudioInfo('Duration: ' + audio.duration + ' seconds');
+            };
+            audio.onerror = function() {
+                renderAudioInfo('Failed to load audio');
+            };
+            audio.src = data_url;
+
+            function renderAudioInfo(text) {
+                sourceToolbarElem.appendChild(document.createTextNode(' ' + text));
             }
         }
     };

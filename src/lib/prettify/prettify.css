@@ -74,3 +74,17 @@
 li:hover {
     background: #EEE;
 }
+@media (prefers-color-scheme: dark) {
+    .token.punctuation,
+    .token.string,
+    .token.atrule,
+    .token.attr-value {
+        color: #7999fb;
+    }
+    .odd-code-line {
+        background: #4e4e4e;
+    }
+    li:hover {
+        background: #646464;
+    }
+}

@@ -408,4 +408,28 @@ img:hover {
     outline: 1px solid rgba(200, 200, 200, 0.5);
 }
 
+@media (prefers-color-scheme: dark) {
+    body,
+    #top-bar #file-filter,
+    #top-bar label,
+    input,
+    #left-panel,
+    button,
+    .content-verifier-wrapper .content-verifier-output {
+        background-color: #313131;
+        color: #bfbfbf;
+    }
+    #left-panel > .resizer {
+        background-color: #4e4e4e;
+    }
+    #file-list li.file-selected,
+    .site-specific-form > div:hover {
+        background-color: #4e4e4e;
+        color: #b7b7b7;
+    }
+    .site-specific-form label:hover {
+        background-color: #646464;
+    }
+}
+
 @import (less) "search-tools.less";

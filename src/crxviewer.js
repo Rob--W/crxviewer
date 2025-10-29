@@ -1218,8 +1218,9 @@ function renderInitialViewFromUrlParams() {
     var qh = getParam('qh') === '1';
     // The nth search result to select (0 = none, 1 = first, etc.).
     var qi = parseInt(getParam('qi')) || 0;
-
-    if (!q && !qf) return;
+    // The specific `filter` value to be used
+    var filter = getParam('filter', location.hash)
+    if (!q && !qf && !filter) return;
     var fileFilterElem = document.getElementById('file-filter');
     if (fileFilterElem.value && fileFilterElem.value !== q) {
         // Page restored from cache (refresh?), query parameter does not match
@@ -1426,6 +1427,10 @@ var checkAndApplyFilter = (function() {
         var fileFilterElem = document.getElementById('file-filter');
         var feedback = document.getElementById('file-filter-feedback');
         var pattern = fileFilterElem.value;
+
+        var newHash = encodeQueryString({ filter: pattern || undefined });
+        history.replaceState(null, '', location.pathname + location.search + '#' + newHash);
+
         var grepTerm = '';
 
         // Allow ! to be escaped if a user really wants to look for a ! in the filename.

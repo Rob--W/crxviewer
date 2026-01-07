@@ -1429,7 +1429,6 @@ var checkAndApplyFilter = (function() {
         var pattern = fileFilterElem.value;
 
         var newHash = encodeQueryString({ filter: pattern || undefined });
-        history.replaceState(null, '', location.pathname + location.search + '#' + newHash);
 
         var grepTerm = '';
 
@@ -1554,6 +1553,29 @@ var checkAndApplyFilter = (function() {
     fileFilterElem.addEventListener('input', function() {
         checkAndApplyFilter(true);
     });
+    fileFilterElem.addEventListener('change', function() {
+        updateUrlWithSearchQuery(this.value);
+    });
+
+    function updateUrlWithSearchQuery(query) {
+        // Do not update the URL if we are in a permalink view.
+        if (getParam('qf') || getParam('qb') || getParam('qh') || getParam('qi')) {
+            return;
+        }
+        var params = {};
+        var crx = getParam('crx');
+        if (crx) params.crx = crx;
+        var blob = getParam('blob');
+        if (blob) params.blob = blob;
+        var inside = getParam('inside[]');
+        if (inside) params.inside = inside;
+
+        if (query) {
+            params.q = query;
+        }
+        var newUrl = location.pathname + '?' + encodeQueryString(params);
+        history.replaceState(null, '', newUrl);
+    }
     fileFilterElem.form.onsubmit = function(e) {
         e.preventDefault();
         checkAndApplyFilter();

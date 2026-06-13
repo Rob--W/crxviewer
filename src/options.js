@@ -4,12 +4,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-/* jshint browser:true, devel:true */
+/* jshint browser:true, devel:true, esversion:6 */
 /* globals chrome */
-'use strict'; 
+'use strict';
 
 //#if CHROME
-var permission = {
+const permission = {
     origins: ['*://*/*'],
 };
 chrome.permissions.contains(permission, setHasPermission);
@@ -33,31 +33,31 @@ document.getElementById('hasAccessToAllURLs').onchange = function() {
 };
 //#endif
 
-var storageArea = chrome.storage.sync;
-var contextmenuPatternsInput = document.getElementById('contextmenuPatterns');
+const storageArea = chrome.storage.sync;
+const contextmenuPatternsInput = document.getElementById('contextmenuPatterns');
 document.getElementById('contextmenu').onchange = function() {
     storageArea.set({showContextMenu: this.checked});
     contextmenuPatternsInput.disabled = !this.checked;
 };
 
 contextmenuPatternsInput.oninput = function() {
-    var patterns = [];
-    var errorMsg = '';
+    const patterns = [];
+    let errorMsg = '';
     this.value.split('\n').every(function(line, i) {
         line = line.trim();
         if (!line) {
-            return;
+            return true;
         }
         if (!/^(\*|https?|ftp|file|data):\/\/\*?[^/*]*\//.test(line)) {
             errorMsg = 'Invalid URL pattern at line ' + (i + 1) + ': ' + line;
             errorMsg += '\nPatterns must look like a URL and may contain at most one * (wildcard) as a subdomain, and any number of * in the path.';
-            return;
+            return false;
         }
         patterns.push(line);
         return true;
     });
 
-    var contextmenuPatternsOutput = document.getElementById('contextmenuPatternsOutput');
+    const contextmenuPatternsOutput = document.getElementById('contextmenuPatternsOutput');
     contextmenuPatternsOutput.style.color = 'red';
     if (errorMsg) {
         contextmenuPatternsOutput.textContent = 'URL patterns not applied; ' + errorMsg;

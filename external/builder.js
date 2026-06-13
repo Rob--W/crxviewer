@@ -109,7 +109,7 @@ function preprocess(inFilename, outFilename, defines) {
   var stack = [];
   var control =
   /* jshint -W101 */
-    /^\s*(?:\/\/|<!--)\s*#(if|elif|else|endif|expand|include|error)\b(?:\s+(.*?)(?:-->)?$)?/;
+    /^(?:\/\/|<!--)\s*#(if|elif|else|endif|expand|include|error)\b(?:\s+(.*?)(?:-->)?$)?/;
   /* jshint +W101 */
   var lineNumber = 0;
   var loc = function() {

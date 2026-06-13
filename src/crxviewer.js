@@ -1218,9 +1218,7 @@ function renderInitialViewFromUrlParams() {
     var qh = getParam('qh') === '1';
     // The nth search result to select (0 = none, 1 = first, etc.).
     var qi = parseInt(getParam('qi')) || 0;
-    // The specific `filter` value to be used
-    var filter = getParam('filter', location.hash)
-    if (!q && !qf && !filter) return;
+    if (!q && !qf) return;
     var fileFilterElem = document.getElementById('file-filter');
     if (fileFilterElem.value && fileFilterElem.value !== q) {
         // Page restored from cache (refresh?), query parameter does not match
@@ -1427,9 +1425,6 @@ var checkAndApplyFilter = (function() {
         var fileFilterElem = document.getElementById('file-filter');
         var feedback = document.getElementById('file-filter-feedback');
         var pattern = fileFilterElem.value;
-
-        var newHash = encodeQueryString({ filter: pattern || undefined });
-
         var grepTerm = '';
 
         // Allow ! to be escaped if a user really wants to look for a ! in the filename.
@@ -1564,7 +1559,12 @@ var checkAndApplyFilter = (function() {
         }
         var params = {};
         var crx = getParam('crx');
-        if (crx) params.crx = crx;
+        if (!crx) {
+          // crx param may be missing if the user has not opened any file, or
+          // if the file picker was used. A permalink would not work for these.
+          return;
+        }
+        params.crx = crx;
         var blob = getParam('blob');
         if (blob) params.blob = blob;
         var inside = getParam('inside[]');

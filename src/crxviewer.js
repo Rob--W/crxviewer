@@ -137,9 +137,6 @@ function getGenericType(filename) {
     if (/^(bmp|cur|gif|ico|jpe?g|png|psd|svg|tiff?|xcf|webp)$/.test(extension)) {
         return 'images';
     }
-    if (/^(mp3|ogg|wav|flac|aac)$/.test(extension)) {
-        return 'audio';
-    }
     if (/^(css|sass|less|html?|xhtml|xml)$/.test(extension)) {
         return 'markup';
     }
@@ -224,9 +221,6 @@ var viewFileInfo = (function() {
                 break;
             case 'images':
                 handler = handlers.image;
-                break;
-            case 'audio':
-                handler = handlers.audio;
                 break;
             }
         }
@@ -611,7 +605,10 @@ var viewFileInfo = (function() {
             audio.src = data_url;
 
             function renderAudioInfo(text) {
-                sourceToolbarElem.appendChild(document.createTextNode(' ' + text));
+                if (sourceCodeElem.firstChild === audio) {
+                  // The audio element is still being displayed.
+                  sourceToolbarElem.appendChild(document.createTextNode(' ' + text));
+                }
             }
         }
     };

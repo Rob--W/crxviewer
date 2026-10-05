@@ -176,6 +176,7 @@ Prism.rob.extToLanguage = function(ext) {
         return 'ini';
     case 'js':
     case 'jsm':
+    case 'mjs':
         return 'javascript';
     case 'json':
         return 'json';

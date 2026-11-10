@@ -3,11 +3,15 @@
  * (c) 2013 Rob Wu <rob@robwu.nl>
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * Modified by Subham Mahesh (2026): build reduced to a Firefox-only target;
+ * added the bundle targets (CodeMirror, MD5); removed CRX helper files; generates
+ * the third-party license list for license.html. */
 
 // Build tool, adapted from PDF.js
 /* jshint node:true */
-/* globals cd, cp, echo, exec, find, grep, mkdir, rm, target, test */
+/* globals cd, cp, echo, exec, find, grep, mkdir, rm, target, test, which */
 
 'use strict';
 require('shelljs/make');
@@ -17,16 +21,14 @@ var builder = require('./external/builder');
 var ROOT_DIR = __dirname + '/';
 var BUILD_DIR = ROOT_DIR + 'dist/';
 var SRC_DIR = ROOT_DIR + 'src/';
-var CHROME_BUILD_DIR = BUILD_DIR + 'chrome/';
-var OPERA_BUILD_DIR = BUILD_DIR + 'opera/';
 var FIREFOX_BUILD_DIR = BUILD_DIR + 'firefox/';
-var WEB_BUILD_DIR = BUILD_DIR + 'web/';
 var ALLOWED_FILES = [
     'manifest.json',
     '.css',
     '.html',
     '.js',
     '.png',
+    '.txt',
 ];
 
 function getVersionString() {
@@ -39,10 +41,6 @@ function getBuildConfig(options) {
     var dest_dir = options.build_dir;
     var setup = {
         defines: {
-            CHROME: false,
-            FIREFOX: false,
-            OPERA: false,
-            WEB: false,
             VERSION: getVersionString(),
         },
         mkdirs: [
@@ -50,12 +48,13 @@ function getBuildConfig(options) {
         ],
         copy: [
             [SRC_DIR + 'lib', dest_dir],
-            [SRC_DIR + 'icons/*.png', dest_dir + 'icons']
+            [SRC_DIR + 'icons/*.png', dest_dir + 'icons'],
+            [SRC_DIR + 'manifest.json', dest_dir],
+            [ROOT_DIR + 'LICENSE', dest_dir + 'LICENSE.txt'],
         ],
         preprocess: [
             [SRC_DIR + '*.html', dest_dir],
             [SRC_DIR + '*.js', dest_dir],
-            [SRC_DIR + 'lib/crx-to-zip.js', dest_dir + 'lib'],
         ]
     };
     if (options.defines)
@@ -76,16 +75,12 @@ function cleanDirectory(dir) {
 function build(setup, output_root_dir) {
     cleanDirectory(output_root_dir);
     builder.build(setup);
-    exec(ROOT_DIR + '/node_modules/.bin/lessc --strict-math=on "' + SRC_DIR + 'crxviewer.less" "' + output_root_dir + 'crxviewer.css"');
+    // Licenses of all third-party code, shown on license.html.
+    require('./external/licenses/generate').generate(output_root_dir + 'third-party-licenses.js');
+    exec(ROOT_DIR + '/node_modules/.bin/lessc --strict-math=on "' + SRC_DIR + 'viewer.less" "' + output_root_dir + 'viewer.css"');
 }
 
-function removeFirefoxSpecificFiles() {
-    rm('domain-fronter.js');
-}
 function removeTestFiles() {
-    rm('lib/prettify/test-prism-language-detect.js');
-    rm('lib/prettify/test-prism-li-lines.js');
-    rm('lib/prettify/test-prism-source-extensions.html');
     rm('test-asn1.html');
 }
 
@@ -120,53 +115,43 @@ function lintDir(dest_dir) {
     }
 }
 
+function zipDirectory(zipPath) {
+    rm('-f', zipPath);
+    // Prefer 7z when available, fall back to the standard zip utility.
+    var hasSevenZip = !!which('7z');
+    if (hasSevenZip) {
+        exec('7z a "' + zipPath + '" * -tzip');
+    } else {
+        exec('zip -qr "' + zipPath + '" .');
+    }
+}
+
+// Writes third-party-licenses.js to src/ for testing license.html without a build.
+target.licenses = function() {
+    echo();
+    echo('Generating third-party-licenses.js...');
+    require('./external/licenses/generate').generate(SRC_DIR + 'third-party-licenses.js');
+};
+
 target.all = function() {
-    target.chrome();
-    target.opera();
+    target.bundles();
     target.firefox();
-    target.web();
 };
 
-target.chrome = function() {
-    echo();
-    echo('Building Chrome extension...');
-    var setup = getBuildConfig({
-        build_dir: CHROME_BUILD_DIR,
-        defines: {
-            CHROME: true
-        },
-        copy: [
-            [SRC_DIR + 'manifest.json', CHROME_BUILD_DIR]
-        ]
+// Builds the JavaScript bundles from npm packages (see external/bundles.js):
+// CodeMirror 6 into src/lib/codemirror/zen-editor.js and the MD5 hash of
+// @noble/hashes into src/lib/noble-md5.js.
+target.bundles = function() {
+    var bundles = require('./external/bundles');
+    bundles.BUNDLES.forEach(function(bundle) {
+        echo();
+        echo('Bundling ' + bundle.id + '...');
+        bundles.buildBundle(bundle);
     });
-    build(setup, CHROME_BUILD_DIR);
-
-    cd(CHROME_BUILD_DIR);
-    removeFirefoxSpecificFiles();
-    removeTestFiles();
-    rm('-f', '../crxviewer.zip');
-    exec('7z a ../crxviewer.zip * -tzip');
-    lintDir(CHROME_BUILD_DIR);
 };
-
-target.opera = function() {
-    echo();
-    echo('Building Opera extension...');
-    var setup = getBuildConfig({
-        build_dir: OPERA_BUILD_DIR,
-        defines: {
-            OPERA: true
-        }
-    });
-    build(setup, OPERA_BUILD_DIR);
-    cp(SRC_DIR + 'manifest_opera.json', OPERA_BUILD_DIR + 'manifest.json');
-
-    cd(OPERA_BUILD_DIR);
-    removeFirefoxSpecificFiles();
-    removeTestFiles();
-    rm('-f', '../crxviewer_opera.zip');
-    exec('7z a ../crxviewer_opera.zip * -tzip');
-    lintDir(OPERA_BUILD_DIR);
+// Kept for convenience: `node make.js codemirror` rebuilds all bundles.
+target.codemirror = function() {
+    target.bundles();
 };
 
 target.firefox = function() {
@@ -174,49 +159,11 @@ target.firefox = function() {
     echo('Building Firefox addon...');
     var setup = getBuildConfig({
         build_dir: FIREFOX_BUILD_DIR,
-        defines: {
-            FIREFOX: true
-        }
     });
     build(setup, FIREFOX_BUILD_DIR);
-    cp(SRC_DIR + 'manifest_firefox.json', FIREFOX_BUILD_DIR + 'manifest.json');
 
     cd(FIREFOX_BUILD_DIR);
     removeTestFiles();
-    // Firefox version uses event page instead of service worker.
-    rm('service_worker.js');
-    rm('-f', '../crxviewer_firefox.zip');
-    exec('7z a ../crxviewer_firefox.zip * -tzip');
+    zipDirectory('../zen-source-viewer.zip');
     lintDir(FIREFOX_BUILD_DIR);
-};
-
-target.web = function() {
-    echo();
-    echo('Building online demo...');
-    var dest_dir = WEB_BUILD_DIR;
-    var setup = {
-        defines: {
-            CHROME: false,
-            FIREFOX: false,
-            OPERA: false,
-            WEB: true,
-            VERSION: getVersionString(),
-        },
-        copy: [
-            [SRC_DIR + 'search-worker.js', dest_dir],
-            [SRC_DIR + 'search-tools.js', dest_dir],
-            [SRC_DIR + 'lib', dest_dir],
-            [SRC_DIR + 'chrome-platform-info.js', dest_dir],
-            [SRC_DIR + 'asn1lite.js', dest_dir],
-            [SRC_DIR + 'mozcose.js', dest_dir],
-        ],
-        preprocess: [
-            [SRC_DIR + 'crxviewer.html', dest_dir],
-            [SRC_DIR + 'crxviewer.js', dest_dir],
-            [SRC_DIR + 'cws_pattern.js', dest_dir],
-            [SRC_DIR + 'lib/crx-to-zip.js', dest_dir + 'lib'],
-        ]
-    };
-    build(setup, WEB_BUILD_DIR);
-    lintDir(WEB_BUILD_DIR);
 };

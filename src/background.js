@@ -2,17 +2,17 @@
  * (c) 2013 Rob Wu <rob@robwu.nl>
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * Modified by Subham Mahesh, 2026: reduced to Firefox only (removed Chrome, Opera and web-demo code,
+ * and Chrome Web Store, Edge and Opera add-on sites). */
 
 /* jshint esversion:6 */
 /* globals navigator */
-/* globals chrome, cws_match_patterns, mea_match_pattern, ows_match_pattern, amo_match_patterns, atn_match_patterns,
-   cws_pattern, mea_pattern, ows_pattern, amo_pattern, atn_pattern,
-    */
+/* globals chrome, amo_match_patterns, atn_match_patterns, amo_pattern, atn_pattern */
 
 'use strict';
 
-//#if FIREFOX
 chrome.runtime.onMessage.addListener((msg, sender) => {
     if (msg && msg.action === "downloadBlob") {
         chrome.downloads.download({
@@ -22,9 +22,7 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
         });
     }
 });
-//#endif
 
-//#if FIREFOX
 /**
  * Logic to toggle visibility of pageAction if needed.
  *
@@ -49,18 +47,15 @@ function tabsOnUpdatedCheckPageAction(tabId, changeInfo, tab) {
     showPageActionIfNeeded(tab);
 }
 var pageActionIsEnabled = true; // Default-enabled by page_action.show_matches.
-//// We immediately respond to tabs.onUpdated events to minimize the chance of
-//// tab.url getting out of sync. This event may trigger before we read the
-//// user's preference through storage.sync. Once we got the user's preference,
-//// we fix up any touched tabs and void this set.
+// We immediately respond to tabs.onUpdated events to minimize the chance of
+// tab.url getting out of sync. This event may trigger before we read the
+// user's preference through storage.sync. Once we got the user's preference,
+// we fix up any touched tabs and void this set.
 var tabIdsBeforePageActionPrefRead = new Set();
 var hasLostPersistentListener = false;
 
-//// Same patterns as in manifest_firefox.json:
+// Same patterns as page_action.show_matches in manifest.json:
 var page_action_show_matches_patterns = [
-    ...cws_match_patterns,
-    mea_match_pattern,
-    ows_match_pattern,
     ...amo_match_patterns,
     ...atn_match_patterns,
 ];
@@ -166,7 +161,7 @@ function togglePageActionAcrossAllMatchingTabs() {
     });
 }
 
-//// In event pages, listeners need to be registered at the top level.
+// In event pages, listeners need to be registered at the top level.
 registerTabsOnUpdatedForPageAction();
 chrome.storage.onChanged.addListener(function(changes, areaName) {
     if (areaName === 'session') {
@@ -221,95 +216,5 @@ function showPageActionIfNeeded(tab) {
     }
 }
 function isPageActionNeededForUrl(url) {
-    return cws_pattern.test(url) || mea_pattern.test(url) || ows_pattern.test(url) ||
-        amo_pattern.test(url) || atn_pattern.test(url);
+    return amo_pattern.test(url) || atn_pattern.test(url);
 }
-//#else
-//// Work-around for crbug.com/1132684: static event_rules disappear after a
-//// restart, so we register rules dynamically instead, on install.
-function registerEventRules() {
-    if (registerEventRules.hasRunOnce) {
-        return;
-    }
-    registerEventRules.hasRunOnce = true;
-
-    var pageUrlFilters = [{
-        hostEquals: "chrome.google.com",
-        pathPrefix: "/webstore/detail/"
-    }, {
-        hostEquals: "chromewebstore.google.com",
-        pathPrefix: "/detail/"
-    }, {
-        hostEquals: "microsoftedge.microsoft.com",
-        pathPrefix: "/addons/detail/"
-    }, {
-        hostEquals: "addons.opera.com",
-        pathContains: "extensions/details/"
-    }, {
-        hostEquals: "addons.mozilla.org",
-        pathContains: "addon/"
-    }, {
-        hostSuffix: "addons.mozilla.org",
-        pathContains: "review/"
-    }, {
-        hostEquals: "addons.allizom.org",
-        pathContains: "addon/"
-    }, {
-        hostSuffix: "addons.allizom.org",
-        pathContains: "review/"
-    }, {
-        hostEquals: "addons-dev.allizom.org",
-        pathContains: "addon/"
-    }, {
-        hostSuffix: "addons-dev.allizom.org",
-        pathContains: "review/"
-    }, {
-        hostEquals: "addons.thunderbird.net",
-        pathContains: "addon/"
-    }, {
-        hostSuffix: "addons-stage.thunderbird.net",
-        pathContains: "addon/"
-    }];
-
-    if (!chrome.declarativeContent.ShowAction) {
-        // Chrome < 97.
-        chrome.declarativeContent.ShowAction = chrome.declarativeContent.ShowPageAction;
-    }
-
-    var rule = {
-        conditions: pageUrlFilters.map(function(pageUrlFilter) {
-            return new chrome.declarativeContent.PageStateMatcher({
-                pageUrl: pageUrlFilter,
-            });
-        }),
-        actions: [
-            new chrome.declarativeContent.ShowAction(),
-        ],
-    };
-
-    chrome.declarativeContent.onPageChanged.removeRules(undefined, function() {
-        chrome.declarativeContent.onPageChanged.addRules([rule], function() {
-            // Visibility of action fully controlled by declarativeContent.
-            chrome.action.disable();
-        });
-    });
-}
-//// The documentation recommends to use runtime.onInstalled to register
-//// declarativeContent rules. Due to bugs, additional work-arounds are needed
-//// to ensure that the declarativeContent rules are registered correctly.
-chrome.runtime.onInstalled.addListener(registerEventRules);
-//// Work-around for crbug.com/388231: onInstalled is not fired when the
-//// extension was disabled during an update.
-chrome.runtime.onStartup.addListener(registerEventRules);
-//// Work-around for crbug.com/264963: onInstalled is not fired when the
-//// extension is run in incognito mode. Although not documented, incognito
-//// contexts have their own declarativeContent rule store.
-if (chrome.extension.inIncognitoContext) {
-    chrome.declarativeContent.onPageChanged.getRules(function(rules) {
-        if (!rules.length) {
-            registerEventRules();
-        }
-    });
-}
-
-//#endif

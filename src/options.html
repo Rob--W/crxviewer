@@ -4,6 +4,8 @@
  This Source Code Form is subject to the terms of the Mozilla Public
  License, v. 2.0. If a copy of the MPL was not distributed with this
  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+ Modified by Subham Mahesh, 2026: redesigned the user interface; reduced to Firefox only (removed Chrome, Opera and web-demo code); added a License & Credits link; renamed to Zen Source Viewer; removed CRX support.
 -->
 <html>
 <head>
@@ -12,74 +14,242 @@
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark light">
 <meta name="viewport" content="width=device-width">
-<title>CRX Viewer options</title>
+<title>Zen Source Viewer settings</title>
 <style>
-/* Work-around for Firefox before 127 - bugzil.la/1888866 */
+:root {
+    --bg: #f4f2ed;
+    --surface: #faf9f6;
+    --surface-hover: #f1eee7;
+    --border: #e3dfd5;
+    --border-strong: #d3cec2;
+    --text: #2f2d29;
+    --text-muted: #6f6a60;
+    --text-subtle: #a19b8f;
+    --accent: #5b7360;
+    --accent-soft: #e5eae1;
+    --focus-ring: rgba(91, 115, 96, 0.28);
+    --danger: #b4533f;
+    --switch-off: #d3cec2;
+    color-scheme: light;
+}
 @media (prefers-color-scheme: dark) {
-    html, body {
-        background: Canvas;
-        color: CanvasText;
+    :root {
+        --bg: #161614;
+        --surface: #1c1c19;
+        --surface-hover: #23231f;
+        --border: #2d2c28;
+        --border-strong: #3a3934;
+        --text: #e2ded4;
+        --text-muted: #a8a397;
+        --text-subtle: #78746b;
+        --accent: #9db5a1;
+        --accent-soft: rgba(157, 181, 161, 0.13);
+        --focus-ring: rgba(157, 181, 161, 0.3);
+        --danger: #d98b78;
+        --switch-off: #3f3e38;
+        color-scheme: dark;
     }
 }
+* {box-sizing: border-box;}
+/* Explicit background also works around Firefox before 127 - bugzil.la/1888866 */
+html, body {
+    background: var(--bg);
+    color: var(--text);
+}
 body {
-    margin: 2em 3em;
+    margin: 0;
+    padding: 48px 24px;
+    font: 14px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
 }
-label {
+main {
+    max-width: 620px;
+    margin: 0 auto;
+}
+a {color: var(--accent); text-decoration: none;}
+a:hover {text-decoration: underline;}
+.page-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 40px;
+}
+.page-header img {width: 36px; height: 36px; border-radius: 8px;}
+.page-header h1 {
+    margin: 0;
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 24px;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+}
+.page-header p {margin: 0; font-size: 13px; color: var(--text-muted);}
+.page-header .open-viewer {
+    margin-left: auto;
+    flex: none;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+}
+.page-header .open-viewer:hover {text-decoration: none; color: var(--bg); background: var(--accent);}
+.section-title {
+    margin: 0 0 12px 4px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-subtle);
+}
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 40px;
+}
+.setting {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    margin: 0;
+    padding: 20px 22px;
+    cursor: pointer;
+}
+.setting + .setting, .sub-setting + .setting {
+    border-top: 1px solid var(--border);
+}
+.setting:hover {background: var(--surface-hover);}
+.setting-text {flex: 1; min-width: 0;}
+.setting-title {display: block; font-weight: 500;}
+.setting-desc {display: block; font-size: 13px; color: var(--text-muted);}
+/* Toggle switch built on the native checkbox. */
+.setting input[type=checkbox] {
+    flex: none;
+    order: 2;
+    appearance: none;
+    -webkit-appearance: none;
+    position: relative;
+    width: 36px;
+    height: 20px;
+    margin: 2px 0 0;
+    border-radius: 999px;
+    background: var(--switch-off);
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+.setting input[type=checkbox]::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    transition: transform 0.15s;
+}
+.setting input[type=checkbox]:checked {background: var(--accent);}
+.setting input[type=checkbox]:checked::before {transform: translateX(16px);}
+.setting input[type=checkbox]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.sub-setting {
     display: block;
-    margin: 1em 0;;
-    line-height: 150%;
+    padding: 0 22px 22px;
 }
-footer {
-    border-top: 1px solid #CCC;
-    padding: 1rem 0;
-    text-align: center;
-}
+.sub-setting .setting-desc {margin-bottom: 8px;}
 #contextmenuPatterns {
     display: block;
     width: 100%;
-    box-sizing: border-box;
-    min-height: 3em;
+    min-height: 5em;
+    padding: 8px 10px;
+    font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    resize: vertical;
 }
+#contextmenuPatterns:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+#contextmenuPatterns:disabled {opacity: 0.5;}
 #contextmenuPatternsOutput {
+    display: block;
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: var(--text-muted);
     white-space: pre-wrap;
     word-break: break-all;
 }
+#contextmenuPatternsOutput:empty {display: none;}
+footer {
+    padding: 8px 0 0;
+    font-size: 12px;
+    color: var(--text-subtle);
+    text-align: center;
+}
+footer nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px 16px;
+    margin-top: 6px;
+}
+footer a {color: var(--text-muted);}
+footer a:hover {color: var(--accent);}
 </style>
 </head>
 <body>
-<!--#if CHROME-->
-<label>
-    <input type="checkbox" id="hasAccessToAllURLs">
-    Allow access to all URLs.<br>
-    This option is required for viewing the source code of extensions outside of the Chrome Web Store, or from other browsers such as Firefox addons.
-</label>
-<!--#endif-->
-<label>
-    <input type="checkbox" id="contextmenu">
-    Add a "View linked extension source" context menu item to Chrome extension and Firefox addon links.
-</label>
-<label>
-    <input type="checkbox" disabled style="visibility:hidden"><!-- Just to align the text... -->
-    Also add the menu item to URLs that match the following patterns:
-    <textarea id="contextmenuPatterns"></textarea>
-    <span id="contextmenuPatternsOutput"></span>
-</label>
-<!--#if FIREFOX-->
-<label id="pageaction-wrapper">
-    <input type="checkbox" id="pageaction">
-    Show a page action button in the location bar of extension installation pages.
-</label>
-<!--#endif-->
-<label>
-    <a href="crxviewer.html">Open Viewer</a> - select a CRX / NEX / XPI / ZIP file to view its contents.
-</label>
+<main>
+<header class="page-header">
+    <img src="icons/48.png" alt="">
+    <div>
+        <h1>Zen Source Viewer</h1>
+        <p>Settings</p>
+    </div>
+    <a class="open-viewer" href="viewer.html" title="Select an XPI or ZIP file to view its contents">Open Viewer</a>
+</header>
+
+<h2 class="section-title">Access</h2>
+<div class="card">
+    <label class="setting" id="pageaction-wrapper">
+        <input type="checkbox" id="pageaction">
+        <span class="setting-text">
+            <span class="setting-title">Show address bar button</span>
+            <span class="setting-desc">Show a page action button in the location bar of extension installation pages.</span>
+        </span>
+    </label>
+    <label class="setting">
+        <input type="checkbox" id="contextmenu">
+        <span class="setting-text">
+            <span class="setting-title">Context menu item</span>
+            <span class="setting-desc">Add a &ldquo;View linked extension source&rdquo; menu item to links to Firefox add-ons (XPI files and add-on pages).</span>
+        </span>
+    </label>
+    <label class="sub-setting">
+        <span class="setting-desc">Also add the menu item to links matching these URL patterns (one per line):</span>
+        <textarea id="contextmenuPatterns" spellcheck="false" placeholder="https://example.com/*.xpi"></textarea>
+        <span id="contextmenuPatternsOutput"></span>
+    </label>
+</div>
+
 <footer>
-    &copy; 2013 - 2026 Rob Wu &lt;rob@robwu.nl&gt;
-    &bull; <a href="https://github.com/Rob--W/crxviewer">Source code on Github</a>
-    &bull; <a href="https://chromewebstore.google.com/detail/chrome-extension-source-v/jifpbeccnghkjeaalbbjmodiffmgedin">Chrome Web Store listing</a>
-    &bull; <a href="https://addons.opera.com/en/extensions/details/extension-source-viewer/">Opera addon listing</a>
-    &bull; <a href="https://addons.mozilla.org/firefox/addon/crxviewer/">Firefox addon listing</a>
+    &copy; 2013&ndash;2026 Rob Wu &lt;rob@robwu.nl&gt; &middot; Modifications &copy; 2026 Subham Mahesh
+    <nav>
+        <a href="license.html">License &amp; Credits</a>
+        <a href="https://github.com/Rob--W/crxviewer">Original source code</a>
+        <a href="https://addons.mozilla.org/firefox/addon/crxviewer/">Original Firefox add-on</a>
+    </nav>
 </footer>
+</main>
 <script src="options.js"></script>
 </body>
 </html>

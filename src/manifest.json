@@ -1,27 +1,51 @@
 {
-    "name": "Chrome extension source viewer",
-    "short_name": "CRX Viewer",
-    "description": "View source code of Chrome extensions, Firefox addons or Opera extensions (crx/nex/xpi) from the Chrome web store and elsewhere.",
+    "name": "Zen Source Viewer",
+    "author": "Subham Mahesh",
+    "description": "A calm, minimal viewer for the source code of Firefox and Thunderbird add-ons (XPI). Based on Extension source viewer by Rob Wu.",
     "version": "1.7.1",
-    "manifest_version": 3,
-    "minimum_chrome_version": "88",
-    "background": {
-        "service_worker": "service_worker.js"
+    "manifest_version": 2,
+    "browser_specific_settings": {
+        "gecko": {
+            "strict_min_version": "115.0",
+            "id": "zen-source-viewer@subhammahesh",
+            "data_collection_permissions": {
+                "required": [
+                    "none"
+                ]
+            }
+        }
     },
-    "action": {
+    "background": {
+        "scripts": [
+            "addon-urls.js",
+            "background.js",
+            "bg-contextmenu.js"
+        ],
+        "persistent": false
+    },
+    "page_action": {
         "default_icon": {
             "19": "icons/19.png",
             "38": "icons/38.png"
         },
         "default_title": "Inspect contents of the current browser extension",
-        "default_popup": "popup.html"
+        "default_popup": "popup.html",
+        "show_matches": [
+            "*://addons.mozilla.org/*addon/*",
+            "*://*.addons.mozilla.org/*review/*",
+            "*://addons.allizom.org/*addon/*",
+            "*://*.addons.allizom.org/*review/*",
+            "*://addons-dev.allizom.org/*addon/*",
+            "*://*.addons-dev.allizom.org/*review/*",
+            "*://addons.thunderbird.net/*addon/*",
+            "*://addons-stage.thunderbird.net/*addon/*"
+        ]
     },
     "icons": {
         "16": "icons/16.png",
         "48": "icons/48.png",
         "128": "icons/128.png"
     },
-    "options_page": "options.html",
     "options_ui": {
         "page": "options.html#optionsV2"
     },
@@ -30,14 +54,10 @@
         "storage",
         "contextMenus",
         "downloads",
-        "declarativeContent"
-    ],
-    "host_permissions": [
-        "*://clients2.google.com/service/update2/crx*",
-        "*://clients2.googleusercontent.com/crx/download/*"
-    ],
-    "optional_host_permissions": [
+        "alarms",
+        "cookies",
+        "webRequest",
+        "webRequestBlocking",
         "*://*/*"
-    ],
-    "incognito": "split"
+    ]
 }

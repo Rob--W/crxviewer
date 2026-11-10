@@ -1,0 +1,1200 @@
+/**
+ * (c) 2013 Rob Wu <rob@robwu.nl>
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * Modified by Subham Mahesh, 2026: redesigned the user interface (theme tokens, light and dark mode);
+ * styles for the folder tree and the CodeMirror code editor; renamed from crxviewer.less. */
+
+// All colors are defined as CSS custom properties in :root below.
+// viewer-dark.less only redefines those properties for the dark theme,
+// so no selector needs to be duplicated there.
+
+@leftPanelWidth: 280px;
+@resizerWidth: 8px;
+@fileSizeWidth: 4.5rem;
+@fileSpecificToolbarHeight: 3rem;
+@topBarHeight: 3.5rem;
+@footerHeight: 2.25rem;
+@footerFontsize: 0.75rem;
+@radius: 8px;
+@radiusLg: 14px;
+
+:root {
+    // Zen palette: rice paper, sumi ink, moss.
+    --bg: #f4f2ed;
+    --surface: #faf9f6;
+    --surface-2: #eeebe4;
+    --surface-hover: #ece8e0;
+    --border: #e3dfd5;
+    --border-strong: #d3cec2;
+    --text: #2f2d29;
+    --text-muted: #6f6a60;
+    --text-subtle: #a19b8f;
+    --accent: #5b7360;
+    --accent-hover: #4b6150;
+    --accent-text: #f8f7f2;
+    --accent-soft: #e5eae1;
+    --accent-soft-text: #45594a;
+    --focus-ring: rgba(91, 115, 96, 0.28);
+    --danger: #b4533f;
+    --danger-soft: #f6e9e4;
+    --highlight-stroke: #c9a24a;
+    --highlight-fill: rgba(222, 196, 120, 0.32);
+    --match-stroke: #b4533f;
+    --shadow-sm: none;
+    --shadow-md: 0 12px 32px rgba(47, 45, 41, 0.08), 0 1px 2px rgba(47, 45, 41, 0.06);
+    --code-bg: #fbfaf7;
+    --cm-selection: rgba(91, 115, 96, 0.2);
+    --cm-selection-match: rgba(91, 115, 96, 0.12);
+    --cm-active-line: rgba(47, 45, 41, 0.035);
+    // Diff colors (muted GitHub palette).
+    --diff-add: #4f8a4a;
+    --diff-del: #b4533f;
+    --diff-mod: #b8862b;
+    --diff-add-bg: rgba(79, 138, 74, 0.10);
+    --diff-del-bg: rgba(180, 83, 63, 0.09);
+    --diff-add-text: rgba(79, 138, 74, 0.28);
+    --diff-del-text: rgba(180, 83, 63, 0.26);
+    // Syntax colors: soft, low-contrast inks.
+    --syn-comment: #a19b8f;
+    --syn-keyword: #8a4f6d;
+    --syn-string: #4f7a3a;
+    --syn-number: #a5612d;
+    --syn-function: #2f6585;
+    --syn-definition: #2f2d29;
+    --syn-property: #4e5f7d;
+    --syn-type: #8a6a1f;
+    --syn-punctuation: #8a847a;
+    --syn-meta: #6f6a60;
+    color-scheme: light;
+}
+
+* {
+    box-sizing: border-box;
+}
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    // Prevent overscrolling in Chrome. The content is expected to fit exactly,
+    // and otherwise the scrollbars will appear in the child elements of <body>.
+    overflow: hidden;
+}
+body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    letter-spacing: 0.005em;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+}
+a {
+    color: var(--accent);
+    text-decoration: none;
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+// Generic form controls.
+button, input[type=submit], input[type=button] {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: @radius;
+    padding: 0.3rem 0.85rem;
+    min-height: 1.9rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.12s, border-color 0.12s, box-shadow 0.12s;
+    &:hover {
+        color: var(--text);
+        background: var(--surface-hover);
+    }
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px var(--focus-ring);
+        border-color: var(--accent);
+    }
+}
+input[type=submit] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-text);
+    &:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+    }
+}
+input[type=text], input[type=url], textarea {
+    font: inherit;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: @radius;
+    padding: 0.45rem 0.65rem;
+    transition: border-color 0.12s, box-shadow 0.12s;
+    &::placeholder {
+        color: var(--text-subtle);
+    }
+    &:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--focus-ring);
+    }
+}
+input[type=checkbox], input[type=radio] {
+    accent-color: var(--accent);
+}
+progress {
+    accent-color: var(--accent);
+}
+input[type=file]::file-selector-button {
+    font: inherit;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: @radius;
+    padding: 0.35rem 0.75rem;
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+
+// The top bar wraps onto more rows in narrow windows. Its actual height is
+// published as --top-bar-height (see viewer.js) and used by the panels below.
+#top-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.625rem;
+    width: 100%;
+    min-height: @topBarHeight;
+    padding: 0.5rem 1.25rem;
+    position: relative;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+
+    // On small screens the togglers may overflow to the next line.
+    // Make sure that they are visible if the user interacts with the top bar.
+    &:hover {
+        z-index: 10;
+    }
+
+    form {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+        flex: 1 1 auto;
+        min-width: 0;
+        flex-wrap: wrap;
+    }
+
+    #file-filter {
+        width: 320px;
+        max-width: 100%;
+        height: 2.125rem;
+        padding: 0 0.75rem 0 2rem;
+        font-size: 13px;
+        background-color: var(--surface-2);
+        border-color: transparent;
+        // Magnifier icon. data: URIs are allowed by the CSP (img-src).
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238a94a3' stroke-width='2' stroke-linecap='round' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: 0.625rem center;
+        &:hover {
+            border-color: var(--border-strong);
+        }
+        &:focus {
+            background-color: var(--surface);
+            border-color: var(--accent);
+        }
+        &.invalid {
+            background-color: var(--danger-soft);
+            border-color: var(--danger);
+            & ~ label {
+                // Require the user to fix the regex before using the checkboxes
+                display: none;
+            }
+        }
+    }
+
+    // Filter chips: [checkbox] Description count
+    label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        height: 1.875rem;
+        padding: 0 0.6rem 0 0.5rem;
+        font-size: 12px;
+        font-weight: 500;
+        font-weight: 400;
+        color: var(--text-subtle);
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+        transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+
+        &:hover {
+            background: var(--surface-hover);
+        }
+        &:has(input:checked) {
+            color: var(--accent-soft-text);
+            background: var(--accent-soft);
+            border-color: transparent;
+        }
+
+        .filter-label-description {
+            order: 2;
+        }
+        input[data-filter-type] {
+            order: 1;
+            margin: 0;
+            width: 14px;
+            height: 14px;
+        }
+        .gcount {
+            order: 3;
+            font-size: 11px;
+            line-height: 14px;
+            height: 14px;
+            font-variant-numeric: tabular-nums;
+            opacity: 0.75;
+            &:empty {
+                display: none;
+            }
+        }
+    }
+    #file-filter-feedback {
+        flex: 0 1 auto;
+        min-width: 0;
+        font-size: 12px;
+        color: var(--danger);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-left: auto;
+        flex: none;
+    }
+    .top-actions > a[href] {
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        height: 2rem;
+        padding: 0 0.75rem;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+        border-radius: @radius;
+        background: transparent;
+        text-decoration: none;
+        transition: background-color 0.12s, border-color 0.12s;
+        &:hover {
+            color: var(--text);
+            background: var(--surface-hover);
+        }
+    }
+    .top-actions > #download-link[href] {
+        color: var(--accent-text);
+        background: var(--accent);
+        border-color: var(--accent);
+        &:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+    }
+    .top-actions > a:not([href]) {
+        display: none;
+    }
+    #download-edited-zip {
+        flex: none;
+        height: 2rem;
+        color: var(--highlight-stroke);
+        border-color: var(--highlight-stroke);
+        &[hidden] {
+            display: none;
+        }
+    }
+}
+
+#advanced-open {
+    display: none;
+    height: calc(100% - var(--top-bar-height, @topBarHeight) - @footerHeight);
+    padding: 4rem 1.5rem;
+    overflow: auto;
+
+    &.visible {
+        & ~ #right-panel, & ~ #left-panel {
+            display: none;
+        }
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+    }
+    > form {
+        width: 100%;
+        max-width: 760px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: @radiusLg;
+        padding: 2rem 2.25rem;
+    }
+    h3 {
+        margin: 0 0 1rem;
+        font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+        font-size: 20px;
+        font-weight: 400;
+        letter-spacing: 0.01em;
+        color: var(--text);
+    }
+}
+#advanced-open-form {
+    color: var(--text-muted);
+    text-align: center;
+    input[type=url] {
+        display: block;
+        width: 100%;
+        margin: 1rem 0 0.75rem;
+        padding: 0.65rem 0.85rem;
+        font-size: 14px;
+    }
+    input[type=submit] {
+        padding: 0.45rem 1rem;
+        margin-right: 0.5rem;
+    }
+    input[type=file] {
+        font: inherit;
+        font-size: 13px;
+        margin-left: 0.5rem;
+    }
+}
+.site-specific-form {
+    text-align: left;
+    transition: opacity 0.2s;
+
+    &.disabled-site:not(:hover):not(.focused-form) {
+        opacity: 0.45;
+        input:invalid {
+            outline: none;
+        }
+    }
+
+    > div {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.25rem 0.375rem;
+        padding: 0.5rem 0.5rem;
+        border-radius: @radius;
+    }
+    > div:hover {
+        background-color: var(--surface-2);
+    }
+    .labeltext {
+        display: inline-block;
+        width: 16ch;
+        flex: none;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+    }
+    label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.25rem 0.55rem;
+        font-size: 13px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        cursor: pointer;
+        &:hover, &:active {
+            background-color: var(--surface-hover);
+        }
+        &:has(input:checked) {
+            background: var(--accent-soft);
+            border-color: transparent;
+            color: var(--accent-soft-text);
+        }
+        input {
+            margin: 0;
+        }
+    }
+    input[type=text] {
+        // Fit at least the extension ID (32 chars) and browser version (max 24 chars)
+        width: 40ch;
+        max-width: 100%;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 13px;
+    }
+    input:invalid {
+        border-color: var(--danger);
+    }
+    .submit-if-valid {
+        gap: 1rem;
+        padding-top: 1rem;
+    }
+}
+.amodescription {
+    width: 100%;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+.amoxpilist {
+    width: 100%;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    list-style: none;
+    a {
+        display: block;
+        padding: 0.4em 0.6em;
+        border-radius: @radius;
+        &:hover {
+            background: var(--surface-hover);
+            text-decoration: none;
+        }
+    }
+}
+#right-panel, #left-panel {
+    // The footer is only visible in the #advanced-open view.
+    height: calc(100% - var(--top-bar-height, @topBarHeight));
+}
+// Code column: toolbar (may wrap onto two rows) above the code, which fills the rest.
+#right-panel {
+    display: flex;
+    flex-direction: column;
+    padding-left: (2 * @resizerWidth + @leftPanelWidth);
+    background: var(--code-bg);
+}
+#left-panel {
+    z-index: 1;
+    position: absolute;
+    display: inline-block;
+    width: @leftPanelWidth;
+    background-color: var(--surface);
+    & > .content {
+        overflow-y: auto;
+        max-height: 100%;
+        padding: 0.75rem 0.25rem;
+    }
+    & > .resizer {
+        height: 100%;
+        position: absolute;
+        top: 0;
+        right: -@resizerWidth;
+        width: @resizerWidth;
+        // A hairline border with a wider, invisible hit area.
+        background: linear-gradient(to right, var(--border) 1px, var(--bg) 1px);
+        border-right: 1px solid var(--border);
+        cursor: col-resize;
+        display: flex;
+        align-items: center;
+        transition: background-color 0.12s;
+        &:hover {
+            background: var(--accent-soft);
+        }
+    }
+}
+footer {
+    height: @footerHeight;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    font-size: @footerFontsize;
+    color: var(--text-subtle);
+    line-height: (@footerHeight - 0.0625rem);
+    padding: 0 1rem;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    a {
+        color: var(--text-muted);
+        &:hover {
+            color: var(--accent);
+        }
+    }
+}
+#initial-status {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    text-align: center;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--text-muted);
+    padding: 3rem 1.5rem;
+    progress {
+        display: block;
+        margin: 1rem auto 0;
+        width: 320px;
+        max-width: 100%;
+    }
+    button {
+        margin-top: 0.75rem;
+    }
+}
+.toggled {
+    width: 0 !important;
+    & > .content {
+        display: none;
+    }
+}
+.toggled + .toggleable {
+    // Override inline declaration
+    padding-left: (2 * @resizerWidth) !important;
+}
+.toggler {
+    @triangleWidth: 5px;
+    cursor: pointer;
+    margin-left: 1px;
+    // Triangle:
+    width: 0;
+    height: 0;
+    border: 7px solid transparent;
+    border-left: 0;
+    border-right: @triangleWidth solid var(--text-subtle);
+    &:hover {
+        border-right-color: var(--accent);
+    }
+    .toggled & {
+        border-left: @triangleWidth solid var(--text-subtle);
+        border-right: 0;
+        &:hover {
+            border-left-color: var(--accent);
+        }
+    }
+}
+// Icons for the file tree, drawn with CSS masks so that they follow the text color.
+@iconChevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 4l4 4-4 4' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+@iconFolder: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 4.5A1.5 1.5 0 0 1 3 3h3.2l1.5 1.5H13a1.5 1.5 0 0 1 1.5 1.5v5.5A1.5 1.5 0 0 1 13 13H3a1.5 1.5 0 0 1-1.5-1.5z'/%3E%3C/svg%3E");
+@iconFolderOpen: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M1.5 4.5A1.5 1.5 0 0 1 3 3h3.2l1.5 1.5H12A1.5 1.5 0 0 1 13.5 6v1H5.2a1.5 1.5 0 0 0-1.4 1L2 12.6V4.5zM4.6 8.4A1 1 0 0 1 5.5 8h9a.6.6 0 0 1 .55.83l-1.6 3.6A1 1 0 0 1 12.5 13H2.6z'/%3E%3C/svg%3E");
+@iconFile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 1.5h5L12.5 5v9a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5V2a.5.5 0 0 1 .5-.5z M9 1.5V5h3.5' fill='none' stroke='%23000' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E");
+@treeIndent: 0.875rem;
+@chevronSize: 0.875rem;
+@iconSize: 0.9375rem;
+@rowGap: 0.375rem;
+
+.tree-icon(@icon) {
+    content: "";
+    flex: none;
+    width: @iconSize;
+    height: @iconSize;
+    background-color: currentColor;
+    mask: @icon center / contain no-repeat;
+}
+
+#file-list {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    font-size: 13px;
+
+    &.gfilter-images    li.gtype-images,
+    &.gfilter-code      li.gtype-code,
+    &.gfilter-markup    li.gtype-markup,
+    &.gfilter-locales   li.gtype-locales,
+    &.gfilter-misc      li.gtype-misc,
+    li.file-filtered, li.grep-no-match, li.tree-hidden {
+        display: none;
+    }
+    li.grep-unknown {
+        opacity: 0.5;
+    }
+    li {
+        display: flex;
+        align-items: center;
+        gap: @rowGap;
+        height: 1.875rem;
+        margin: 0 0.375rem;
+        padding: 0 0.625rem 0 calc(0.5rem + var(--depth, 0) * @treeIndent);
+        border-radius: @radius;
+        cursor: pointer;
+        white-space: nowrap;
+        user-select: none;
+        // Faint indent guides, one per nesting level.
+        background-image: repeating-linear-gradient(to right,
+            transparent 0,
+            transparent ~"calc(@{chevronSize} / 2)",
+            var(--border) ~"calc(@{chevronSize} / 2)",
+            var(--border) ~"calc(@{chevronSize} / 2 + 1px)",
+            transparent ~"calc(@{chevronSize} / 2 + 1px)",
+            transparent @treeIndent);
+        background-position: 0.5rem 0;
+        background-size: calc(var(--depth, 0) * @treeIndent) 100%;
+        background-repeat: no-repeat;
+        &:hover {
+            background-color: var(--surface-hover);
+        }
+    }
+
+    // Files: [spacer for chevron] [file icon] name ... size
+    li[data-filename] {
+        padding-left: calc(0.5rem + var(--depth, 0) * @treeIndent + @chevronSize + @rowGap);
+        &::before {
+            .tree-icon(@iconFile);
+            color: var(--text-subtle);
+        }
+        &.file-selected {
+            background-color: var(--accent-soft);
+            color: var(--accent-soft-text);
+            &::before, .file-size {
+                color: inherit;
+            }
+            .file-name {
+                font-weight: 500;
+            }
+        }
+        .file-path {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        // The full path is in the tooltip; the tree already shows the folder.
+        .file-dir {
+            display: none;
+        }
+        // Edited files are tinted and get an "M" (modified) badge, like in source control views.
+        &.file-edited {
+            .file-name {
+                color: var(--diff-mod);
+            }
+            .file-size {
+                display: none;
+            }
+            &::after {
+                content: "M";
+                order: 3;
+                flex: none;
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--diff-mod);
+            }
+        }
+        .file-size {
+            flex: none;
+            font-size: 11.5px;
+            color: var(--text-subtle);
+            font-variant-numeric: tabular-nums;
+        }
+    }
+
+    // Folders: [chevron] [folder icon] name ... file count
+    li.folder-row {
+        color: var(--text);
+        .tree-chevron {
+            flex: none;
+            width: @chevronSize;
+            height: @chevronSize;
+            background-color: var(--text-subtle);
+            mask: @iconChevron center / contain no-repeat;
+            transform: rotate(90deg);
+            transition: transform 0.12s;
+        }
+        &::after {
+            .tree-icon(@iconFolderOpen);
+            order: 1;
+            color: var(--accent);
+        }
+        .folder-name {
+            order: 2;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+        .folder-count {
+            order: 3;
+            flex: none;
+            font-size: 11px;
+            color: var(--text-subtle);
+            font-variant-numeric: tabular-nums;
+            opacity: 0;
+            transition: opacity 0.12s;
+        }
+        &:hover .folder-count, &.folder-collapsed .folder-count {
+            opacity: 1;
+        }
+        // Folders containing edited files.
+        &.folder-has-edits .folder-name {
+            color: var(--diff-mod);
+            &::after {
+                content: "";
+                display: inline-block;
+                width: 5px;
+                height: 5px;
+                margin-left: 6px;
+                vertical-align: middle;
+                border-radius: 50%;
+                background: var(--diff-mod);
+            }
+        }
+        &.folder-collapsed {
+            .tree-chevron {
+                transform: none;
+            }
+            &::after {
+                mask-image: @iconFolder;
+            }
+        }
+    }
+    // While filtering, all folders with matches are shown expanded.
+    &.tree-filtering li.folder-row.folder-collapsed {
+        .tree-chevron {
+            transform: rotate(90deg);
+        }
+        &::after {
+            mask-image: @iconFolderOpen;
+        }
+        .folder-count {
+            opacity: 0;
+        }
+    }
+}
+
+.total-size-wrapper {
+    text-align: right;
+    margin: 0.375rem 0.375rem 0;
+    padding: 0.375rem 0.625rem 0;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+}
+#total-size {
+    display: inline-block;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+#source-toolbar {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: @fileSpecificToolbarHeight;
+    position: relative;
+    padding: 0.375rem 1.25rem;
+    background: var(--code-bg);
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+    &:empty {
+        display: none;
+    }
+
+    // Non-text file info (images, media) is rendered as a table here.
+    table {
+        line-height: 1.4;
+        border-collapse: collapse;
+        td {
+            padding: 0 1rem 0 0;
+        }
+    }
+}
+#source-code {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    white-space: pre;
+    -moz-tab-size: 2;
+    tab-size: 2;
+
+    pre {
+        font: inherit;
+        margin: 0;
+    }
+
+    .auto-wordwrap {
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+    > img {
+        margin: 1.5rem;
+        // Checkerboard to show transparency.
+        background-color: var(--surface);
+        background-image:
+            linear-gradient(45deg, var(--surface-2) 25%, transparent 25%, transparent 75%, var(--surface-2) 75%),
+            linear-gradient(45deg, var(--surface-2) 25%, transparent 25%, transparent 75%, var(--surface-2) 75%);
+        background-size: 16px 16px;
+        background-position: 0 0, 8px 8px;
+        border-radius: 4px;
+        box-shadow: 0 0 0 1px var(--border);
+    }
+    > audio, > video {
+        margin: 1.5rem;
+    }
+    > button {
+        margin: 1.5rem;
+    }
+}
+
+// The CodeMirror editor fills the code area and scrolls by itself.
+#source-code.has-editor {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    white-space: normal;
+    > .cm-host {
+        flex: 1 1 auto;
+        min-height: 0;
+        > .cm-editor {
+            height: 100%;
+        }
+        // Side-by-side diff: the wrapper scrolls both editors together.
+        > .cm-zen-split {
+            height: 100%;
+            overflow: auto;
+            background: var(--code-bg);
+            .cm-mergeView {
+                min-height: 100%;
+            }
+            .cm-merge-a {
+                border-right: 1px solid var(--border);
+            }
+            .cm-merge-revert {
+                background: var(--surface-2);
+                border-left: 1px solid var(--border);
+                border-right: 1px solid var(--border);
+            }
+        }
+    }
+}
+
+// "Changes" panel above the file tree (only shown when files were edited).
+#changes-panel {
+    margin: 0 0.375rem 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+
+    .changes-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.25rem 0.5rem 0.375rem;
+        button {
+            flex: none;
+            min-height: 1.5rem;
+            padding: 0.1rem 0.5rem;
+            font-size: 11.5px;
+            white-space: nowrap;
+        }
+    }
+    .changes-title {
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-subtle);
+    }
+    .changes-count {
+        font-size: 11px;
+        padding: 0 0.45rem;
+        border-radius: 999px;
+        color: var(--diff-mod);
+        background: var(--surface-2);
+        font-variant-numeric: tabular-nums;
+    }
+    .changes-total {
+        flex: 1;
+        white-space: nowrap;
+        font-size: 11.5px;
+        font-variant-numeric: tabular-nums;
+    }
+    #changes-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .change-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        height: 1.875rem;
+        padding: 0 0.25rem 0 0.5rem;
+        border-radius: @radius;
+        cursor: pointer;
+        white-space: nowrap;
+        &:hover {
+            background: var(--surface-hover);
+            .change-revert {
+                opacity: 1;
+            }
+        }
+        &.is-selected {
+            background: var(--accent-soft);
+        }
+    }
+    .change-status {
+        flex: none;
+        width: 1rem;
+        font-size: 11px;
+        font-weight: 600;
+        text-align: center;
+        color: var(--diff-mod);
+    }
+    .change-name {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .change-dir {
+        margin-left: 0.4rem;
+        font-size: 11.5px;
+        color: var(--text-subtle);
+    }
+    .change-stats {
+        flex: none;
+        font-size: 11.5px;
+        font-variant-numeric: tabular-nums;
+        span + span {
+            margin-left: 0.3rem;
+        }
+    }
+    .change-revert {
+        flex: none;
+        width: 1.5rem;
+        min-height: 1.5rem;
+        padding: 0;
+        border-color: transparent;
+        opacity: 0;
+        // Counter-clockwise arrow ("discard").
+        background: var(--text-muted);
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 6.5h6a3.5 3.5 0 0 1 0 7H6' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='M6 3.5 3 6.5l3 3' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 14px no-repeat;
+        &:hover, &:focus-visible {
+            opacity: 1;
+            background: var(--diff-del);
+        }
+    }
+}
+.stat-add {
+    color: var(--diff-add);
+}
+.stat-del {
+    color: var(--diff-del);
+}
+
+.file-specific-toolbar {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: 0;
+
+    button {
+        min-height: 1.75rem;
+        padding: 0.2rem 0.65rem;
+        font-size: 12px;
+        line-height: 1.2;
+    }
+    > .find-prev, > .find-next, > .find-all {
+        min-width: 1.85rem;
+        padding: 0.2rem 0.4rem;
+    }
+    > .find-prev {
+        margin-left: 0.5rem;
+    }
+    .find-status {
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+        color: var(--text-muted);
+    }
+    .toolbar-spacer {
+        flex: 1;
+    }
+    .is-active {
+        color: var(--accent-soft-text);
+        background: var(--accent-soft);
+        border-color: transparent;
+    }
+    .diff-controls {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        &[hidden] {
+            display: none;
+        }
+        > button {
+            min-width: 1.75rem;
+            padding: 0.2rem 0.4rem;
+        }
+    }
+    // Segmented control: Code | Diff | Split
+    .diff-switch {
+        display: inline-flex;
+        > button {
+            border-radius: 0;
+            margin-left: -1px;
+            &:first-child {
+                border-radius: @radius 0 0 @radius;
+                margin-left: 0;
+            }
+            &:last-child {
+                border-radius: 0 @radius @radius 0;
+            }
+            &.is-active {
+                position: relative;
+                border-color: var(--border);
+            }
+        }
+    }
+    .language-label {
+        font-size: 11.5px;
+        color: var(--text-subtle);
+        letter-spacing: 0.02em;
+    }
+    .find-all-indicator {
+        display: inline-block;
+        padding: 0 0.2em;
+        border-radius: 3px;
+    }
+    .find-all-enabled {
+        color: var(--match-stroke);
+        // Same style as highlighted matches in the editor (.cm-zen-match).
+        outline: 1px solid var(--highlight-stroke);
+        background: var(--highlight-fill);
+    }
+}
+.file-specific-download-link {
+    display: inline-flex;
+    align-items: center;
+    height: 1.75rem;
+    padding: 0 0.65rem;
+    border-radius: @radius;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent-text);
+    background: var(--accent);
+    // Fixed width so that file-specific download links do not shift the
+    // toolbar ("Show download", "Creating link" and "Download file").
+    min-width: 7.5rem;
+    justify-content: center;
+    &:hover {
+        text-decoration: none;
+        background: var(--accent-hover);
+    }
+    &:not([href]) {
+        cursor: pointer;
+    }
+}
+
+.content-verifier-wrapper {
+    display: inline-block;
+
+    .content-verifier-output {
+        // positioned relative to the toolbar.
+        position: absolute;
+        left: 0.75rem;
+        top: 100%;
+        // Allow some space for the source container scrollbar to be visible, if any.
+        right: 30px;
+        max-height: calc(100vh - var(--top-bar-height, @topBarHeight) - @fileSpecificToolbarHeight - 1rem);
+        overflow: auto;
+
+        background: var(--surface);
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--border);
+        border-radius: @radiusLg;
+        box-shadow: var(--shadow-md);
+
+        white-space: normal;
+        line-height: 1.5rem;
+        font-size: 13px;
+        color: var(--text);
+
+        // Above search highlights.
+        z-index: 2;
+    }
+}
+
+.info-table-row > :first-child {
+    font-weight: 600;
+    white-space: pre;
+}
+
+img:hover {
+    // Subtle box around image to see the size of images that are
+    // almost fully transparent or white.
+    outline: 1px solid rgba(150, 150, 150, 0.5);
+}
+
+dialog {
+    border: 1px solid var(--border);
+    border-radius: @radiusLg;
+    box-shadow: var(--shadow-md);
+    background: var(--surface);
+    color: var(--text);
+    padding: 1.25rem;
+    &::backdrop {
+        background: rgba(47, 45, 41, 0.25);
+        backdrop-filter: blur(2px);
+    }
+}
+
+// Thin, unobtrusive scrollbars.
+#left-panel > .content, #source-code, #advanced-open {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+}
+
+@media (prefers-color-scheme: dark) {
+    @import (less) "viewer-dark.less";
+}
+
+// Narrow windows: tighter spacing and a slimmer file panel so that everything fits.
+@media (max-width: 1100px) {
+    #top-bar {
+        padding: 0.5rem 0.75rem;
+        #file-filter {
+            width: 220px;
+        }
+        label {
+            padding: 0 0.5rem 0 0.4rem;
+        }
+        .top-actions > a[href] {
+            padding: 0 0.6rem;
+        }
+    }
+    #source-toolbar {
+        padding: 0.375rem 0.75rem;
+    }
+    .file-specific-toolbar button {
+        padding: 0.2rem 0.5rem;
+    }
+}
+@media (max-width: 900px) {
+    #left-panel {
+        width: 220px;
+    }
+    #right-panel {
+        padding-left: (2 * @resizerWidth + 220px);
+    }
+    #top-bar #file-filter {
+        width: 100%;
+    }
+    #top-bar form {
+        flex-basis: 100%;
+    }
+}

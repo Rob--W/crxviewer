@@ -1,0 +1,61 @@
+/**
+ * (c) 2013 Rob Wu <rob@robwu.nl>
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * Modified by Subham Mahesh, 2026: rewrote the dark theme as theme tokens
+ * for the redesigned user interface; renamed from crxviewer-dark.less. */
+
+// Dark theme: only redefines the design tokens declared in viewer.less.
+// Imported inside @media (prefers-color-scheme: dark).
+
+:root {
+    // Zen palette at night: charcoal, washi, moss.
+    --bg: #161614;
+    --surface: #1c1c19;
+    --surface-2: #23231f;
+    --surface-hover: #272723;
+    --border: #2d2c28;
+    --border-strong: #3a3934;
+    --text: #e2ded4;
+    --text-muted: #a8a397;
+    --text-subtle: #78746b;
+    --accent: #9db5a1;
+    --accent-hover: #b0c6b3;
+    --accent-text: #161714;
+    --accent-soft: rgba(157, 181, 161, 0.13);
+    --accent-soft-text: #bcd0be;
+    --focus-ring: rgba(157, 181, 161, 0.3);
+    --danger: #d98b78;
+    --danger-soft: rgba(217, 139, 120, 0.12);
+    --highlight-stroke: #c9a24a;
+    --highlight-fill: rgba(177, 160, 90, 0.28);
+    --match-stroke: #d98b78;
+    --shadow-sm: none;
+    --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --code-bg: #181816;
+    --cm-selection: rgba(157, 181, 161, 0.22);
+    --cm-selection-match: rgba(157, 181, 161, 0.12);
+    --cm-active-line: rgba(226, 222, 212, 0.035);
+    // Diff colors (muted GitHub palette).
+    --diff-add: #8fbf86;
+    --diff-del: #d98b78;
+    --diff-mod: #d6b06a;
+    --diff-add-bg: rgba(143, 191, 134, 0.09);
+    --diff-del-bg: rgba(217, 139, 120, 0.09);
+    --diff-add-text: rgba(143, 191, 134, 0.26);
+    --diff-del-text: rgba(217, 139, 120, 0.26);
+    // Syntax colors: soft, low-contrast inks.
+    --syn-comment: #77736a;
+    --syn-keyword: #c7a0b4;
+    --syn-string: #a9c08e;
+    --syn-number: #d8a878;
+    --syn-function: #8fb4c9;
+    --syn-definition: #e2ded4;
+    --syn-property: #b6c3d6;
+    --syn-type: #d9c58e;
+    --syn-punctuation: #8f8a80;
+    --syn-meta: #a29d91;
+    color-scheme: dark;
+}

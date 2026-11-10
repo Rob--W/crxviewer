@@ -2,36 +2,14 @@
  * (c) 2013 Rob Wu <rob@robwu.nl>
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * Modified by Subham Mahesh, 2026: reduced to Firefox only (removed Chrome, Opera and web-demo code); error text uses the theme color. */
 
 /* jshint browser:true, devel:true */
 /* globals chrome */
 'use strict'; 
 
-//#if CHROME
-var permission = {
-    origins: ['*://*/*'],
-};
-chrome.permissions.contains(permission, setHasPermission);
-//// Assume that there is only one optional permission
-chrome.permissions.onAdded.addListener(setHasPermission.bind(null, true));
-chrome.permissions.onRemoved.addListener(setHasPermission.bind(null, false));
-
-function setHasPermission(hasAccessToAllURLs) {
-    document.getElementById('hasAccessToAllURLs').checked = hasAccessToAllURLs;
-    console.log('Has access to all URLs = ' + hasAccessToAllURLs);
-}
-
-document.getElementById('hasAccessToAllURLs').onchange = function() {
-    if (this.checked) {
-        chrome.permissions.request(permission, function(result) {
-            if (!result) setHasPermission(false);
-        });
-    } else {
-        chrome.permissions.remove(permission);
-    }
-};
-//#endif
 
 var storageArea = chrome.storage.sync;
 var contextmenuPatternsInput = document.getElementById('contextmenuPatterns');
@@ -58,7 +36,7 @@ contextmenuPatternsInput.oninput = function() {
     });
 
     var contextmenuPatternsOutput = document.getElementById('contextmenuPatternsOutput');
-    contextmenuPatternsOutput.style.color = 'red';
+    contextmenuPatternsOutput.style.color = 'var(--danger)';
     if (errorMsg) {
         contextmenuPatternsOutput.textContent = 'URL patterns not applied; ' + errorMsg;
         return;
@@ -78,30 +56,24 @@ contextmenuPatternsInput.oninput = function() {
 storageArea.get({
     showContextMenu: true,
     contextmenuPatterns: [],
-//#if FIREFOX
     showPageAction: true,
-//#endif
 }, function(items) {
     document.getElementById('contextmenu').checked = items.showContextMenu;
     contextmenuPatternsInput.disabled = !items.showContextMenu;
     contextmenuPatternsInput.value = items.contextmenuPatterns.join('\n');
-//#if FIREFOX
     document.getElementById('pageaction').checked = items.showPageAction;
-//#endif
 });
 
-//#if FIREFOX
 document.getElementById('pageaction').onchange = function() {
     storageArea.set({showPageAction: this.checked});
 };
 
-//// May change via bg-contextmenu.js when the user toggles the option via the context menu.
+// May change via bg-contextmenu.js when the user toggles the option via the context menu.
 chrome.storage.onChanged.addListener(function(items) {
     if (items.showPageAction) {
         document.getElementById('pageaction').checked = items.showPageAction.newValue;
     }
 });
-//#endif
 
 if (location.hash !== '#optionsV2') {
     // A normal options page, open links in the same tab.

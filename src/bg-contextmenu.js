@@ -2,37 +2,29 @@
  * (c) 2013 Rob Wu <rob@robwu.nl>
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * Modified by Subham Mahesh, 2026: reduced to Firefox only (removed Chrome, Opera and web-demo code,
+ * and Chrome/Edge/Opera CRX links and add-on sites). */
 
 /* jshint browser:true, devel:true, esversion:6 */
-/* globals chrome, cws_match_patterns, mea_match_pattern, ows_match_pattern, amo_match_patterns, atn_match_patterns, get_crx_url */
+/* globals chrome, amo_match_patterns, atn_match_patterns, get_addon_download_url */
 /* globals encodeQueryString */
-/* globals getPlatformInfoAsync */
 
 'use strict';
 (function() {
-    var MENU_ID_LINK = 'nl.robwu.contextmenu.crxlink';
-    var MENU_ID_PAGE = 'nl.robwu.contextmenu.crxpage';
+    var MENU_ID_LINK = 'nl.robwu.contextmenu.addonlink';
     var MENU_ID_AMO_APPROVED_LINK = 'nl.robwu.contextmenu.amoapprovedlink';
     var MENU_ID_AMO_APPROVED_PAGE = 'nl.robwu.contextmenu.amoapprovedpage';
-//#if FIREFOX
     var MENU_ID_PAGE_ACTION = 'nl.robwu.contextmenu.pageaction';
-//#endif
     var MENU_ID_ACTION_MENU = 'nl.robwu.contextmenu.actionmenu.';
     var MENU_ID_ACTION_MENU_POPUP = MENU_ID_ACTION_MENU + 'popup';
     var MENU_ID_ACTION_MENU_VIEW_SOURCE = MENU_ID_ACTION_MENU + 'view-source';
     var MENU_ID_ACTION_MENU_DOWNLOAD = MENU_ID_ACTION_MENU + 'download';
 
     var DEFAULT_LINK_TARGET_URL_PATTERNS = [
-        '*://*/*.crx*',
-        '*://*/*.CRX*',
-        '*://*/*.NEX*',
-        '*://*/*.nex*',
         '*://*/*.XPI*',
         '*://*/*.xpi*',
-        ...cws_match_patterns,
-        mea_match_pattern,
-        ows_match_pattern,
     ];
 
     chrome.storage.onChanged.addListener(function(changes) {
@@ -81,7 +73,6 @@
         // calling contextMenus.create unconditionally.
         // In Chrome and Firefox 136+: contextMenus.update() raises an error if
         // the menu item already exists.
-//#if FIREFOX
         // Use a different detection method for Firefox 135- because the method
         // described above did not work until Firefox 136 (bugzil.la/1688743).
         if (/Firefox\/1([12]\d|3[0-5])\./.test(navigator.userAgent)) {
@@ -98,7 +89,6 @@
             });
             return;
         }
-//#endif
         chrome.contextMenus.update(MENU_ID_DUMMY_NEVER_SHOWN, {}, function() {
             // Error = menu does not exist, so it was not persisted before.
             var hasPersistedMenu = !chrome.runtime.lastError;
@@ -142,13 +132,11 @@
             setActionClickAction(items.actionClickAction);
             markMenuRegistrationCompleted();
         });
-//#if FIREFOX
         chrome.contextMenus.create({
             id: MENU_ID_PAGE_ACTION,
             title: 'Hide this button',
             contexts: ['page_action'],
         });
-//#endif
         chrome.contextMenus.create({
             id: MENU_ID_ACTION_MENU,
             title: 'Primary action on click',
@@ -187,37 +175,29 @@
     }
     
     function contextMenusOnClicked(info, tab) {
-//#if FIREFOX
         if (info.menuItemId === MENU_ID_PAGE_ACTION) {
             // background.js will now pick up the storage change
             // and disable page actions.
             chrome.storage.sync.set({showPageAction: false});
             return;
         }
-//#endif
         if (info.menuItemId.startsWith(MENU_ID_ACTION_MENU)) {
             var choice = info.menuItemId.slice(MENU_ID_ACTION_MENU.length);
             chrome.storage.sync.set({actionClickAction: choice});
             return;
         }
-        var url = info.menuItemId == MENU_ID_PAGE ||
-           info.menuItemId == MENU_ID_AMO_APPROVED_PAGE ? info.pageUrl : info.linkUrl;
-        getPlatformInfoAsync(function() {
-            url = get_crx_url(url);
-            openCrxViewerRelatedToTab(url, tab);
-        });
+        var url = info.menuItemId == MENU_ID_AMO_APPROVED_PAGE ? info.pageUrl : info.linkUrl;
+        openViewerRelatedToTab(get_addon_download_url(url), tab);
     }
-    function openCrxViewerRelatedToTab(url, tab) {
-        var params = encodeQueryString({crx: url});
+    function openViewerRelatedToTab(url, tab) {
+        var params = encodeQueryString({url: url});
 
         chrome.tabs.create({
-            url: chrome.runtime.getURL('crxviewer.html') + '?' + params,
+            url: chrome.runtime.getURL('viewer.html') + '?' + params,
             active: true,
             windowId: tab ? tab.windowId : undefined,
             index: tab ? tab.index + 1 : undefined,
-//#if FIREFOX
             cookieStoreId: tab ? tab.cookieStoreId : undefined,
-//#endif
         });
     }
     chrome.contextMenus.onClicked.addListener(contextMenusOnClicked);
@@ -248,16 +228,6 @@
             contexts: ['link'],
             targetUrlPatterns: amo_match_patterns.concat(atn_match_patterns),
         });
-        chrome.contextMenus.create({
-            id: MENU_ID_PAGE,
-            title: 'View extension source',
-            contexts: ['all'],
-            documentUrlPatterns: [
-                ...cws_match_patterns,
-                mea_match_pattern,
-                ows_match_pattern,
-            ],
-        });
         // AMO lists multiple versions, specifically state that this
         // is the latest approved version to avoid ambiguity.
         chrome.contextMenus.create({
@@ -274,7 +244,6 @@
             // jshint +W030
         }
         chrome.contextMenus.remove(MENU_ID_LINK, darkhole);
-        chrome.contextMenus.remove(MENU_ID_PAGE, darkhole);
         chrome.contextMenus.remove(MENU_ID_AMO_APPROVED_LINK, darkhole);
         chrome.contextMenus.remove(MENU_ID_AMO_APPROVED_PAGE, darkhole);
     }

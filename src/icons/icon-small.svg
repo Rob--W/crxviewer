@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Zen Source Viewer icon. (c) 2026 Subham Mahesh. MPL-2.0. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6d8772"/>
+      <stop offset="1" stop-color="#4b6150"/>
+    </linearGradient>
+    <mask id="gap">
+      <rect width="128" height="128" fill="#fff"/>
+      <path d="M64 64 L82 4 L118 22 Z" fill="#000"/>
+    </mask>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="30" fill="url(#bg)"/>
+  <!-- Enso: a brush circle whose thickness varies, left open at the top right. -->
+  <path mask="url(#gap)" fill="#f4f2ed" fill-rule="evenodd"
+        d="M64 18 a46 46 0 1 0 0.001 0 Z
+           M61 41 a26 26 0 1 0 0.001 0 Z"/>
+</svg>

@@ -4,59 +4,190 @@
  This Source Code Form is subject to the terms of the Mozilla Public
  License, v. 2.0. If a copy of the MPL was not distributed with this
  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+ Modified by Subham Mahesh, 2026: redesigned the user interface; reduced to Firefox only (removed Chrome, Opera and web-demo code); added a License & Credits link; renamed to Zen Source Viewer; removed CRX support.
 -->
 <html>
 <head>
 <meta charset="utf-8">
-<title>View CRX</title>
+<title>Zen Source Viewer</title>
+<meta name="color-scheme" content="light dark">
 <style>
+    :root {
+        --bg: #f4f2ed;
+        --surface: #faf9f6;
+        --surface-hover: #ece8e0;
+        --border: #e3dfd5;
+        --border-strong: #d3cec2;
+        --text: #2f2d29;
+        --text-muted: #8a847a;
+        --accent: #5b7360;
+        --accent-hover: #4b6150;
+        --accent-text: #f8f7f2;
+        --accent-soft: #e5eae1;
+        --focus-ring: rgba(91, 115, 96, 0.28);
+        color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --bg: #161614;
+            --surface: #1c1c19;
+            --surface-hover: #272723;
+            --border: #2d2c28;
+            --border-strong: #3a3934;
+            --text: #e2ded4;
+            --text-muted: #8f8a80;
+            --accent: #9db5a1;
+            --accent-hover: #b0c6b3;
+            --accent-text: #161714;
+            --accent-soft: rgba(157, 181, 161, 0.13);
+            --focus-ring: rgba(157, 181, 161, 0.3);
+            color-scheme: dark;
+        }
+    }
     * {box-sizing: border-box;}
-    body {width: 160px;}
+    html, body {margin: 0;}
+    body {
+        width: 256px;
+        padding: 18px 16px 16px;
+        font: 13px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 2px 14px;
+        margin-bottom: 4px;
+        border-bottom: 1px solid var(--border);
+    }
+    header img {width: 28px; height: 28px; border-radius: 6px;}
+    header h1 {
+        margin: 0;
+        font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+        font-size: 16px;
+        font-weight: 400;
+        letter-spacing: 0.01em;
+        line-height: 1.2;
+    }
+    header p {margin: 0; font-size: 11.5px; color: var(--text-muted);}
+    a {color: var(--accent);}
     button {
         position: relative;
-        display: block;
+        display: flex;
+        align-items: center;
+        gap: 10px;
         width: 100%;
-        padding: 10px;
+        padding: 10px 14px;
+        overflow: hidden;
+        font: inherit;
+        font-weight: 400;
+        text-align: left;
+        color: var(--text);
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background-color 0.12s, border-color 0.12s, box-shadow 0.12s;
     }
+    button:hover {background: var(--surface-hover);}
+    button:focus-visible {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--focus-ring);
+    }
+    button.primary, button[type=submit] {
+        color: var(--accent-text);
+        background: var(--accent);
+        border-color: var(--accent);
+    }
+    button.primary:hover, button[type=submit]:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+    }
+    button[type=submit], button[type=reset] {justify-content: center;}
+    button svg {flex: none; width: 16px; height: 16px;}
     button progress {
         position: absolute;
         bottom: 0;
         left: 0;
-        height: 10px;
+        height: 3px;
         width: 100%;
+        border: 0;
+        appearance: none;
+        background: transparent;
+        accent-color: var(--accent-text);
     }
+    button progress::-webkit-progress-bar {background: transparent;}
+    button progress::-webkit-progress-value {background: currentColor;}
+    button progress::-moz-progress-bar {background: currentColor;}
     #download.downloading .idle,
     #download:not(.downloading) .busy {
         display: none;
     }
+    #permission_missing_form {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+        font-size: 12.5px;
+        color: var(--text-muted);
+        background: var(--accent-soft);
+        border-radius: 8px;
+    }
+    #permission_missing_form[hidden] {display: none;}
+    #permission_missing_form p {margin: 0 0 4px;}
     #permission_missing_form:not([hidden]) ~ button {
         display: none;
     }
+    .credits {
+        margin: 2px 0 0;
+        font-size: 11px;
+        text-align: center;
+    }
+    .credits a {color: var(--text-muted); text-decoration: none;}
+    .credits a:hover {color: var(--accent);}
+    dialog {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--bg);
+        color: var(--text);
+    }
+    dialog button {margin-top: 10px; justify-content: center;}
 </style>
 </head>
 <body>
+<header>
+    <img src="icons/48.png" alt="">
+    <div>
+        <h1>Zen Source Viewer</h1>
+        <p>Inspect this extension&rsquo;s code</p>
+    </div>
+</header>
 <form id="permission_missing_form" hidden>
-    To view this extension's source, an extra permission is needed.<br>
-    This permission can be revoked at any time at the
-    <a href="/options.html" target="_blank">options page</a>.<br><br>
+    <p>To view this extension's source, an extra permission is needed.
+    It can be revoked at any time on the
+    <a href="/options.html" target="_blank">options page</a>.</p>
     <button type="submit">Add permission</button>
     <button type="reset">Cancel</button>
 </form>
-<button id="download" title="Download extension in zip format">
-    <span class="idle">Download as zip</span>
-    <span class="busy">Downloading...</span>
+<button id="view-source" class="primary" title="View source of extension in a new tab">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg>
+    View source
 </button>
-<button id="view-source" title="View source of extension in a new tab">View source</button>
-<!--#if OPERA-->
-<button id="install-as-nex" title="install the extension">Install</button>
-<!--#endif-->
-<!--#if FIREFOX-->
+<button id="download" title="Download extension in zip format">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+    <span class="idle">Download as zip</span>
+    <span class="busy">Downloading&hellip;</span>
+</button>
+<p class="credits"><a href="/license.html" target="_blank">License &amp; Credits</a></p>
 <script src="domain-fronter.js"></script>
-<!--#endif-->
-<script src="lib/sha256.js"></script>
-<script src="lib/crx-to-zip.js"></script>
-<script src="chrome-platform-info.js"></script>
-<script src="cws_pattern.js"></script>
+<script src="open-addon.js"></script>
+<script src="addon-urls.js"></script>
 <script src="popup.js"></script>
 </body>
 </html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<!--
+ (c) 2026 Subham Mahesh
+ This Source Code Form is subject to the terms of the Mozilla Public
+ License, v. 2.0. If a copy of the MPL was not distributed with this
+ file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width">
+<title>License &amp; Credits</title>
+<style>
+:root {
+    --bg: #f4f2ed;
+    --surface: #faf9f6;
+    --border: #e3dfd5;
+    --text: #2f2d29;
+    --text-muted: #6f6a60;
+    --text-subtle: #a19b8f;
+    --accent: #5b7360;
+    --accent-soft: #e5eae1;
+    color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #161614;
+        --surface: #1c1c19;
+        --border: #2d2c28;
+        --text: #e2ded4;
+        --text-muted: #a8a397;
+        --text-subtle: #78746b;
+        --accent: #9db5a1;
+        --accent-soft: rgba(157, 181, 161, 0.13);
+        color-scheme: dark;
+    }
+}
+* {box-sizing: border-box;}
+html, body {background: var(--bg); color: var(--text);}
+body {
+    margin: 0;
+    padding: 56px 24px;
+    font: 14px/1.7 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+main {max-width: 620px; margin: 0 auto;}
+a {color: var(--accent); text-decoration: none;}
+a:hover {text-decoration: underline;}
+.page-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 40px;
+}
+.page-header img {width: 36px; height: 36px; border-radius: 8px;}
+h1, h2 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+}
+h1 {margin: 0; font-size: 24px; line-height: 1.25;}
+.page-header p {margin: 0; font-size: 13px; color: var(--text-muted);}
+.section-title {
+    margin: 0 0 12px 4px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-subtle);
+}
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-bottom: 40px;
+}
+.person + .person {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+.role {
+    display: inline-block;
+    margin-bottom: 4px;
+    padding: 0 10px;
+    font-size: 11.5px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 999px;
+}
+.name {display: block; font-size: 16px;}
+.detail {display: block; font-size: 13px; color: var(--text-muted);}
+.card p {margin: 0 0 12px;}
+.card p:last-child {margin-bottom: 0;}
+ul {margin: 0; padding-left: 1.2em; color: var(--text-muted);}
+li + li {margin-top: 4px;}
+blockquote {
+    margin: 0 0 14px;
+    padding: 12px 16px;
+    font: 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: var(--text-muted);
+    background: var(--bg);
+    border-radius: 10px;
+}
+.links {display: flex; flex-wrap: wrap; gap: 8px 20px;}
+footer {font-size: 12px; color: var(--text-subtle); text-align: center;}
+.person .detail + .detail {margin-top: 2px;}
+details.license-text {
+    margin: 10px 0 12px;
+}
+details.license-text summary {
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--accent);
+    list-style-position: outside;
+}
+details.license-text pre {
+    max-height: 360px;
+    overflow: auto;
+    margin: 10px 0 0;
+    padding: 14px 16px;
+    font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text-muted);
+    background: var(--bg);
+    border-radius: 10px;
+}
+.license-counts {display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px;}
+.license-badge {
+    display: inline-block;
+    padding: 0 10px;
+    font-size: 11.5px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.generated-note {font-size: 12px; color: var(--text-subtle);}
+.group-title {
+    margin: 0 0 10px 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+.component + .component {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+.component-head {display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px;}
+.component-name {font-size: 15px; font-weight: 500;}
+.component-version {font-size: 12.5px; color: var(--text-subtle);}
+.component-head .license-badge {margin-left: auto;}
+.component .detail {display: block; font-size: 13px; color: var(--text-muted); overflow-wrap: anywhere;}
+.component .notice {margin-top: 6px; font-size: 12.5px; color: var(--text-muted); font-style: italic;}
+.component details.license-text {margin: 8px 0 0;}
+</style>
+</head>
+<body>
+<main>
+<header class="page-header">
+    <img src="icons/48.png" alt="">
+    <div>
+        <h1>License &amp; Credits</h1>
+        <p>Zen Source Viewer for Firefox</p>
+    </div>
+</header>
+
+<h2 class="section-title">Authors</h2>
+<div class="card">
+    <div class="person">
+        <span class="role">Original author</span>
+        <span class="name">Rob Wu</span>
+        <span class="detail">Extension source viewer (CRX Viewer) &mdash; &copy; 2013&ndash;2026 Rob Wu &lt;rob@robwu.nl&gt;</span>
+        <span class="detail"><a href="https://robwu.nl/" target="_blank">robwu.nl</a> &middot; <a href="https://github.com/Rob--W/crxviewer" target="_blank">Original source code</a></span>
+    </div>
+    <div class="person">
+        <span class="role">Contributors to the original work</span>
+        <span class="detail" id="original-contributors">Peter Wu, xnumad, Ng Yik Phang, utkarshspat, Patrick Kettner, cyrozap, Snazzah, Damien</span>
+    </div>
+    <div class="person">
+        <span class="role">Modifications</span>
+        <span class="name">Subham Mahesh</span>
+        <span class="detail">Zen Source Viewer &mdash; &copy; 2026 Subham Mahesh</span>
+    </div>
+</div>
+
+<h2 class="section-title">Changes in this version</h2>
+<div class="card">
+    <p>This is a modified version of the original work. Changes made by Subham Mahesh:</p>
+    <ul>
+        <li>Redesigned the user interface (viewer, popup and options page) with a calm, minimal look in light and dark mode.</li>
+        <li>Reduced the project to Firefox only; Chrome, Opera and online-demo builds were removed, as was support for Chrome, Edge and Opera extensions (CRX files and their stores).</li>
+        <li>Added this License &amp; Credits page, with the licenses of all included open-source components.</li>
+        <li>The viewer shows files as a collapsible folder tree, like a file explorer.</li>
+        <li>Code is shown in a CodeMirror 6 editor (editing, search and replace, code folding, autocompletion, JSON checking); edited files can be downloaded alone or as a new zip.</li>
+        <li>A Changes panel lists edited files with added/removed line counts, shows each file's diff (inline or side by side) and can revert a single change, a whole file or everything.</li>
+        <li>All third-party libraries are installed from npm and bundled at build time: zip.js 2, js-beautify, strip-json-comments (instead of JSON.minify) and @noble/hashes (instead of SparkMD5).</li>
+        <li>New name (Zen Source Viewer), add-on ID and icon.</li>
+    </ul>
+    <p style="margin-top: 12px">Each modified source file carries a notice saying it was modified by Subham Mahesh.</p>
+</div>
+
+<h2 class="section-title">License of Zen Source Viewer</h2>
+<div class="card">
+    <p>The original work and these modifications are distributed under the
+    <strong>Mozilla Public License, version 2.0</strong> (MPL-2.0).</p>
+    <blockquote>This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.</blockquote>
+    <details class="license-text" id="project-license">
+        <summary>Show the full license text</summary>
+        <pre></pre>
+    </details>
+    <div class="links">
+        <a href="LICENSE.txt" target="_blank">LICENSE.txt (bundled)</a>
+        <a href="https://mozilla.org/MPL/2.0/" target="_blank">MPL 2.0 on mozilla.org</a>
+    </div>
+</div>
+
+<h2 class="section-title">Open-source components</h2>
+<div class="card" id="components-summary">
+    <p id="components-intro">Zen Source Viewer includes the following open-source software.
+    Each component remains under its own license, shown below in full.</p>
+    <div class="license-counts" id="license-counts"></div>
+    <p class="generated-note" id="generated-note"></p>
+</div>
+<div id="components"></div>
+
+<footer>Thank you to Rob Wu and everyone who contributed to the original extension and to the components above.</footer>
+</main>
+<script src="third-party-licenses.js"></script>
+<script src="license.js"></script>
+</body>
+</html>

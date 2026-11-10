@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<!--
+ (c) 2013 Rob Wu <rob@robwu.nl>
+ This Source Code Form is subject to the terms of the Mozilla Public
+ License, v. 2.0. If a copy of the MPL was not distributed with this
+ file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+ Modified by Subham Mahesh, 2026: refreshed the open-extension view and footer credits; code is shown in a CodeMirror 6 editor; Changes panel with diffs; reduced to Firefox only (removed Chrome, Opera and web-demo code, and Chrome/Edge/Opera CRX support; renamed from crxviewer.html); renamed to Zen Source Viewer.
+
+//#expand Revision __VERSION__
+ -->
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; media-src 'self' data:; connect-src https: http: data: blob:">
+<title>Zen Source Viewer</title>
+<meta name="color-scheme" content="dark light">
+<link rel="stylesheet" type="text/css" href="viewer.css">
+</head>
+<body>
+<div id="top-bar">
+    <form>
+        <input type="text" id="file-filter" placeholder="filter (regex) ! file search"
+title="File filter (case-insensitive). Formats:
+1. [filename filter regexp]
+2. [filename filter regexp]!file content search term (case-insensitive)
+3. [filename filter regexp]!case:file content search term (case-sensitive)
+4. [filename filter regexp]!regexp:filter content regexp (case-sensitive)
+5. [filename filter regexp]!iregexp:filter content regexp (case-insensitive)
+The filename filter is optional, '!search term' can also be used directly to search in all files.
+" list="file-filter-patterns">
+        <label title="Filter: Images">
+            <input type="checkbox" data-filter-type="images">
+            <span class="filter-label-description">Images</span>
+            <span class="gcount"></span>
+        </label>
+        <label title="Filter: JavaScript code">
+            <input type="checkbox" data-filter-type="code">
+            <span class="filter-label-description">Code</span>
+            <span class="gcount"></span>
+        </label>
+        <label title="Filter: HTML, CSS">
+            <input type="checkbox" data-filter-type="markup">
+            <span class="filter-label-description">Markup</span>
+            <span class="gcount"></span>
+        </label>
+        <label title="Filter: Translations used by browser.i18n">
+            <input type="checkbox" data-filter-type="locales">
+            <span class="filter-label-description">Locales</span>
+            <span class="gcount"></span>
+        </label>
+        <label title="Filter: Other files">
+            <input type="checkbox" data-filter-type="misc">
+            <span class="filter-label-description">Misc</span>
+            <span class="gcount"></span>
+        </label>
+    </form>
+    <span id="file-filter-feedback"></span>
+    <div class="top-actions">
+        <a id="listing-link">Listing</a>
+        <button id="download-edited-zip" hidden>Download edited zip</button>
+        <a id="download-link">Download</a>
+        <a id="open-viewer">Open</a>
+    </div>
+</div>
+<div id="advanced-open">
+    <form id="advanced-open-form">
+        <h3>Open an add-on</h3>
+        Enter the URL of a Firefox or Thunderbird add-on (XPI), a zip file,
+        or an add-on page on addons.mozilla.org or addons.thunderbird.net.
+        <input type="url" placeholder="URL of a Firefox add-on, XPI or zip file" name="url">
+        <input type="submit" value="Open in this viewer">
+        or select a local file &rarr;
+        <input type="file" accept=".xpi,.zip,.jar">
+    </form>
+    <form id="advanced-open-amo-extension" class="site-specific-form">
+        <h3>Find XPI files of Firefox add-ons at AMO</h3>
+        <div title="Add-on slug (from the URL) or add-on ID (GUID or ID containing @)">
+            <span class="labeltext">Add-on slug or ID</span>
+            <input type="text" pattern="[^\/]+" name="amoslugorid" placeholder="slug from AMO URL or ID add-on" required>
+            <input type="submit" value="Search on AMO">
+        </div>
+        <div>
+            <div class="amodescription"></div>
+            <ul class="amoxpilist"></ul>
+        </div>
+    </form>
+</div>
+<div id="left-panel">
+    <div class="content">
+        <section id="changes-panel" hidden>
+            <div class="changes-header">
+                <span class="changes-title">Changes</span>
+                <span class="changes-count"></span>
+                <span class="changes-total"></span>
+                <button id="changes-download-zip" title="Download a new zip file that includes your edits">Zip</button>
+                <button id="revert-all-changes" title="Discard all edits">Revert all</button>
+            </div>
+            <ol id="changes-list"></ol>
+        </section>
+        <ol id="file-list"></ol>
+        <div class="total-size-wrapper" hidden>
+            +
+            <span id="total-size"></span>
+        </div>
+    </div>
+</div>
+<div id="right-panel">
+    <div id="source-toolbar"></div>
+    <div id="source-code">
+        <div id="initial-status"></div>
+    </div>
+</div>
+<footer>
+    Original work by <a href="https://robwu.nl">Rob Wu</a>
+    (<a href="https://github.com/Rob--W/crxviewer">source</a>) &middot;
+    Modified by Subham Mahesh &middot;
+    <a href="license.html" target="_blank">License &amp; Credits</a>
+</footer>
+<datalist id="file-filter-patterns">
+    <option value="\.js$" label="JavaScript">
+    <option value="\.css$" label="CSS">
+    <option value="\.html?$" label="HTML">
+    <option value="\.(js|css|html)$" label="JS / CSS / HTML">
+    <option value="!browser." label="Files using the browser API">
+    <option value="!regexp:(chrome|browser)\." label="Regexp file search">
+    <option value="\.html$!http:" label="All HTML files containing http:.">
+</datalist>
+<script src="domain-fronter.js"></script>
+<script src="lib/zip.js/zip.js"></script>
+<script src="lib/efficienttextwriter.js"></script>
+<script src="lib/uint8arraywriter.js"></script>
+<script src="open-addon.js"></script>
+<script src="addon-urls.js"></script>
+<script src="lib/beautify/beautify.js"></script>
+<script src="lib/strip-json-comments.js"></script>
+<script src="lib/noble-md5.js"></script>
+<script src="lib/modern-crypto.js"></script>
+<script src="lib/codemirror/zen-editor.js"></script>
+<script src="asn1lite.js"></script>
+<script src="mozcose.js"></script>
+<script src="viewer.js"></script>
+</body>
+</html>

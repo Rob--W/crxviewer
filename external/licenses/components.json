@@ -1,0 +1,61 @@
+{
+    "_comment": "Input for external/licenses/generate.js. All third-party libraries are bundled from npm (see external/bundles.js) and found automatically. \"embedded\" lists third-party code that is copied inside one of those npm packages (and so has no package of its own); it is listed when its host package is bundled. \"vendored\" would list libraries copied into src/lib/ without npm (none).",
+    "project": {
+        "name": "Zen Source Viewer",
+        "license": "MPL-2.0",
+        "licenseFile": "LICENSE",
+        "originalWork": {
+            "name": "Extension source viewer (CRX Viewer)",
+            "author": "Rob Wu <rob@robwu.nl>",
+            "years": "2013–2026",
+            "homepage": "https://github.com/Rob--W/crxviewer",
+            "contributors": [
+                "Peter Wu",
+                "xnumad",
+                "Ng Yik Phang",
+                "utkarshspat",
+                "Patrick Kettner",
+                "cyrozap",
+                "Snazzah",
+                "Damien"
+            ]
+        },
+        "modifications": {
+            "author": "Subham Mahesh",
+            "years": "2026"
+        }
+    },
+    "vendored": [],
+    "embedded": [
+        {
+            "name": "zlib-streams-ts (port of zlib)",
+            "embeddedIn": "@zip.js/zip.js",
+            "version": "included in @zip.js/zip.js",
+            "license": "BSD-3-Clause AND Zlib",
+            "homepage": "https://github.com/gildas-lormeau/zlib-streams-ts",
+            "usedFor": "Compression fallback inside zip.js (lib/core/streams/zlib-js/zlib-streams.min.js)",
+            "note": "A TypeScript port of zlib by Jean-loup Gailly and Mark Adler. License text from the zlib-streams-ts 1.2.0 npm package.",
+            "licenseFile": "external/licenses/zlib-streams-ts.LICENSE.md"
+        },
+        {
+            "name": "Acorn (parts)",
+            "embeddedIn": "js-beautify",
+            "version": "included in js-beautify",
+            "license": "MIT",
+            "homepage": "https://github.com/acornjs/acorn",
+            "usedFor": "Character classes used by the JavaScript beautifier (js/src/javascript/acorn.js)",
+            "note": "js-beautify states: \"Parts of this section of code is taken from acorn. Acorn was written by Marijn Haverbeke and released under an MIT license.\" License text from the acorn npm package.",
+            "licenseFile": "external/licenses/acorn.LICENSE"
+        },
+        {
+            "name": "Esprima (Unicode regular expressions)",
+            "embeddedIn": "js-beautify",
+            "version": "included in js-beautify",
+            "license": "BSD-2-Clause",
+            "homepage": "https://github.com/jquery/esprima",
+            "usedFor": "Unicode identifier and whitespace patterns used by the JavaScript beautifier",
+            "note": "js-beautify states that its Unicode regexps \"were taken from Esprima by Ariya Hidayat\". License text from the esprima npm package.",
+            "licenseFile": "external/licenses/esprima.LICENSE"
+        }
+    ]
+}

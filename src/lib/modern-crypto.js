@@ -2,10 +2,13 @@
  * (c) 2017 Rob Wu <rob@robwu.nl>
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * Modified by Subham Mahesh, 2026: MD5 is calculated with @noble/hashes
+ * (lib/noble-md5.js, MIT license) instead of SparkMD5. */
 
 'use strict';
-/* globals console, crypto, SparkMD5, Uint8Array */
+/* globals console, crypto, NobleMD5, Uint8Array */
 /**
  * Provides the implementation of common hash algorithms with minimal code.
  * Requires a modern browser that supports crypto.subtle.digest.
@@ -41,7 +44,7 @@ var ModernCrypto = {};
         };
     }
     ModernCrypto.md5 = function(uint8Array, callback) {
-        callback(SparkMD5.ArrayBuffer.hash(uint8Array));
+        callback(NobleMD5.hex(uint8Array));
     };
     ModernCrypto.sha1 = subtleCryptoDigestFactory('SHA-1');
     ModernCrypto.sha256 = subtleCryptoDigestFactory('SHA-256');
